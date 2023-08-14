@@ -487,22 +487,11 @@
             return renderer.LoadTexture(name, data);
         }
 
-        public SDLTexture? LoadTexture(string name, byte[]? data)
-        {
-            return renderer.LoadTexture(name, data);
-        }
-
         public SDLMusic? LoadMusic(string name)
         {
             byte[]? data = contentManager.FindContent(name);
             return SDLAudio.LoadMusic(name, data);
         }
-
-        public SDLMusic? LoadMusic(string name, byte[]? data)
-        {
-            return SDLAudio.LoadMusic(name, data);
-        }
-
         public SDLSound? LoadSound(string name)
         {
             byte[]? data = contentManager.FindContent(name);

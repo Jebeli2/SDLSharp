@@ -395,18 +395,10 @@
         );
 
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr TTF_RenderGlyph_Blended(
-            IntPtr font,
-            ushort ch,
-            SDL.SDL_Color fg
-        );
+        public static extern IntPtr TTF_RenderGlyph_Blended(IntPtr font, ushort ch, int fg);
 
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr TTF_RenderGlyph32_Blended(
-            IntPtr font,
-            uint ch,
-            SDL.SDL_Color fg
-        );
+        public static extern IntPtr TTF_RenderGlyph32_Blended(IntPtr font, uint ch, int fg);
 
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int TTF_SetDirection(int direction);

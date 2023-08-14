@@ -104,14 +104,14 @@
             return window?.LoadTexture(name);
         }
 
-        protected SDLTexture? LoadTexture(string name, byte[]? data)
-        {
-            return renderer?.LoadTexture(name, data);
-        }
-
         protected SDLSound? LoadSound(string name)
         {
             return window?.LoadSound(name);
+        }
+
+        protected SDLMusic? LoadMusic(string name)
+        {
+            return window?.LoadMusic(name);
         }
 
         protected virtual void OnWindowLoad(SDLWindowLoadEventArgs e) { }

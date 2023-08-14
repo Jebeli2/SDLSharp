@@ -209,6 +209,13 @@
             //DirectDrawText(font, text, x, y, width, height, color, horizontalAlignment, verticalAlignment, offsetX, offsetY);
         }
 
+        public void DrawIcon(Icons icon, float x, float y, float width, float height, Color color, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, float offsetX = 0, float offsetY = 0)
+        {
+            if (icon == Icons.NONE) return;
+            SDLFont? font = SDLApplication.IconFont;
+            if (font == null) return;
+        }
+
         private TextCache? GetTextCache(SDLFont font, ReadOnlySpan<char> text, Color color)
         {
             int hash = string.GetHashCode(text);
@@ -254,6 +261,35 @@
             }
             return textCache;
         }
+
+        private IconCache? CreateIconCache(SDLFont? font, Icons icon, Color color)
+        {
+            IconCache? iconCache = null;
+            if (font != null)
+            {
+                IntPtr fontHandle = font.Handle;
+                if (fontHandle != IntPtr.Zero)
+                {
+                    IntPtr surface = SDL_ttf.TTF_RenderGlyph32_Blended(fontHandle, (uint)icon, color.ToArgb());
+                    if (surface != IntPtr.Zero)
+                    {
+                        IntPtr texHandle = SDL_CreateTextureFromSurface(handle, surface);
+                        if (texHandle != IntPtr.Zero)
+                        {
+                            if (texHandle != IntPtr.Zero)
+                            {
+                                _ = SDL_QueryTexture(texHandle, out _, out _, out int w, out int h);
+                                _ = SDL_SetTextureAlphaMod(texHandle, color.A);
+                                iconCache = new IconCache(icon, color, w, h, texHandle);
+                            }
+                        }
+                        SDL_FreeSurface(surface);
+                    }
+                }
+            }
+            return iconCache;
+        }
+
 
         private void DrawTextCache(TextCache? textCache, float x, float y, float width, float height, HorizontalAlignment hAlign, VerticalAlignment vAlign, float offsetX, float offsetY)
         {
@@ -445,7 +481,29 @@
             {
                 return (textHash == TextHash) && (font == Font) && (color == Color);
             }
-
         }
+
+        private class IconCache
+        {
+            public Icons Icon;
+            public Color Color;
+            public int Width;
+            public int Height;
+            public IntPtr Texture;
+
+            internal IconCache(Icons icon, Color color, int width, int height, IntPtr texture)
+            {
+                Icon = icon;
+                Color = color;
+                Width = width;
+                Height = height;
+                Texture = texture;
+            }
+            public bool Matches(Icons icon, Color color)
+            {
+                return (icon == Icon) && (color == Color);
+            }
+        }
+
     }
 }
