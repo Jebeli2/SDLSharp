@@ -25,8 +25,11 @@
         private static readonly Dictionary<int, Playback> playback = new();
         private static readonly Dictionary<string, int> channels = new();
         private static readonly ChannelFinishedDelegate channelFinished = OnChannelFinished;
+        private static readonly MusicFinishedDelegate musicFinished = MixMusicFinished;
         private static PointF lastPos;
 
+        public static event EventHandler<SDLMusicEventArgs>? MusicStarted;
+        public static event EventHandler<SDLMusicFinishedEventArgs>? MusicFinished;
         public static bool UseTmpFilesForMusic { get; set; } = true;
         public static bool AttemptToDeleteOldTmpFiles { get; set; } = true;
         public static int SoundFallOff { get; set; } = 15;
@@ -82,6 +85,7 @@
                 _ = Mix_AllocateChannels(NumChannels);
                 driverName = SDL.IntPtr2String(SDL.SDL_GetCurrentAudioDriver());
                 SDLLog.Info(LogCategory.AUDIO, $"Audio opened: {driverName}");
+                Mix_HookMusicFinished(musicFinished);
             }
         }
 
@@ -93,7 +97,7 @@
             musicTracker.Dispose();
             Mix_CloseAudio();
             Mix_Quit();
-            SDLLog.Info(LogCategory.AUDIO, "Audo closed");
+            SDLLog.Info(LogCategory.AUDIO, "Audio closed");
         }
 
         internal static void Track(SDLMusic music)
@@ -183,24 +187,23 @@
             if (music == null) return;
             IntPtr handle = music.Handle;
             if (handle == IntPtr.Zero) return;
-            //SDLMusicEventArgs e = new SDLMusicEventArgs(music);
             if (currentMusic != null)
             {
                 if (currentMusic != music)
                 {
-                    //OnMusicFinished(new SDLMusicFinishedEventArgs(currentMusic, MusicFinishReason.Interrupted));
+                    OnMusicFinished(currentMusic, MusicFinishReason.Interrupted);
                 }
                 else if (forceRestart)
                 {
                     Mix_RewindMusic();
                     SDLLog.Verbose(LogCategory.AUDIO, $"Music '{music.Name}' restarted");
-                    //OnMusicStarted(e);
+                    OnMusicStarted(music);
                     return;
                 }
                 else
                 {
                     SDLLog.Verbose(LogCategory.AUDIO, $"Music '{music.Name}' already playing, continuing...");
-                    //OnMusicStarted(e); // or maybe not?
+                    OnMusicStarted(music); // or maybe not?
                     return;
                 }
             }
@@ -212,9 +215,8 @@
             {
                 _ = Mix_VolumeMusic(musicVolume);
                 SDLLog.Verbose(LogCategory.AUDIO, $"Music '{music.Name}' started");
-                //OnMusicStarted(e);
+                OnMusicStarted(music);
                 currentMusic = music;
-                //musicDataEventArgs = new SDLMusicDataEventArgs(currentMusic);
             }
         }
         public static void PauseMusic()
@@ -433,5 +435,28 @@
             public bool Finished;
         }
 
+        private static void MixMusicFinished()
+        {
+            if (currentMusic != null)
+            {
+                SDLMusic music = currentMusic;
+                currentMusic = null;
+                OnMusicFinished(music,MusicFinishReason.Finished);                
+            }
+            else
+            {
+                SDLLog.Warn(LogCategory.AUDIO, $"Music finished callback called on no music");
+            }
+        }
+
+        private static void OnMusicStarted(SDLMusic music)
+        {
+            MusicStarted?.Invoke(null, new SDLMusicEventArgs(music));
+        }
+
+        private static void OnMusicFinished(SDLMusic music, MusicFinishReason reason)
+        {
+            MusicFinished?.Invoke(null, new SDLMusicFinishedEventArgs(music, reason));
+        }
     }
 }

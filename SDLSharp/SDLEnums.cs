@@ -44,6 +44,11 @@
         LightSubPixel = 4
     }
 
+    public enum MusicFinishReason
+    {
+        Finished,
+        Interrupted
+    }
     public enum HorizontalAlignment
     {
         Left,

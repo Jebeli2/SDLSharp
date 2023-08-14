@@ -62,6 +62,23 @@
             get => appName;
             set => appName = value;
         }
+
+        public static int MaxFramesPerSecond
+        {
+            get => maxFramesPerSecond;
+            set
+            {
+                if (value < 10) { value = 10; }
+                if (maxFramesPerSecond != value)
+                {
+                    maxFramesPerSecond = value;
+                    framesPerSecond = value;
+                    prevFramesPerSecond = value;
+                    targetTime = ONESECONDMS / maxFramesPerSecond;
+                    fpsText = null;
+                }
+            }
+        }
         public static SDLFont? DefaultFont => defaultFont;
         internal static SDLFont? IconFont => iconFont;
 
@@ -200,13 +217,13 @@
                     if (updateFrameLag == 0)
                     {
                         isRunningSlowly = false;
-                        //SDLLog.Verbose(LogCategory.APPLICATION, "Stopped Running Slowly");
+                        SDLLog.Verbose(LogCategory.APPLICATION, "Stopped Running Slowly");
                     }
                 }
                 else if (updateFrameLag >= 5)
                 {
                     isRunningSlowly = true;
-                    //SDLLog.Verbose(LogCategory.APPLICATION, "Started Running Slowly");
+                    SDLLog.Verbose(LogCategory.APPLICATION, "Started Running Slowly");
                 }
                 if (stepCount == 1 && updateFrameLag > 0) { updateFrameLag--; }
                 elapsedTime = targetTime * stepCount;
@@ -226,7 +243,6 @@
             {
                 PaintLoop(totalElapsedTime, elapsedTime);
             }
-
         }
 
         private static void UpdateLoop(double totalTime, double elapsedTime)

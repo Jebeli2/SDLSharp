@@ -36,8 +36,8 @@
         private bool showFPS;
         private float fpsPosX;
         private float fpsPosY;
-        private SDLTexture? backgroundImage;
-        private SDLMusic? backgroundMusic;
+        private int updateCount;
+        private bool needAppletUpdate;
 
         private readonly List<SDLApplet> applets = new();
         private readonly List<SDLApplet> paintApplets = new();
@@ -92,10 +92,6 @@
 
                 }
                 ClearApplets();
-                backgroundMusic?.Dispose();
-                backgroundMusic = null;
-                backgroundImage?.Dispose();
-                backgroundImage = null;
                 renderer.Dispose();
                 if (handle != IntPtr.Zero)
                 {
@@ -112,25 +108,6 @@
         public bool HandleCreated => handle != IntPtr.Zero;
         public SDLRenderer Renderer => renderer;
         public SDLContentManager ContentManager => contentManager;
-
-        public SDLTexture? BackgroundImage
-        {
-            get => backgroundImage;
-            set => backgroundImage = value;
-        }
-
-        public SDLMusic? BackgroundMusic
-        {
-            get => backgroundMusic;
-            set
-            {
-                if (backgroundMusic != value)
-                {
-                    backgroundMusic = value;
-                    SDLAudio.PlayMusic(backgroundMusic);
-                }
-            }
-        }
         public int X
         {
             get => x;
@@ -366,6 +343,16 @@
             }
         }
 
+        public T GetApplet<T>() where T : SDLApplet, new()
+        {
+            foreach (SDLApplet applet in applets)
+            {
+                if (applet is T t) { return t; }
+            }
+            T newT = new();
+            AddApplet(newT);
+            return newT;
+        }
         public void AddApplet(SDLApplet applet)
         {
             if (!applets.Contains(applet))
@@ -409,14 +396,34 @@
             }
         }
 
+        private void BeginUpdate()
+        {
+            needAppletUpdate = false;
+            updateCount++;
+        }
+
+        private void EndUpdate()
+        {
+            updateCount--;
+            if (updateCount == 0 && needAppletUpdate) { CacheAppletSortOrder(); }
+        }
+
         private void CacheAppletSortOrder()
         {
-            paintApplets.Clear();
-            paintApplets.AddRange(applets.Where(x => x.Enabled && !x.NoRender).OrderBy(x => x.RenderPrio));
-            inputApplets.Clear();
-            inputApplets.AddRange(applets.Where(x => x.Enabled && !x.NoInput).OrderBy(x => x.InputPrio));
-            otherApplets.Clear();
-            otherApplets.AddRange(applets.Where(x => x.Enabled));
+            if (updateCount == 0)
+            {
+                paintApplets.Clear();
+                paintApplets.AddRange(applets.Where(x => x.Enabled && !x.NoRender).OrderBy(x => x.RenderPrio));
+                inputApplets.Clear();
+                inputApplets.AddRange(applets.Where(x => x.Enabled && !x.NoInput).OrderBy(x => x.InputPrio));
+                otherApplets.Clear();
+                otherApplets.AddRange(applets.Where(x => x.Enabled));
+                needAppletUpdate = false;
+            }
+            else
+            {
+                needAppletUpdate = true;
+            }
         }
 
         private void ClearApplets()
@@ -506,7 +513,6 @@
         internal void Paint(double totalTime, double elapsedTime)
         {
             renderer.BeginPaint();
-            if (backgroundImage != null) { renderer.DrawTexture(backgroundImage); }
             SDLWindowPaintEventArgs e = new(renderer, totalTime, elapsedTime);
             foreach (SDLApplet applet in paintApplets) { applet.InternalOnPaint(e); }
             if (showFPS) { renderer.DrawText(null, SDLApplication.FPSText, fpsPosX, fpsPosY, 0, 0, Color.White, HorizontalAlignment.Left, VerticalAlignment.Top); }
@@ -551,7 +557,9 @@
                 windowId = SDL_GetWindowID(handle);
                 SDLLog.Info(LogCategory.VIDEO, $"SDLWindow {windowId} created");
                 renderer.CreateHandle();
+                BeginUpdate();
                 OnHandleCreated(EventArgs.Empty);
+                EndUpdate();
             }
             else
             {

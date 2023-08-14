@@ -197,5 +197,26 @@
         public SDLRenderer Renderer => renderer;
     }
 
+    public class SDLMusicEventArgs : EventArgs
+    {
+        private readonly SDLMusic music;
+        public SDLMusicEventArgs(SDLMusic music)
+        {
+            this.music = music;
+        }
 
+        public SDLMusic Music => music;
+    }
+
+    public class SDLMusicFinishedEventArgs : SDLMusicEventArgs
+    {
+        private readonly MusicFinishReason reason;
+        public SDLMusicFinishedEventArgs(SDLMusic music, MusicFinishReason reason)
+            : base(music)
+        {
+            this.reason = reason;
+        }
+
+        public MusicFinishReason Reason => reason;
+    }
 }
