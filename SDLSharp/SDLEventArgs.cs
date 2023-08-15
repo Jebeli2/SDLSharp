@@ -219,4 +219,22 @@
 
         public MusicFinishReason Reason => reason;
     }
+
+    public class SDLMusicDataEventArgs : SDLMusicEventArgs
+    {
+        private short[] data;
+        public SDLMusicDataEventArgs(SDLMusic music)
+            : this(music, Array.Empty<short>())
+        {
+
+        }
+        public SDLMusicDataEventArgs(SDLMusic music, short[] data)
+            : base(music)
+        {
+            this.data = data;
+        }
+
+        public short[] Data { get => data; set => data = value; }
+    }
+
 }

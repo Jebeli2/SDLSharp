@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading.Channels;
     using System.Threading.Tasks;
@@ -26,10 +27,14 @@
         private static readonly Dictionary<string, int> channels = new();
         private static readonly ChannelFinishedDelegate channelFinished = OnChannelFinished;
         private static readonly MusicFinishedDelegate musicFinished = MixMusicFinished;
+        private static readonly MixFuncDelegate postMix = MixPostMix;
+        private static short[] musicData = Array.Empty<short>();
+        private static SDLMusicDataEventArgs? musicDataEventArgs;
         private static PointF lastPos;
 
         public static event EventHandler<SDLMusicEventArgs>? MusicStarted;
         public static event EventHandler<SDLMusicFinishedEventArgs>? MusicFinished;
+        public static event EventHandler<SDLMusicDataEventArgs>? MusicDataReceived;
         public static bool UseTmpFilesForMusic { get; set; } = true;
         public static bool AttemptToDeleteOldTmpFiles { get; set; } = true;
         public static int SoundFallOff { get; set; } = 15;
@@ -86,6 +91,7 @@
                 driverName = SDL.IntPtr2String(SDL.SDL_GetCurrentAudioDriver());
                 SDLLog.Info(LogCategory.AUDIO, $"Audio opened: {driverName}");
                 Mix_HookMusicFinished(musicFinished);
+                Mix_SetPostMix(postMix, IntPtr.Zero);
             }
         }
 
@@ -217,6 +223,7 @@
                 SDLLog.Verbose(LogCategory.AUDIO, $"Music '{music.Name}' started");
                 OnMusicStarted(music);
                 currentMusic = music;
+                musicDataEventArgs = new SDLMusicDataEventArgs(music);
             }
         }
         public static void PauseMusic()
@@ -435,13 +442,24 @@
             public bool Finished;
         }
 
+        private static void MixPostMix(IntPtr data, IntPtr stream, int len)
+        {
+            if (currentMusic != null && musicDataEventArgs != null && MusicDataReceived != null)
+            {
+                if (musicData.Length != len / 2) { musicData = new short[len / 2]; }
+                Marshal.Copy(stream, musicData, 0, musicData.Length);
+                musicDataEventArgs.Data = musicData;
+                OnMusicDataReceived(musicDataEventArgs);
+            }
+        }
+
         private static void MixMusicFinished()
         {
             if (currentMusic != null)
             {
                 SDLMusic music = currentMusic;
                 currentMusic = null;
-                OnMusicFinished(music,MusicFinishReason.Finished);                
+                OnMusicFinished(music, MusicFinishReason.Finished);
             }
             else
             {
@@ -457,6 +475,11 @@
         private static void OnMusicFinished(SDLMusic music, MusicFinishReason reason)
         {
             MusicFinished?.Invoke(null, new SDLMusicFinishedEventArgs(music, reason));
+        }
+
+        private static void OnMusicDataReceived(SDLMusicDataEventArgs e)
+        {
+            MusicDataReceived?.Invoke(null, e);
         }
     }
 }

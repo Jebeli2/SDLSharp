@@ -33,6 +33,9 @@
         private int textCacheLimit = 100;
         private int iconCacheLimit = 100;
         private readonly SDLObjectTracker<SDLTexture> textureTracker = new(LogCategory.RENDER, "Texture");
+        private readonly int[] rectIndices = new int[] { 2, 0, 1, 1, 3, 2 };
+        private const int NUM_RECT_INDICES = 6;
+        private readonly SDL_Vertex[] rectVertices = new SDL_Vertex[4];
 
         internal SDLRenderer(SDLWindow window)
         {
@@ -49,7 +52,7 @@
             if (handle != IntPtr.Zero)
             {
                 ClearTextCache();
-                //ClearIconCache();
+                ClearIconCache();
                 //if (backBuffer != IntPtr.Zero)
                 //{
                 //    SDL_DestroyTexture(backBuffer);
@@ -201,6 +204,24 @@
                 _ = SDL_SetRenderDrawBlendMode(handle, (SDL_BlendMode)blendMode);
             }
         }
+
+        public void FillColorRect(RectangleF rect, Color colorTopLeft, Color colorTopRight, Color colorBottomLeft, Color colorBottomRight)
+        {
+            rectVertices[0].color = ToSDLColor(colorTopLeft);
+            rectVertices[0].position.X = rect.X;
+            rectVertices[0].position.Y = rect.Y;
+            rectVertices[1].color = ToSDLColor(colorTopRight);
+            rectVertices[1].position.X = rect.Right;
+            rectVertices[1].position.Y = rect.Y;
+            rectVertices[2].color = ToSDLColor(colorBottomLeft);
+            rectVertices[2].position.X = rect.X;
+            rectVertices[2].position.Y = rect.Bottom;
+            rectVertices[3].color = ToSDLColor(colorBottomRight);
+            rectVertices[3].position.X = rect.Right;
+            rectVertices[3].position.Y = rect.Bottom;
+            _ = SDL_RenderGeometry(handle, IntPtr.Zero, rectVertices, 4, rectIndices, NUM_RECT_INDICES);
+        }
+
 
         public void DrawText(SDLFont? font, ReadOnlySpan<char> text, float x, float y, float width, float height, Color color, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, float offsetX = 0, float offsetY = 0)
         {
@@ -424,6 +445,19 @@
         {
             textureTracker.Untrack(texture);
         }
+
+        private static int ToSDLColor(Color c)
+        {
+            int i = c.A;
+            i <<= 8;
+            i |= c.B;
+            i <<= 8;
+            i |= c.G;
+            i <<= 8;
+            i |= c.R;
+            return i;
+        }
+
 
         internal void WindowResized(int width, int height)
         {

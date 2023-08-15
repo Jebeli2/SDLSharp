@@ -1468,7 +1468,7 @@
         public struct SDL_Vertex
         {
             public PointF position;
-            public SDL_Color color;
+            public int color;
             public PointF tex_coord;
         }
 

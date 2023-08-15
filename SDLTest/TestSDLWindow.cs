@@ -11,7 +11,7 @@
 
     internal class TestSDLWindow : SDLWindow
     {
-        private Icons icon = Icons.PX500;
+        private Icons icon = Icons.MIN;
         private double lastTime;
         public TestSDLWindow()
             : base("Test SDL")
@@ -24,8 +24,10 @@
             GetApplet<BackgroundImage>().Image = LoadTexture(nameof(Properties.Resources.badlands));
             GetApplet<MusicPlayer>().PlayNow(nameof(Properties.Resources.jesu_joy_of_mans_desiring));
             var boxes = GetApplet<RainingBoxesApp>();
+            var music = GetApplet<MusicVisualizer>();
             var lines = GetApplet<LinesApp>();
             boxes.RenderPrio = -500;
+            music.RenderPrio = -600;
             lines.RenderPrio = -750;
             SDLApplication.MaxFramesPerSecond = 120;
         }
@@ -33,9 +35,9 @@
         private void NextIcon()
         {
             icon++;
-            if (icon > Icons.YOUTUBE_WITH_CIRCLE)
+            if (icon > Icons.MAX)
             {
-                icon = Icons.PX500;
+                icon = Icons.MIN;
                 return;
             }
             while (!Enum.IsDefined(icon))
