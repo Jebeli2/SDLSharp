@@ -2,6 +2,7 @@
 {
     using SDLSharp;
     using SDLSharp.Applets;
+    using SDLSharp.GUI;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
@@ -13,6 +14,7 @@
     {
         private Icons icon = Icons.MIN;
         private double lastTime;
+        private Window? window;
         public TestSDLWindow()
             : base("Test SDL")
         {
@@ -26,10 +28,21 @@
             var boxes = GetApplet<RainingBoxesApp>();
             var music = GetApplet<MusicVisualizer>();
             var lines = GetApplet<LinesApp>();
+            var gui = GetApplet<GUISystem>();
             boxes.RenderPrio = -500;
             music.RenderPrio = -600;
             lines.RenderPrio = -750;
+
+            gui.RenderPrio = 1000;
+
             SDLApplication.MaxFramesPerSecond = 120;
+            window = Intuition.OpenWindow(new NewWindow { LeftEdge = 10, TopEdge = 10, Width = 200, Height = 400, Title = "Window" });
+        }
+
+        protected override void OnClose(EventArgs e)
+        {
+            base.OnClose(e);
+            Intuition.CloseWindow(window);
         }
 
         private void NextIcon()

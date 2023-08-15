@@ -205,6 +205,24 @@
             }
         }
 
+        public void DrawRect(Rectangle rect)
+        {
+            _ = SDL_RenderDrawRect(handle, ref rect);
+        }
+        public void DrawRect(RectangleF rect)
+        {
+            _ = SDL_RenderDrawRectF(handle, ref rect);
+        }
+
+        public void FillRect(Rectangle rect)
+        {
+            _ = SDL_RenderFillRect(handle, ref rect);
+        }
+        public void FillRect(RectangleF rect)
+        {
+            _ = SDL_RenderFillRectF(handle, ref rect);
+        }
+
         public void FillColorRect(RectangleF rect, Color colorTopLeft, Color colorTopRight, Color colorBottomLeft, Color colorBottomRight)
         {
             rectVertices[0].color = ToSDLColor(colorTopLeft);
