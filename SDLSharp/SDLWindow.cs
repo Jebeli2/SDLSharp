@@ -29,7 +29,7 @@
         private bool alwaysOnTop;
         private bool borderless;
         private bool skipTaskbar;
-        private bool fullScreen;
+        private DisplayMode displayMode;
         private bool mouseGrab;
         private bool keyboardGrab;
         private string driver;
@@ -38,6 +38,10 @@
         private float fpsPosY;
         private int updateCount;
         private bool needAppletUpdate;
+        private int oldX;
+        private int oldY;
+        private int oldWidth;
+        private int oldHeight;
 
         private readonly List<SDLApplet> applets = new();
         private readonly List<SDLApplet> paintApplets = new();
@@ -56,7 +60,7 @@
             alwaysOnTop = false;
             borderless = false;
             skipTaskbar = false;
-            fullScreen = false;
+            displayMode = DisplayMode.Windowed;
             mouseGrab = false;
             keyboardGrab = false;
             showFPS = true;
@@ -163,6 +167,18 @@
                 if (driver != value)
                 {
                     driver = value;
+                }
+            }
+        }
+
+        public DisplayMode DisplayMode
+        {
+            get => displayMode;
+            set
+            {
+                if (displayMode != value)
+                {
+                    SetDisplayMode(value);
                 }
             }
         }
@@ -466,6 +482,124 @@
             }
         }
 
+        public void SetDisplayMode(DisplayMode mode)
+        {
+            if (HandleCreated)
+            {
+                SDLLog.Info(LogCategory.VIDEO, $"Entering Display Mode {mode}");
+                switch (mode)
+                {
+                    case DisplayMode.Windowed:
+                        GoWindowed();
+                        break;
+                    case DisplayMode.Desktop:
+                        GoDesktopFullScreen();
+                        break;
+                    case DisplayMode.FullSize:
+                        GoFullSizeFullScreen();
+                        break;
+                    case DisplayMode.MultiMonitor:
+                        GoMultiMonitorFullScreen();
+                        break;
+                }
+            }
+            displayMode = mode;
+        }
+
+        private void GoWindowed()
+        {
+            if (displayMode == DisplayMode.Desktop)
+            {
+                if (SDL_SetWindowFullscreen(handle, 0) == 0)
+                {
+                    //DetectWindowResized();
+                }
+            }
+            //else
+            //{
+            SDL_SetWindowPosition(handle, oldX, oldY);
+            SDL_SetWindowSize(handle, oldWidth, oldHeight);
+            SDL_SetWindowBordered(handle, !borderless);
+            SDL_SetWindowResizable(handle, resizeable);
+            if (title != null) { SDL_SetWindowTitle(handle, title); }
+            SDL_SetWindowAlwaysOnTop(handle, alwaysOnTop);
+            DetectWindowResized();
+
+            //}
+        }
+
+        private void GoDesktopFullScreen()
+        {
+            if (displayMode == DisplayMode.Windowed)
+            {
+                SDL_GetWindowPosition(handle, out oldX, out oldY);
+                SDL_GetWindowSize(handle, out oldWidth, out oldHeight);
+            }
+            if (SDL_SetWindowFullscreen(Handle, (uint)SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+            {
+            }
+        }
+
+        private void GoMultiMonitorFullScreen()
+        {
+            if (displayMode == DisplayMode.Windowed)
+            {
+                SDL_GetWindowPosition(handle, out oldX, out oldY);
+                SDL_GetWindowSize(handle, out oldWidth, out oldHeight);
+            }
+            if (SDL_GetDisplayBounds(0, out Rectangle bounds) == 0)
+            {
+                int numDisplays = SDL_GetNumVideoDisplays();
+                for (int index = 1; index < numDisplays; index++)
+                {
+                    if (SDL_GetDisplayBounds(index, out Rectangle otherBounds) == 0)
+                    {
+                        if (otherBounds.Height == bounds.Height)
+                        {
+                            bounds = Rectangle.Union(bounds, otherBounds);
+
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                SDL_SetWindowBordered(handle, false);
+                SDL_SetWindowResizable(handle, false);
+                SDL_SetWindowTitle(handle, IntPtr.Zero);
+                SDL_SetWindowAlwaysOnTop(handle, true);
+                SDL_SetWindowPosition(handle, bounds.X, bounds.Y);
+                SDL_SetWindowSize(handle, bounds.Width, bounds.Height);
+            }
+        }
+        private void GoFullSizeFullScreen()
+        {
+            if (displayMode == DisplayMode.Windowed)
+            {
+                SDL_GetWindowPosition(handle, out oldX, out oldY);
+                SDL_GetWindowSize(handle, out oldWidth, out oldHeight);
+            }
+            int index = SDL_GetWindowDisplayIndex(handle);
+            if (SDL_GetDisplayBounds(index, out Rectangle bounds) == 0)
+            {
+                SDL_SetWindowBordered(handle, false);
+                SDL_SetWindowResizable(handle, false);
+                SDL_SetWindowTitle(handle, IntPtr.Zero);
+                SDL_SetWindowAlwaysOnTop(handle, true);
+                SDL_SetWindowPosition(handle, bounds.X, bounds.Y);
+                SDL_SetWindowSize(handle, bounds.Width, bounds.Height);
+            }
+        }
+        private void DetectWindowResized()
+        {
+            SDL_GetWindowSize(handle, out int w, out int h);
+            if (w != width || h != height)
+            {
+                RaiseWindowResized(w, h);
+            }
+        }
+
         public void Show()
         {
             visible = true;
@@ -509,12 +643,14 @@
         {
             SDLWindowUpdateEventArgs e = new(totalTime, elapsedTime);
             foreach (SDLApplet applet in otherApplets) { applet.InternalOnUpdate(e); }
+            OnUpdate(e);
         }
         internal void Paint(double totalTime, double elapsedTime)
         {
             renderer.BeginPaint();
             SDLWindowPaintEventArgs e = new(renderer, totalTime, elapsedTime);
             foreach (SDLApplet applet in paintApplets) { applet.InternalOnPaint(e); }
+            OnPaint(e);
             if (showFPS) { renderer.DrawText(null, SDLApplication.FPSText, fpsPosX, fpsPosY, 0, 0, Color.White, HorizontalAlignment.Left, VerticalAlignment.Top); }
             renderer.EndPaint();
         }
@@ -669,7 +805,7 @@
         }
         internal void RaiseMouseMotion(int which, int x, int y, int xrel, int yrel)
         {
-            SDLLog.Verbose(LogCategory.INPUT, $"Window {windowId} Mouse {which} Moved {x} {y} ({xrel} {yrel})");
+            //SDLLog.Verbose(LogCategory.INPUT, $"Window {windowId} Mouse {which} Moved {x} {y} ({xrel} {yrel})");
             SDLMouseEventArgs e = new(which, x, y, MouseButton.None, 0, KeyButtonState.Invalid, xrel, yrel);
             foreach (SDLApplet applet in inputApplets) { applet.OnMouseMove(e); if (e.Handled) break; }
             OnMouseMoved(e);
@@ -691,6 +827,7 @@
                 SDLLog.Verbose(LogCategory.INPUT, $"Window {windowId} {scanCode} {keyCode} {keyMod} {state}");
             }
             SDLKeyEventArgs e = new(scanCode, keyCode, keyMod, state, repeat);
+            foreach (SDLApplet applet in inputApplets) { applet.OnKeyDown(e); if (e.Handled) break; }
             OnKeyDown(e);
         }
         internal void RaiseKeyUp(ScanCode scanCode, KeyCode keyCode, KeyMod keyMod, KeyButtonState state, bool repeat)
@@ -704,6 +841,7 @@
                 SDLLog.Verbose(LogCategory.INPUT, $"Window {windowId} {scanCode} {keyCode} {keyMod} {state}");
             }
             SDLKeyEventArgs e = new(scanCode, keyCode, keyMod, state, repeat);
+            foreach (SDLApplet applet in inputApplets) { applet.OnKeyUp(e); if (e.Handled) break; }
             OnKeyUp(e);
         }
         internal void RaiseTextInput(string text)
@@ -714,6 +852,15 @@
         }
 
         protected virtual void OnHandleCreated(EventArgs e)
+        {
+
+        }
+
+        protected virtual void OnUpdate(SDLWindowUpdateEventArgs e)
+        {
+
+        }
+        protected virtual void OnPaint(SDLWindowPaintEventArgs e)
         {
 
         }

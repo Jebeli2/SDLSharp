@@ -73,6 +73,7 @@
                 {
                     maxFramesPerSecond = value;
                     framesPerSecond = value;
+                    frameCounter = 0;
                     prevFramesPerSecond = value;
                     targetTime = ONESECONDMS / maxFramesPerSecond;
                     fpsText = null;

@@ -121,6 +121,9 @@
         internal protected virtual void OnMouseButtonDown(SDLMouseEventArgs e) { }
         internal protected virtual void OnMouseButtonUp(SDLMouseEventArgs e) { }
         internal protected virtual void OnMouseMove(SDLMouseEventArgs e) { }
+        internal protected virtual void OnKeyDown(SDLKeyEventArgs e) { }
+        internal protected virtual void OnKeyUp(SDLKeyEventArgs e) { }
+
 
         protected virtual void OnDispose() { }
 
