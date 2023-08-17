@@ -36,6 +36,8 @@
         private readonly int[] rectIndices = new int[] { 2, 0, 1, 1, 3, 2 };
         private const int NUM_RECT_INDICES = 6;
         private readonly SDL_Vertex[] rectVertices = new SDL_Vertex[4];
+        private readonly Stack<IntPtr> prevTargets = new();
+        private readonly Stack<Rectangle> prevClips = new();
 
         internal SDLRenderer(SDLWindow window)
         {
@@ -147,6 +149,26 @@
             return string.Empty;
         }
 
+        public void PushTarget(SDLTexture? texture)
+        {
+            if (texture != null)
+            {
+                IntPtr oldTarget = SDL_GetRenderTarget(handle);
+                prevTargets.Push(oldTarget);
+                _ = SDL_SetRenderTarget(handle, texture.Handle);
+                _ = SDL_SetRenderDrawBlendMode(handle, (SDL_BlendMode)blendMode);
+            }
+        }
+        public void PopTarget()
+        {
+            if (prevTargets.Count > 0)
+            {
+                IntPtr oldTarget = prevTargets.Pop();
+                _ = SDL_SetRenderTarget(handle, oldTarget);
+            }
+        }
+
+
         public SDLTexture? CreateTexture(string name, int width, int height)
         {
             SDLTexture? texture = textureTracker.Find(name);
@@ -177,6 +199,13 @@
                 _ = SDL_RenderCopy(handle, texture.Handle, IntPtr.Zero, ref dst);
             }
         }
+        public void DrawTexture(SDLTexture? texture, Rectangle src, Rectangle dst)
+        {
+            if (texture != null)
+            {
+                _ = SDL_RenderCopy(handle, texture.Handle, ref src, ref dst);
+            }
+        }
 
         public void DrawLine(int x1, int y1, int x2, int y2)
         {
@@ -203,6 +232,11 @@
                 blendMode = value;
                 _ = SDL_SetRenderDrawBlendMode(handle, (SDL_BlendMode)blendMode);
             }
+        }
+
+        public void ClearScreen()
+        {
+            _ = SDL_RenderClear(handle);
         }
 
         public void DrawRect(Rectangle rect)

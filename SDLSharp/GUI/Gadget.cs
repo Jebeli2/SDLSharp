@@ -9,6 +9,7 @@ namespace SDLSharp.GUI
 {
     public class Gadget
     {
+        private static int nextGadgetId;
         private int leftEdge;
         private int topEdge;
         private int width;
@@ -22,6 +23,7 @@ namespace SDLSharp.GUI
         private SysGadgetType sysGadgetType;
         private bool transparentBackground;
         private string? text;
+        private Icons icon;
         private Rectangle? bounds;
         private Window? window;
         private bool leftBorder;
@@ -32,15 +34,36 @@ namespace SDLSharp.GUI
         private bool relBottom;
         private bool relWidth;
         private bool relHeight;
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
+        private bool immediate;
+        private bool relVerify;
+
+        public Gadget()
         {
-            renderer.RenderGadget(gfx, this, 0, 0);
+            GadgetId = ++nextGadgetId;
+            immediate = true;
+            relVerify = true;
         }
+
+        public event EventHandler<EventArgs>? GadgetDown;
+
+        public event EventHandler<EventArgs>? GadgetUp;
+
+        internal void Render(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
+        {
+            renderer.RenderGadget(gfx, this, offsetX, offsetY);
+        }
+        public int GadgetId { get; internal set; }
 
         public string? Text
         {
             get => text;
             set => text = value;
+        }
+
+        public Icons Icon
+        {
+            get => icon;
+            set => icon = value;
         }
 
         public GadgetType GadgetType
@@ -96,6 +119,7 @@ namespace SDLSharp.GUI
             set => noHighlight = value;
         }
 
+        public bool IsBorderGadget => leftBorder || topBorder || rightBorder || bottomBorder;
         public bool LeftBorder
         {
             get => leftBorder;
@@ -142,6 +166,17 @@ namespace SDLSharp.GUI
         {
             get => relHeight;
             internal set => relHeight = value;
+        }
+        public bool Immediat
+        {
+            get => immediate;
+            internal set => immediate = value;
+        }
+
+        public bool RelVerify
+        {
+            get => relVerify;
+            internal set => relVerify = value;
         }
         public bool Enabled => enabled;
         public bool Active => active;
@@ -217,24 +252,6 @@ namespace SDLSharp.GUI
                     bounds.Height -= window.BorderBottom;
                 }
             }
-            //if ((activation & GadgetActivation.LeftBorder) == 0)
-            //{
-            //    bounds.X += window.BorderLeft;
-            //    bounds.Width -= window.BorderLeft;
-            //}
-            //if ((activation & GadgetActivation.TopBorder) == 0)
-            //{
-            //    bounds.Y += window.BorderTop;
-            //    bounds.Height -= window.BorderTop;
-            //}
-            //if ((activation & GadgetActivation.RightBorder) == 0)
-            //{
-            //    bounds.Width -= window.BorderRight;
-            //}
-            //if ((activation & GadgetActivation.BottomBorder) == 0)
-            //{
-            //    bounds.Height -= window.BorderBottom;
-            //}
             //if (requester != null)
             //{
             //    bounds.X += requester.LeftEdge;
@@ -252,17 +269,69 @@ namespace SDLSharp.GUI
         }
         internal void SetActive(bool active)
         {
-            this.active = active;
+            if (this.active != active)
+            {
+                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(active ? "activated" : "deactivated")}");
+                this.active = active;
+                window?.Invalidate();
+            }
         }
 
         internal void SetMouseHover(bool mouseHover)
         {
-            this.mouseHover = mouseHover;
+            if (this.mouseHover != mouseHover)
+            {
+                this.mouseHover = mouseHover;
+                window?.Invalidate();
+            }
         }
 
         internal void SetSelected(bool selected)
         {
-            this.selected = selected;
+            if (this.selected != selected)
+            {
+                this.selected = selected;
+                window?.Invalidate();
+            }
         }
+
+        internal bool HandleMouseDown(int x, int y, bool isTimerRepeat = false)
+        {
+            bool result = false;
+            if (immediate) { RaiseGadgetDown(); result |= true; }
+            if (result) { window?.Invalidate(); }
+            return result;
+        }
+        internal bool HandleMouseUp(int x, int y)
+        {
+            bool result = false;
+            if (RelVerify) { RaiseGadgetUp(); result |= true; }
+            if (result) { window?.Invalidate(); }
+            return result;
+        }
+
+        internal void RaiseGadgetDown()
+        {
+            EventHelper.Raise(this, GadgetDown, EventArgs.Empty);
+        }
+        internal void RaiseGadgetUp()
+        {
+            EventHelper.Raise(this, GadgetUp, EventArgs.Empty);
+        }
+
+
+        private string GetGadgetName()
+        {
+            StringBuilder sb = new();
+            sb.Append("_GUI_Gadget_");
+            sb.Append(GadgetId);
+            sb.Append('_');
+            return sb.ToString();
+        }
+        public override string ToString()
+        {
+            return GetGadgetName();
+        }
+
     }
 }

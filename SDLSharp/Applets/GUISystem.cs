@@ -26,6 +26,11 @@ namespace SDLSharp.Applets
             Intuition.PaintDisplay(e.Renderer);
         }
 
+        protected override void OnWindowSizeChanged(int width, int height)
+        {
+            Intuition.WindowSizeChanged(width,height);
+        }
+
         protected internal override void OnMouseButtonDown(SDLMouseEventArgs e)
         {
             if (Intuition.MouseButtonDown(e.X, e.Y, e.Button)) { e.Handled = true; }

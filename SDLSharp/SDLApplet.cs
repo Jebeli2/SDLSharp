@@ -117,6 +117,20 @@
         protected virtual void OnWindowLoad(SDLWindowLoadEventArgs e) { }
         protected virtual void OnWindowUpdate(SDLWindowUpdateEventArgs e) { }
         protected virtual void OnWindowPaint(SDLWindowPaintEventArgs e) { }
+        protected virtual void OnWindowSizeChanged(int width, int height) { }
+
+        internal void OnWindowResized(SDLWindowSizeEventArgs e) 
+        { 
+            width = e.Width;
+            height = e.Height;
+            OnWindowSizeChanged(width,height);
+        }
+        internal void OnWindowSizeChanged(SDLWindowSizeEventArgs e)
+        {
+            width = e.Width;
+            height = e.Height;
+            OnWindowSizeChanged(width, height);
+        }
 
         internal protected virtual void OnMouseButtonDown(SDLMouseEventArgs e) { }
         internal protected virtual void OnMouseButtonUp(SDLMouseEventArgs e) { }

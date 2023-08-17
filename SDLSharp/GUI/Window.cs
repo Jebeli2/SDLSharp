@@ -11,6 +11,8 @@ namespace SDLSharp.GUI
 {
     public class Window
     {
+        private static int nextWindowId;
+
         private int leftEdge;
         private int topEdge;
         private int width;
@@ -42,9 +44,23 @@ namespace SDLSharp.GUI
         private int sysGadgetHeight = 28;
 
         private Gadget? dragBar;
+        private Gadget? closeGad;
+        private Gadget? maxGad;
+        private Gadget? minGad;
 
+        private SDLTexture? bitmap;
+        private bool superBitMap;
+        private bool valid;
+        private bool maximized;
+        private bool minimized;
+
+        private int oldLeftEdge;
+        private int oldTopEdge;
+        private int oldWidth;
+        private int oldHeight;
         internal Window(NewWindow newWindow, Screen wbScreen)
         {
+            WindowId = ++nextWindowId;
             leftEdge = newWindow.LeftEdge;
             topEdge = newWindow.TopEdge;
             width = newWindow.Width;
@@ -55,7 +71,11 @@ namespace SDLSharp.GUI
             minHeight = newWindow.MinHeight;
             maxWidth = newWindow.MaxWidth;
             maxHeight = newWindow.MaxHeight;
+            superBitMap = true;
+            closeable = true;
             dragable = true;
+            maximizable = true;
+            minimizable = false;
             borderLeft = 4;
             borderRight = 4;
             borderBottom = 4;
@@ -63,6 +83,7 @@ namespace SDLSharp.GUI
             screen.AddWindow(this);
             InitSysGadgets();
         }
+        public int WindowId { get; internal set; }
         public int LeftEdge => leftEdge;
         public int TopEdge => topEdge;
         public int Width => width;
@@ -83,6 +104,10 @@ namespace SDLSharp.GUI
         public bool Active => active;
         public bool Borderless => borderless;
         public bool MouseHover => mouseHover;
+
+        public bool IsMaximized => maximized;
+        public bool IsMinimized => minimized;
+        public bool IsRestored => !maximized && !minimized;
         public bool BackDrop
         {
             get => backDrop;
@@ -116,12 +141,21 @@ namespace SDLSharp.GUI
 
         internal void SetActive(bool active)
         {
-            this.active = active;
+            if (this.active != active)
+            {
+                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(active ? "activated" : "deactivated")}");
+                this.active = active;
+                valid = false;
+            }
         }
 
         internal void SetMouseHover(bool mouseHover)
         {
-            this.mouseHover = mouseHover;
+            if (this.mouseHover != mouseHover)
+            {
+                this.mouseHover = mouseHover;
+                valid = false;
+            }
         }
         internal bool Contains(int x, int y)
         {
@@ -130,35 +164,82 @@ namespace SDLSharp.GUI
 
         internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
         {
-            RenderWindow(gfx, renderer, 0, 0);
+            if (superBitMap)
+            {
+                if (!valid)
+                {
+                    CheckBitmap(gfx);
+                    gfx.PushTarget(bitmap);
+                    gfx.ClearScreen(Color.FromArgb(0, 0, 0, 0));
+                    RenderWindow(gfx, renderer, -leftEdge, -topEdge);
+                    gfx.PopTarget();
+                    valid = true;
+                }
+                if (valid)
+                {
+                    if (bitmap != null)
+                    {
+                        Rectangle dst = GetBounds();
+                        Rectangle src = new Rectangle(0, 0, dst.Width, dst.Height);
+                        gfx.DrawTexture(bitmap, src, dst);
+                    }
+                }
+            }
+            else
+            {
+                RenderWindow(gfx, renderer, 0, 0);
+            }
         }
 
         private void RenderWindow(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
         {
             renderer.RenderWindow(gfx, this, offsetX, offsetY);
-            foreach (Gadget gadget in gadgets)
+            if (superBitMap)
             {
-                gadget.Render(gfx, renderer);
+                foreach (Gadget gadget in gadgets)
+                {
+                    gadget.Render(gfx, renderer, -leftEdge, -topEdge);
+                }
+            }
+            else
+            {
+                foreach (Gadget gadget in gadgets)
+                {
+                    gadget.Render(gfx, renderer, 0, 0);
+                }
             }
         }
 
         internal void MoveWindow(int dX, int dY, bool dragging = false)
         {
-            Rectangle newDim = new Rectangle(leftEdge + dX, topEdge + dY, width, height);
+            int w = width;
+            int h = height;
+            if (maximized)
+            {
+                w = oldWidth;
+                h = oldHeight;
+            }
+            Rectangle newDim = new Rectangle(leftEdge + dX, topEdge + dY, w, h);
             SetBounds(newDim);
-            if (dragging) { mouseHover = true; }
+            if (dragging)
+            {
+                mouseHover = true;
+                maximized = false;
+            }
             InvalidateBounds();
         }
 
         internal void InvalidateBounds()
         {
-            foreach(Gadget gadget in gadgets)
+            Invalidate();
+            foreach (Gadget gadget in gadgets)
             {
                 gadget.InvalidateBounds();
             }
         }
         private void InitSysGadgets()
         {
+            int gadX = 0;
             if (dragable)
             {
                 dragBar ??= new Gadget
@@ -176,6 +257,109 @@ namespace SDLSharp.GUI
                 };
                 AddGadget(dragBar, 0);
             }
+            if (closeable)
+            {
+                gadX += sysGadgetWidth;
+                closeGad ??= new Gadget
+                {
+                    LeftEdge = -gadX,
+                    TopEdge = 0,
+                    Width = sysGadgetWidth,
+                    Height = sysGadgetHeight,
+                    RelRight = true,
+                    TransparentBackground = true,
+                    Icon = Icons.CROSS,
+                    TopBorder = true,
+                    RightBorder = true,
+                    SysGadgetType = SysGadgetType.WClosing
+                };
+                AddGadget(closeGad, -1);
+            }
+            if (maximizable)
+            {
+                gadX += sysGadgetWidth;
+                maxGad ??= new Gadget
+                {
+                    LeftEdge = -gadX,
+                    TopEdge = 0,
+                    Width = sysGadgetWidth,
+                    Height = sysGadgetHeight,
+                    RelRight = true,
+                    TransparentBackground = true,
+                    Icon = Icons.RESIZE_FULL_SCREEN,
+                    TopBorder = true,
+                    RightBorder = true,
+                    SysGadgetType = SysGadgetType.WMaximizing
+                };
+                maxGad.GadgetUp += MaxGad_GadgetUp;
+                AddGadget(maxGad, -1);
+            }
+            if (minimizable)
+            {
+                gadX += sysGadgetWidth;
+                minGad ??= new Gadget
+                {
+                    LeftEdge = -gadX,
+                    TopEdge = 0,
+                    Width = sysGadgetWidth,
+                    Height = sysGadgetHeight,
+                    RelRight = true,
+                    TransparentBackground = true,
+                    Icon = Icons.RESIZE_100_PERCENT,
+                    TopBorder = true,
+                    RightBorder = true,
+                    SysGadgetType = SysGadgetType.WMinimizing
+                };
+                AddGadget(minGad, -1);
+            }
+        }
+
+        private void MaxGad_GadgetUp(object? sender, EventArgs e)
+        {
+            if (sender is Gadget gad)
+            {
+                if (!maximized)
+                {
+                    gad.Icon = Icons.RESIZE_100_PERCENT;
+                    Maximize();
+                }
+                else
+                {
+                    gad.Icon = Icons.RESIZE_FULL_SCREEN;
+                    Restore();
+                }
+            }
+        }
+
+        internal void Maximize()
+        {
+            if (IsRestored)
+            {
+                oldLeftEdge = leftEdge;
+                oldTopEdge = topEdge;
+                oldWidth = width;
+                oldHeight = height;
+            }
+            maximized = true;
+            minimized = false;
+            SetBounds(0, 0, screen.Width, screen.Height);
+            InvalidateBounds();
+        }
+
+        internal void Restore()
+        {
+            maximized = false;
+            minimized = false;
+            SetBounds(oldLeftEdge, oldTopEdge, oldWidth, oldHeight);
+            InvalidateBounds();
+        }
+
+        internal void Minimize()
+        {
+
+            minimized = true;
+            maximized = false;
+            InvalidateBounds();
         }
 
         internal int AddGadget(Gadget gadget, int position)
@@ -192,6 +376,17 @@ namespace SDLSharp.GUI
                 gadget.SetWindow(this);
                 return position;
             }
+        }
+
+        internal void Invalidate()
+        {
+            valid = false;
+        }
+        internal void Close()
+        {
+            bitmap?.Dispose();
+            bitmap = null;
+            valid = false;
         }
         internal Gadget? FindGadget(int x, int y)
         {
@@ -219,5 +414,34 @@ namespace SDLSharp.GUI
             //return NormalFindGadget(x, y);
             //}
         }
+
+        private void CheckBitmap(SDLRenderer renderer)
+        {
+            if (bitmap == null || bitmap.Width < width || bitmap.Height < height)
+            {
+                InitBitmap(renderer);
+            }
+        }
+        private void InitBitmap(SDLRenderer renderer)
+        {
+            bitmap?.Dispose();
+            bitmap = renderer.CreateTexture(GetWindowName(), width, height);
+            if (bitmap != null) { bitmap.BlendMode = BlendMode.Blend; }
+        }
+
+        private string GetWindowName()
+        {
+            StringBuilder sb = new();
+            sb.Append("_GUI_Window_");
+            sb.Append(WindowId);
+            sb.Append('_');
+            return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return GetWindowName();
+        }
+
     }
 }

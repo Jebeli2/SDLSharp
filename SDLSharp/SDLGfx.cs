@@ -9,6 +9,11 @@ namespace SDLSharp
 {
     public static class SDLGfx
     {
+        public static void ClearScreen(this SDLRenderer renderer, Color color)
+        {
+            renderer.Color = color;
+            renderer.ClearScreen();
+        }
         public static void DrawRect(this SDLRenderer renderer, int x, int y, int width, int height, Color color)
         {
             renderer.Color = color;

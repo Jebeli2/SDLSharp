@@ -109,6 +109,8 @@ namespace SDLSharp.GUI
         {
             Rectangle bounds = window.GetBounds();
             Rectangle inner = window.GetInnerBounds();
+            bounds.Offset(offsetX, offsetY);
+            inner.Offset(offsetX, offsetY);
             bool active = window.Active;
             Color bg = WindowFillUnFocused;
             Color bt = WindowHeaderGradientTop;
@@ -162,9 +164,19 @@ namespace SDLSharp.GUI
                 }
                 gfx.FillVertGradient(bounds, gradTop, gradBottom);
             }
-            DrawBox(gfx, bounds, BorderLight, BorderDark);
+            if (gadget.IsBorderGadget)
+            {
+                if (hover)
+                {
+                    DrawBox(gfx, bounds, BorderLight, BorderDark);
+                }
+            }
+            else if (!gadget.NoHighlight)
+            {
+                DrawBox(gfx, bounds, BorderLight, BorderDark);
+            }
             int offset = selected ? 1 : 0;
-            bool hasIcon = false;
+            bool hasIcon = gadget.Icon != Icons.NONE;
             bool hasText = !string.IsNullOrEmpty(gadget.Text);
             Color tc = gadget.Enabled ? TextColor : DisabledTextColor;
             if (hasIcon && hasText)
@@ -173,7 +185,7 @@ namespace SDLSharp.GUI
             }
             else if (hasIcon)
             {
-
+                gfx.DrawIcon(gadget.Icon, bounds.X, bounds.Y, bounds.Width, bounds.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, offset, offset);
             }
             else if (hasText)
             {

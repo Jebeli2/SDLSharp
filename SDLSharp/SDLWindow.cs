@@ -52,9 +52,10 @@
         public SDLWindow(string? title = null)
         {
             this.title = title;
+            driver = "direct3d12";
             //driver = "direct3d11";
             //driver = "opengl";
-            driver = "direct3d";
+            //driver = "direct3d";
             visible = true;
             resizeable = true;
             alwaysOnTop = false;
@@ -778,6 +779,7 @@
             SDLLog.Debug(LogCategory.INPUT, $"Window {windowId} Resized {width} {height}");
             ChangeSize(width, height);
             SDLWindowSizeEventArgs e = new(width, height);
+            foreach (SDLApplet applet in applets) { applet.OnWindowResized(e); }
             OnResized(e);
         }
         internal void RaiseWindowSizeChanged(int width, int height)
@@ -785,6 +787,7 @@
             SDLLog.Debug(LogCategory.INPUT, $"Window {windowId} Size Changed {width} {height}");
             ChangeSize(width, height);
             SDLWindowSizeEventArgs e = new(width, height);
+            foreach (SDLApplet applet in applets) { applet.OnWindowSizeChanged(e); }
             OnSizeChanged(e);
         }
 

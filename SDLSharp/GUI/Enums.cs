@@ -17,6 +17,9 @@
     public enum SysGadgetType
     {
         None,
-        WDragging
+        WDragging,
+        WClosing,
+        WMaximizing,
+        WMinimizing,
     }
 }

@@ -55,6 +55,7 @@ namespace SDLSharp.GUI
             {
                 Screen screen = window.Screen;
                 screen.RemoveWindow(window);
+                window.Close();
             }
         }
 
@@ -78,6 +79,14 @@ namespace SDLSharp.GUI
             foreach (Screen screen in screens)
             {
                 screen.Render(renderer, guiRenderer);
+            }
+        }
+
+        internal static void WindowSizeChanged(int width, int height)
+        {
+            foreach (Screen screen in screens)
+            {
+                screen.UpdateScreenSize(width, height);
             }
         }
 
@@ -159,7 +168,7 @@ namespace SDLSharp.GUI
                 if (downGadget != null)
                 {
                     SetSelectedGadget(downGadget);
-                    result = true;
+                    result |= downGadget.HandleMouseDown(x, y, false);
                 }
             }
             return result;
@@ -173,7 +182,7 @@ namespace SDLSharp.GUI
                 upGadget = mouseHoverGadget;
                 if (upGadget != null && upGadget == downGadget)
                 {
-
+                    result |= upGadget.HandleMouseUp(x, y);
                 }
                 SetSelectedGadget(null);
             }

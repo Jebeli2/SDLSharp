@@ -8,6 +8,8 @@ namespace SDLSharp.GUI
 {
     public class Screen
     {
+        private static int nextScreenId;
+
         private readonly List<Window> windows = new();
 
         private int leftEdge;
@@ -28,7 +30,9 @@ namespace SDLSharp.GUI
             width = newScreen.Width;
             height = newScreen.Height;
             defaultTitle = newScreen.DefaultTitle;
+            ScreenId = ++nextScreenId;
         }
+        public int ScreenId { get; internal set; }
 
         public int LeftEdge => leftEdge;
         public int TopEdge => topEdge;
@@ -54,10 +58,20 @@ namespace SDLSharp.GUI
             renderer.RenderScreen(gfx, this, leftEdge, topEdge);
             foreach (Window window in windows) { window.Render(gfx, renderer); }
         }
+        internal void UpdateScreenSize(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
         internal void SetActive(bool active)
         {
-            this.active = active;
+            if (this.active != active)
+            {
+                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(active ? "activated" : "deactivated")}");
+                this.active = active;
+            }
         }
+
 
         internal void SetMouseHover(bool mouseHover)
         {
@@ -73,15 +87,29 @@ namespace SDLSharp.GUI
         {
             x -= leftEdge;
             y -= topEdge;
-            for(int i = windows.Count - 1; i >= 0;i--)
+            for (int i = windows.Count - 1; i >= 0; i--)
             {
                 Window win = windows[i];
-                if (win.Contains(x,y))
+                if (win.Contains(x, y))
                 {
                     return win;
                 }
             }
             return null;
         }
+
+        private string GetScreenName()
+        {
+            StringBuilder sb = new();
+            sb.Append("_GUI_Screen_");
+            sb.Append(ScreenId);
+            sb.Append('_');
+            return sb.ToString();
+        }
+        public override string ToString()
+        {
+            return GetScreenName();
+        }
+
     }
 }
