@@ -18,6 +18,8 @@ namespace SDLSharp.GUI
         private int mouseX;
         private string? title;
         private string? defaultTitle;
+        private bool active;
+        private bool mouseHover;
 
         internal Screen(NewScreen newScreen)
         {
@@ -34,6 +36,8 @@ namespace SDLSharp.GUI
         public int Height => height;
         public int MouseX => mouseX;
         public int MouseY => mouseY;
+        public bool Active => active;
+        public bool MouseHover => mouseHover;
 
         internal void AddWindow(Window window)
         {
@@ -50,10 +54,34 @@ namespace SDLSharp.GUI
             renderer.RenderScreen(gfx, this, leftEdge, topEdge);
             foreach (Window window in windows) { window.Render(gfx, renderer); }
         }
+        internal void SetActive(bool active)
+        {
+            this.active = active;
+        }
+
+        internal void SetMouseHover(bool mouseHover)
+        {
+            this.mouseHover = mouseHover;
+        }
 
         internal bool Contains(int x, int y)
         {
             return x >= leftEdge && y >= topEdge && x - leftEdge <= width && y - topEdge <= height;
+        }
+
+        internal Window? FindWindow(int x, int y)
+        {
+            x -= leftEdge;
+            y -= topEdge;
+            for(int i = windows.Count - 1; i >= 0;i--)
+            {
+                Window win = windows[i];
+                if (win.Contains(x,y))
+                {
+                    return win;
+                }
+            }
+            return null;
         }
     }
 }

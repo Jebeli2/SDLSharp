@@ -18,5 +18,6 @@ namespace SDLSharp.GUI
         public int MinHeight { get; set; }
         public int MaxWidth { get; set; }
         public int MaxHeight { get; set; }
+        public IList<Gadget> Gadgets { get; set; } = new List<Gadget>();
     }
 }

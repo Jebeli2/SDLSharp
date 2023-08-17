@@ -15,6 +15,9 @@
         private Icons icon = Icons.MIN;
         private double lastTime;
         private Window? window;
+        private Gadget? button1;
+        private Gadget? button2;
+
         public TestSDLWindow()
             : base("Test SDL")
         {
@@ -33,10 +36,12 @@
             music.RenderPrio = -600;
             lines.RenderPrio = -750;
 
-            gui.RenderPrio = 1000;
-
             SDLApplication.MaxFramesPerSecond = 120;
-            window = Intuition.OpenWindow(new NewWindow { LeftEdge = 10, TopEdge = 10, Width = 200, Height = 400, Title = "Window" });
+            window = Intuition.OpenWindow(new NewWindow { LeftEdge = 20, TopEdge = 40, Width = 200, Height = 400, Title = "Window" });
+            button1 = new Gadget { LeftEdge = 10, TopEdge = 10, Width = 100, Height = 25, Text = "Button 1" };
+            button2 = new Gadget { LeftEdge = 10, TopEdge = 45, Width = 100, Height = 25, Text = "Button 2" };
+            Intuition.AddGadget(window, button1, 0);
+            Intuition.AddGadget(window, button2, 1);
         }
 
         protected override void OnClose(EventArgs e)

@@ -15,6 +15,9 @@ namespace SDLSharp.GUI
     {
         public DefaultGUIRenderer()
         {
+            TextColor = Color.FromArgb(238, 238, 238);
+            DisabledTextColor = MkColor(255, 80);
+
             BorderDark = MkColor(29, 255);
             BorderLight = MkColor(92, 255);
             BorderMedium = MkColor(35, 255);
@@ -26,10 +29,22 @@ namespace SDLSharp.GUI
             WindowHeaderGradientTopActive = Color.FromArgb(200, 62 + 10, 92 + 10, 154 + 10);
             WindowHeaderGradientBotActive = Color.FromArgb(130, 62, 92, 154);
 
+            ButtonGradientTopFocused = MkColor(64, 255);
+            ButtonGradientBotFocused = MkColor(48, 255);
+            ButtonGradientTopUnFocused = MkColor(74, 255);
+            ButtonGradientBotUnFocused = MkColor(58, 255);
+            ButtonGradientTopPushed = MkColor(41, 255);
+            ButtonGradientBotPushed = MkColor(28, 255);
+            ButtonGradientTopHover = MkColor(84, 255);
+            ButtonGradientBotHover = MkColor(68, 255);
+
         }
         public Color BorderDark { get; set; }
         public Color BorderLight { get; set; }
         public Color BorderMedium { get; set; }
+        public Color TextColor { get; set; }
+        public Color DisabledTextColor { get; set; }
+
         public Color WindowFillUnFocused { get; set; }
         public Color WindowFillFocused { get; set; }
 
@@ -37,6 +52,14 @@ namespace SDLSharp.GUI
         public Color WindowHeaderGradientBot { get; set; }
         public Color WindowHeaderGradientTopActive { get; set; }
         public Color WindowHeaderGradientBotActive { get; set; }
+        public Color ButtonGradientTopFocused { get; set; }
+        public Color ButtonGradientBotFocused { get; set; }
+        public Color ButtonGradientTopUnFocused { get; set; }
+        public Color ButtonGradientBotUnFocused { get; set; }
+        public Color ButtonGradientTopPushed { get; set; }
+        public Color ButtonGradientBotPushed { get; set; }
+        public Color ButtonGradientTopHover { get; set; }
+        public Color ButtonGradientBotHover { get; set; }
 
         private static Color MkColor(int gray, int alpha)
         {
@@ -66,6 +89,10 @@ namespace SDLSharp.GUI
 
         private void DrawGadget(SDLRenderer renderer, Gadget gadget, int offsetX, int offsetY)
         {
+            if (gadget.IsBoolGadget)
+            {
+                DrawBoolGadget(renderer, gadget, offsetX, offsetY);
+            }
 
         }
         private void DrawRequester(SDLRenderer renderer, Requester requester, int offsetX, int offsetY)
@@ -99,7 +126,59 @@ namespace SDLSharp.GUI
             if (window.BorderRight > 2) renderer.FillRect(bounds.Right - window.BorderRight - 1, inner.Top, window.BorderRight, inner.Height, bb);
             if (window.BorderBottom > 2) renderer.FillVertGradient(bounds.Left, bounds.Bottom - window.BorderBottom - 1, bounds.Width, window.BorderBottom, bb, bt);
             DrawBox(renderer, bounds, BorderLight, BorderDark);
+        }
 
+        private void DrawBoolGadget(SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)
+        {
+            Rectangle bounds = gadget.GetBounds();
+            bounds.Offset(offsetX, offsetY);
+            bool active = gadget.Active;
+            bool hover = gadget.MouseHover;
+            bool selected = gadget.Selected;
+            if (gadget.NoHighlight)
+            {
+                active = false;
+                hover = false;
+                selected = false;
+            }
+            if (!gadget.TransparentBackground)
+            {
+                Color gradTop = ButtonGradientTopUnFocused;
+                Color gradBottom = ButtonGradientBotUnFocused;
+                if (selected)
+                {
+                    gradTop = ButtonGradientTopPushed;
+                    gradBottom = ButtonGradientBotPushed;
+                }
+                else if (active)
+                {
+                    gradTop = ButtonGradientTopFocused;
+                    gradBottom = ButtonGradientBotFocused;
+                }
+                else if (hover)
+                {
+                    gradTop = ButtonGradientTopHover;
+                    gradBottom = ButtonGradientBotHover;
+                }
+                gfx.FillVertGradient(bounds, gradTop, gradBottom);
+            }
+            DrawBox(gfx, bounds, BorderLight, BorderDark);
+            int offset = selected ? 1 : 0;
+            bool hasIcon = false;
+            bool hasText = !string.IsNullOrEmpty(gadget.Text);
+            Color tc = gadget.Enabled ? TextColor : DisabledTextColor;
+            if (hasIcon && hasText)
+            {
+
+            }
+            else if (hasIcon)
+            {
+
+            }
+            else if (hasText)
+            {
+                gfx.DrawText(null, gadget.Text, bounds.X, bounds.Y, bounds.Width, bounds.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, offset, offset);
+            }
         }
 
         private static void DrawBox(SDLRenderer gfx, Rectangle rect, Color shinePen, Color shadowPen)

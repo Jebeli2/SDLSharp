@@ -9,16 +9,11 @@ namespace SDLSharp.Applets
 {
     public class GUISystem : SDLApplet
     {
-        private int prevMouseX;
-        private int prevMouseY;
-        private int mouseX;
-        private int mouseY;
-        private int diffMouseX;
-        private int diffMouseY;
 
         public GUISystem() : base("GUI System")
         {
-
+            RenderPrio = 1000;
+            InputPrio = -1000;
         }
 
         protected override void OnWindowUpdate(SDLWindowUpdateEventArgs e)
@@ -33,34 +28,19 @@ namespace SDLSharp.Applets
 
         protected internal override void OnMouseButtonDown(SDLMouseEventArgs e)
         {
-            UpdateMouse(e.X, e.Y);
+            if (Intuition.MouseButtonDown(e.X, e.Y, e.Button)) { e.Handled = true; }
         }
 
         protected internal override void OnMouseButtonUp(SDLMouseEventArgs e)
         {
-            UpdateMouse(e.X, e.Y);
+            if (Intuition.MouseButtonUp(e.X, e.Y, e.Button)) { e.Handled = true; }
         }
 
         protected internal override void OnMouseMove(SDLMouseEventArgs e)
         {
-            UpdateMouse(e.X, e.Y);
+            if (Intuition.MouseMoved(e.X, e.Y)) { e.Handled = true; }
         }
 
-        private bool UpdateMouse(int x, int y)
-        {
-            if (mouseX != x || mouseY != y)
-            {
-                prevMouseX = mouseX;
-                prevMouseY = mouseY;
-                mouseX = x;
-                mouseY = y;
-                diffMouseX = mouseX - prevMouseX;
-                diffMouseY = mouseY - prevMouseY;
-                //lastInputTime = currentTime;
-                return true;
-            }
-            return false;
-        }
 
     }
 }
