@@ -52,9 +52,9 @@
         public SDLWindow(string? title = null)
         {
             this.title = title;
-            driver = "direct3d12";
+            //driver = "direct3d12";
             //driver = "direct3d11";
-            //driver = "opengl";
+            driver = "opengl";
             //driver = "direct3d";
             visible = true;
             resizeable = true;

@@ -286,7 +286,7 @@ namespace SDLSharp.GUI
                     Height = sysGadgetHeight,
                     RelRight = true,
                     TransparentBackground = true,
-                    Icon = Icons.RESIZE_FULL_SCREEN,
+                    Icon = Icons.DOCUMENT,
                     TopBorder = true,
                     RightBorder = true,
                     SysGadgetType = SysGadgetType.WMaximizing
@@ -305,7 +305,7 @@ namespace SDLSharp.GUI
                     Height = sysGadgetHeight,
                     RelRight = true,
                     TransparentBackground = true,
-                    Icon = Icons.RESIZE_100_PERCENT,
+                    Icon = Icons.DOCUMENT,
                     TopBorder = true,
                     RightBorder = true,
                     SysGadgetType = SysGadgetType.WMinimizing
@@ -320,12 +320,12 @@ namespace SDLSharp.GUI
             {
                 if (!maximized)
                 {
-                    gad.Icon = Icons.RESIZE_100_PERCENT;
+                    gad.Icon = Icons.DOCUMENTS;
                     Maximize();
                 }
                 else
                 {
-                    gad.Icon = Icons.RESIZE_FULL_SCREEN;
+                    gad.Icon = Icons.DOCUMENT;
                     Restore();
                 }
             }

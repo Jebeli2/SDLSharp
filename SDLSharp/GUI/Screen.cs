@@ -62,6 +62,14 @@ namespace SDLSharp.GUI
         {
             this.width = width;
             this.height = height;
+            foreach (Window window in windows)
+            {
+                if (window.IsMaximized)
+                {
+                    window.SetBounds(0, 0, width, height);
+                    window.InvalidateBounds();
+                }
+            }
         }
         internal void SetActive(bool active)
         {

@@ -174,7 +174,7 @@
             SDLTexture? texture = textureTracker.Find(name);
             if (texture == null)
             {
-                IntPtr tex = SDL_CreateTexture(handle, format, (int)SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, width, height);
+                IntPtr tex = SDL_CreateTexture(handle, format, (int)(SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET), width, height);
                 if (tex != IntPtr.Zero)
                 {
                     texture = new SDLTexture(this, tex, name);
