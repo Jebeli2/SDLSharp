@@ -81,25 +81,53 @@ namespace SDLSharp.GUI
         public int LeftEdge
         {
             get => leftEdge;
-            set => leftEdge = value;
+            set
+            {
+                if (leftEdge != value)
+                {
+                    leftEdge = value;
+                    //CheckAutoFlags();
+                }
+            }
         }
 
         public int TopEdge
         {
             get => topEdge;
-            set => topEdge = value;
+            set
+            {
+                if (topEdge != value)
+                {
+                    topEdge = value;
+                    //CheckAutoFlags();
+                }
+            }
         }
 
         public int Width
         {
             get => width;
-            set => width = value;
+            set
+            {
+                if (width != value)
+                {
+                    width = value;
+                    //CheckAutoFlags();
+                }
+            }
         }
 
         public int Height
         {
             get => height;
-            set => height = value;
+            set
+            {
+                if (height != value)
+                {
+                    height = value;
+                    //CheckAutoFlags();
+                }
+            }
         }
         public bool TransparentBackground
         {
@@ -110,13 +138,20 @@ namespace SDLSharp.GUI
         public bool Selected
         {
             get => selected;
-            //set => selected = value;    
         }
 
         public bool NoHighlight
         {
             get => noHighlight;
-            set => noHighlight = value;
+            internal set => noHighlight = value;
+        }
+
+        internal void CheckAutoFlags()
+        {
+            if (topEdge < 0) { relBottom = true; }
+            if (leftEdge < 0) { relRight = true; }
+            if (width <= 0) { relWidth = true; }
+            if (height <= 0) { relHeight = true; }
         }
 
         public bool IsBorderGadget => leftBorder || topBorder || rightBorder || bottomBorder;
@@ -290,6 +325,7 @@ namespace SDLSharp.GUI
         {
             if (this.selected != selected)
             {
+                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(selected ? "selected" : "deselected")}");
                 this.selected = selected;
                 window?.Invalidate();
             }

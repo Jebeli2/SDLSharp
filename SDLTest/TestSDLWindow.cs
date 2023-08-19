@@ -17,6 +17,7 @@
         private Window? window;
         private Gadget? button1;
         private Gadget? button2;
+        private Gadget? button3;
 
         public TestSDLWindow()
             : base("Test SDL")
@@ -37,11 +38,14 @@
             lines.RenderPrio = -750;
 
             SDLApplication.MaxFramesPerSecond = 120;
-            window = Intuition.OpenWindow(new NewWindow { LeftEdge = 20, TopEdge = 40, Width = 200, Height = 400, Title = "Window" });
-            button1 = new Gadget { LeftEdge = 10, TopEdge = 10, Width = 100, Height = 25, Text = "Button 1" };
-            button2 = new Gadget { LeftEdge = 10, TopEdge = 45, Width = 100, Height = 25, Text = "Button 2" };
-            Intuition.AddGadget(window, button1, 0);
-            Intuition.AddGadget(window, button2, 1);
+            button1 = new Gadget { LeftEdge = 10, TopEdge = 10, Width = -20, Height = 40, Text = "GUI Test" };
+            button2 = new Gadget { LeftEdge = 10, TopEdge = 60, Width = -20, Height = 40, Text = "Blocks" };
+            button3 = new Gadget { LeftEdge = 10, TopEdge = 110, Width = -20, Height = 40, Text = "Particles" };
+
+
+            window = Intuition.OpenWindow(new NewWindow { LeftEdge = 50, TopEdge = 50, Width = 300, Height = 300, Title = "Window", Gadgets = new[] { button1, button2, button3 } });
+            //Intuition.AddGadget(window, button1, 0);
+            //Intuition.AddGadget(window, button2, 1);
         }
 
         protected override void OnClose(EventArgs e)

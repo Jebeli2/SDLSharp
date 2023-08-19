@@ -82,6 +82,11 @@ namespace SDLSharp.GUI
             borderTop = 28;
             screen.AddWindow(this);
             InitSysGadgets();
+            var gadgets = newWindow.Gadgets;
+            if (gadgets != null && gadgets.Count > 0)
+            {
+                Intuition.AddGList(this, gadgets, -1, gadgets.Count);
+            }
         }
         public int WindowId { get; internal set; }
         public int LeftEdge => leftEdge;
@@ -364,18 +369,23 @@ namespace SDLSharp.GUI
 
         internal int AddGadget(Gadget gadget, int position)
         {
+            int result = -1;
             if (position < 0 || position >= gadgets.Count)
             {
                 gadgets.Add(gadget);
-                gadget.SetWindow(this);
-                return gadgets.Count;
+                result = gadgets.Count;                
             }
             else
             {
                 gadgets.Insert(position, gadget);
-                gadget.SetWindow(this);
-                return position;
+                result = position;
             }
+            gadget.SetWindow(this);
+            if (gadget.SysGadgetType == SysGadgetType.None)
+            {
+                gadget.CheckAutoFlags();
+            }
+            return result;
         }
 
         internal void Invalidate()

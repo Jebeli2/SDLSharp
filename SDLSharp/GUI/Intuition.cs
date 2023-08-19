@@ -37,8 +37,15 @@ namespace SDLSharp.GUI
         }
         public static int AddGList(Window window, IEnumerable<Gadget> gadgets, int position, int numgad, Requester? requester = null)
         {
-            int result = 0;
-
+            int result = -1;
+            int count = 0;
+            foreach(Gadget gadget in gadgets)
+            {
+                int insertPos = window.AddGadget(gadget, position);
+                if (result < 0) { result = insertPos; }
+                count++;
+                if (count >= numgad) { break; }
+            }
             return result;
         }
         public static void CloseScreen(Screen? screen)
