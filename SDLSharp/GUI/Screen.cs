@@ -118,6 +118,24 @@ namespace SDLSharp.GUI
         {
             return GetScreenName();
         }
+        internal void WindowToBack(Window window)
+        {
+            int index = windows.IndexOf(window);
+            if (index > 0)
+            {
+                windows.RemoveAt(index);
+                windows.Insert(0, window);
+            }
+        }
 
+        internal void WindowToFront(Window window)
+        {
+            int index = windows.IndexOf(window);
+            if (index >= 0 && index < windows.Count - 1)
+            {
+                windows.RemoveAt(index);
+                windows.Add(window);
+            }
+        }
     }
 }

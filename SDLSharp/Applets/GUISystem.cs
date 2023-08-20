@@ -18,7 +18,7 @@ namespace SDLSharp.Applets
 
         protected override void OnWindowUpdate(SDLWindowUpdateEventArgs e)
         {
-
+            Intuition.Update(e.TotalTime);
         }
 
         protected override void OnWindowPaint(SDLWindowPaintEventArgs e)

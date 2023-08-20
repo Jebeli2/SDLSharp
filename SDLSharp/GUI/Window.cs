@@ -40,6 +40,7 @@ namespace SDLSharp.GUI
         private bool closeable;
         private bool maximizable;
         private bool minimizable;
+        private bool sizeBRight;
         private int sysGadgetWidth = 32;
         private int sysGadgetHeight = 28;
 
@@ -47,6 +48,7 @@ namespace SDLSharp.GUI
         private Gadget? closeGad;
         private Gadget? maxGad;
         private Gadget? minGad;
+        private Gadget? sizeGad;
 
         private SDLTexture? bitmap;
         private bool superBitMap;
@@ -71,15 +73,21 @@ namespace SDLSharp.GUI
             minHeight = newWindow.MinHeight;
             maxWidth = newWindow.MaxWidth;
             maxHeight = newWindow.MaxHeight;
-            superBitMap = true;
-            closeable = true;
-            dragable = true;
-            maximizable = true;
-            minimizable = false;
-            borderLeft = 4;
-            borderRight = 4;
-            borderBottom = 4;
-            borderTop = 28;
+            superBitMap = newWindow.SuperBitmap;
+            closeable = newWindow.Closing;
+            dragable = newWindow.Dragging;
+            resizable = newWindow.Sizing;
+            borderless = newWindow.Borderless;
+            backDrop = newWindow.BackDrop;
+            maximizable = newWindow.Maximizing;
+            minimizable = newWindow.Minimizing;
+            if (!borderless)
+            {
+                borderLeft = 4;
+                borderRight = HasRightBar ? sysGadgetWidth : 4;
+                borderBottom = HasBottomBar ? sysGadgetHeight : 4;
+                borderTop = HasTitleBar ? 28 : 4;
+            }
             screen.AddWindow(this);
             InitSysGadgets();
             var gadgets = newWindow.Gadgets;
@@ -88,6 +96,8 @@ namespace SDLSharp.GUI
                 Intuition.AddGList(this, gadgets, -1, gadgets.Count);
             }
         }
+        public event EventHandler<EventArgs>? WindowClose;
+
         public int WindowId { get; internal set; }
         public int LeftEdge => leftEdge;
         public int TopEdge => topEdge;
@@ -117,6 +127,31 @@ namespace SDLSharp.GUI
         {
             get => backDrop;
             set => backDrop = value;
+        }
+
+        public bool HasBottomBar
+        {
+            get => !borderless && resizable && !sizeBRight;
+        }
+
+        public bool HasRightBar
+        {
+            get => !borderless && resizable && sizeBRight;
+        }
+        public bool HasTitleBar
+        {
+            get => !borderless && (!string.IsNullOrEmpty(Title) || dragable);
+        }
+
+        public bool SizeBBottom
+        {
+            get => !sizeBRight;
+            internal set => sizeBRight = !value;
+        }
+        public bool SizeBRight
+        {
+            get => sizeBRight;
+            internal set => sizeBRight = value;
         }
         internal void SetBounds(Rectangle bounds)
         {
@@ -165,6 +200,10 @@ namespace SDLSharp.GUI
         internal bool Contains(int x, int y)
         {
             return x >= leftEdge && y >= topEdge && x - leftEdge <= width && y - topEdge <= height;
+        }
+        internal void RaiseWindowClose()
+        {
+            EventHelper.Raise(this, WindowClose, EventArgs.Empty);
         }
 
         internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
@@ -224,14 +263,43 @@ namespace SDLSharp.GUI
                 w = oldWidth;
                 h = oldHeight;
             }
-            Rectangle newDim = new Rectangle(leftEdge + dX, topEdge + dY, w, h);
+            Rectangle newDim = CheckDimensions(leftEdge + dX, topEdge + dY, w, h);
             SetBounds(newDim);
             if (dragging)
             {
                 mouseHover = true;
-                maximized = false;
+                SetRestored();
             }
             InvalidateBounds();
+        }
+
+        internal void SizeWindow(int dX, int dY, bool sizing = false)
+        {
+            int w = width + dX;
+            int h = height + dY;
+            Rectangle newDim = CheckDimensions(leftEdge, topEdge, w, h);
+            SetBounds(newDim);
+            if (sizing)
+            {
+                mouseHover = true;
+                SetRestored();
+            }
+            InvalidateBounds();
+        }
+
+        private Rectangle CheckDimensions(int x, int y, int w, int h)
+        {
+            int sw = screen.Width;
+            int sh = screen.Height;
+            if (maxWidth > 0 && w > maxWidth) { w = maxWidth; }
+            if (maxHeight > 0 && h > maxHeight) { h = maxHeight; }
+            if (w < minWidth) { w = minWidth; }
+            if (h < minHeight) { h = minHeight; }
+            if (x < 0) { x = 0; }
+            if (y < 0) { y = 0; }
+            if (x + w > sw) { x -= (x + w) - sw; }
+            if (y + h > sh) { y -= (y + h) - sh; }
+            return new Rectangle(x, y, w, h);
         }
 
         internal void InvalidateBounds()
@@ -244,7 +312,6 @@ namespace SDLSharp.GUI
         }
         private void InitSysGadgets()
         {
-            int gadX = 0;
             if (dragable)
             {
                 dragBar ??= new Gadget
@@ -264,22 +331,22 @@ namespace SDLSharp.GUI
             }
             if (closeable)
             {
-                gadX += sysGadgetWidth;
                 closeGad ??= new Gadget
                 {
-                    LeftEdge = -gadX,
+                    LeftEdge = 0,
                     TopEdge = 0,
                     Width = sysGadgetWidth,
                     Height = sysGadgetHeight,
-                    RelRight = true,
                     TransparentBackground = true,
                     Icon = Icons.CROSS,
                     TopBorder = true,
                     RightBorder = true,
                     SysGadgetType = SysGadgetType.WClosing
                 };
+                closeGad.GadgetUp += CloseGad_GadgetUp;
                 AddGadget(closeGad, -1);
             }
+            int gadX = 0;
             if (maximizable)
             {
                 gadX += sysGadgetWidth;
@@ -317,6 +384,33 @@ namespace SDLSharp.GUI
                 };
                 AddGadget(minGad, -1);
             }
+            if (resizable)
+            {
+                sizeGad = new Gadget
+                {
+                    LeftEdge = -sysGadgetWidth,
+                    TopEdge = -sysGadgetHeight,
+                    Width = sysGadgetWidth,
+                    Height = sysGadgetHeight,
+                    RelRight = true,
+                    RelBottom = true,
+                    TransparentBackground = true,
+                    Icon = Icons.RETWEET,
+                    BottomBorder = true,
+                    RightBorder = true,
+                    SysGadgetType = SysGadgetType.WSizing
+
+                };
+                AddGadget(sizeGad, -1);
+            }
+        }
+
+        private void CloseGad_GadgetUp(object? sender, EventArgs e)
+        {
+            if (sender is Gadget gad)
+            {
+                RaiseWindowClose();
+            }
         }
 
         private void MaxGad_GadgetUp(object? sender, EventArgs e)
@@ -325,12 +419,10 @@ namespace SDLSharp.GUI
             {
                 if (!maximized)
                 {
-                    gad.Icon = Icons.DOCUMENTS;
                     Maximize();
                 }
                 else
                 {
-                    gad.Icon = Icons.DOCUMENT;
                     Restore();
                 }
             }
@@ -345,26 +437,58 @@ namespace SDLSharp.GUI
                 oldWidth = width;
                 oldHeight = height;
             }
-            maximized = true;
-            minimized = false;
+            SetMaximized();
             SetBounds(0, 0, screen.Width, screen.Height);
             InvalidateBounds();
         }
 
         internal void Restore()
         {
-            maximized = false;
-            minimized = false;
+            SetRestored();
             SetBounds(oldLeftEdge, oldTopEdge, oldWidth, oldHeight);
             InvalidateBounds();
         }
 
         internal void Minimize()
         {
-
-            minimized = true;
-            maximized = false;
+            if (IsRestored)
+            {
+                oldLeftEdge = leftEdge;
+                oldTopEdge = topEdge;
+                oldWidth = width;
+                oldHeight = height;
+            }
+            SetMinimized();
             InvalidateBounds();
+        }
+
+        private void SetMaximized()
+        {
+            maximized = true;
+            minimized = false;
+            if (maxGad != null)
+            {
+                maxGad.Icon = Icons.DOCUMENTS;
+            }
+        }
+
+        private void SetRestored()
+        {
+            maximized = false;
+            minimized = false;
+            if (maxGad != null)
+            {
+                maxGad.Icon = Icons.DOCUMENT;
+            }
+        }
+        private void SetMinimized()
+        {
+            maximized = false;
+            minimized = true;
+            if (maxGad != null)
+            {
+                maxGad.Icon = Icons.DOCUMENTS;
+            }
         }
 
         internal int AddGadget(Gadget gadget, int position)
@@ -373,7 +497,7 @@ namespace SDLSharp.GUI
             if (position < 0 || position >= gadgets.Count)
             {
                 gadgets.Add(gadget);
-                result = gadgets.Count;                
+                result = gadgets.Count;
             }
             else
             {
@@ -385,6 +509,7 @@ namespace SDLSharp.GUI
             {
                 gadget.CheckAutoFlags();
             }
+            gadget.InvalidateBounds();
             return result;
         }
 
@@ -397,6 +522,15 @@ namespace SDLSharp.GUI
             bitmap?.Dispose();
             bitmap = null;
             valid = false;
+        }
+
+        internal void ToBack()
+        {
+            screen.WindowToBack(this);
+        }
+        internal void ToFront()
+        {
+            screen.WindowToFront(this);
         }
         internal Gadget? FindGadget(int x, int y)
         {

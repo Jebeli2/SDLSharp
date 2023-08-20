@@ -18,6 +18,11 @@ namespace SDLSharp.GUI
         private static int diffMouseX;
         private static int diffMouseY;
         private static bool selectMouseDown;
+        private static double currentTime;
+        private static double lastInputTime;
+        private static int timerTick;
+        private static int tickIntervall = 100;
+
 
         private static Screen? mouseHoverSceen;
         private static Window? mouseHoverWindow;
@@ -31,6 +36,15 @@ namespace SDLSharp.GUI
         private static Gadget? upGadget;
         private static Gadget? selectedGadget;
 
+        private static Queue<Window> activationWindows = new();
+
+        private static bool moveWindowToFrontOnActivate = true;
+
+        public static void ActivateWindow(Window window)
+        {
+            activationWindows.Enqueue(window);
+        }
+
         public static int AddGadget(Window window, Gadget gadget, int position)
         {
             return window.AddGadget(gadget, position);
@@ -39,7 +53,7 @@ namespace SDLSharp.GUI
         {
             int result = -1;
             int count = 0;
-            foreach(Gadget gadget in gadgets)
+            foreach (Gadget gadget in gadgets)
             {
                 int insertPos = window.AddGadget(gadget, position);
                 if (result < 0) { result = insertPos; }
@@ -66,6 +80,12 @@ namespace SDLSharp.GUI
             }
         }
 
+        public static void ModifyProp(Gadget gadget, PropFlags flags, int horizPot, int vertPot, int horizBody, int vertBody)
+        {
+            gadget.ModifyProp(flags, horizPot, vertPot, horizBody, vertBody);
+        }
+
+
         public static Screen OpenScreen(NewScreen newScreen)
         {
             Screen screen = new Screen(newScreen);
@@ -76,11 +96,25 @@ namespace SDLSharp.GUI
         {
             workbench ??= MakeWorkbench();
             Window window = new Window(newWindow, workbench);
-
+            if (newWindow.Activate) { activationWindows.Enqueue(window); }
             return window;
         }
+        public static void WindowToBack(Window window)
+        {
+            window.ToBack();
+        }
 
+        public static void WindowToFront(Window window)
+        {
+            window.ToFront();
+        }
 
+        internal static void Update(double time)
+        {
+            CheckWindowActivationQueue();
+            CheckTimer(time);
+
+        }
         internal static void PaintDisplay(SDLRenderer renderer)
         {
             foreach (Screen screen in screens)
@@ -107,7 +141,7 @@ namespace SDLSharp.GUI
             SetMouseHoverWindow(window);
             SetMouseHoverGadget(gadget);
             bool handled = CheckHandled(screen, window, gadget);
-            if (CheckWindowDragging(x, y)) { handled = true; }
+            if (CheckWindowDragging(x, y) || CheckWindowSizing(x, y) || CheckGadgetMove(x, y)) { handled = true; lastInputTime = currentTime; }
             return handled;
         }
 
@@ -125,7 +159,7 @@ namespace SDLSharp.GUI
             SetActiveGadget(gadget);
             bool handled = CheckHandled(screen, window, gadget);
             if (button == MouseButton.Left) { selectMouseDown = true; }
-            if (CheckGadgetDown(x, y, button)) { handled = true; }
+            if (CheckGadgetDown(x, y, button)) { handled = true; lastInputTime = currentTime; }
             return handled;
         }
 
@@ -140,7 +174,7 @@ namespace SDLSharp.GUI
             SetMouseHoverGadget(gadget);
             bool handled = CheckHandled(screen, window, gadget);
             if (button == MouseButton.Left) { selectMouseDown = false; }
-            if (CheckGadgetUp(x, y, button)) { handled = true; }
+            if (CheckGadgetUp(x, y, button)) { handled = true; lastInputTime = currentTime; }
             return handled;
         }
         private static bool CheckHandled(Screen? screen, Window? window, Gadget? gadget)
@@ -164,6 +198,42 @@ namespace SDLSharp.GUI
                 return true;
             }
             return false;
+        }
+
+        private static bool CheckWindowSizing(int x, int y)
+        {
+            if (activeScreen != null &&
+                selectMouseDown &&
+                activeGadget != null &&
+                activeGadget.SysGadgetType == SysGadgetType.WSizing &&
+                activeWindow != null &&
+                activeGadget.Window == activeWindow)
+            {
+                activeWindow.SizeWindow(diffMouseX, diffMouseY, true);
+                return true;
+            }
+            return false;
+        }
+
+        private static bool CheckGadgetMove(int x, int y)
+        {
+            bool result = false;
+            if (downGadget == mouseHoverGadget && downGadget != null)
+            {
+                result |= downGadget.HandleMouseMove(x, y);
+            }
+            else
+            {
+                if (downGadget != null)
+                {
+                    result |= downGadget.HandleMouseMove(x, y);
+                }
+                else if (mouseHoverGadget != null)
+                {
+                    result |= mouseHoverGadget.HandleMouseMove(x, y);
+                }
+            }
+            return result;
         }
 
         private static bool CheckGadgetDown(int x, int y, MouseButton button)
@@ -196,6 +266,41 @@ namespace SDLSharp.GUI
             return result;
         }
 
+        private static void CheckWindowActivationQueue()
+        {
+            if (activationWindows.Count > 0)
+            {
+                Window win = activationWindows.Dequeue();
+                SetActiveWindow(win);
+            }
+        }
+
+        private static void CheckTimer(double time)
+        {
+            currentTime = time;
+            if (timerTick == 0)
+            {
+                timerTick = EventHelper.GetExpirationTime(time, tickIntervall);
+            }
+            if (EventHelper.HasExpired(time, timerTick))
+            {
+                CheckGadgetTimer(time);
+                timerTick = 0;
+            }
+        }
+
+        private static bool CheckGadgetTimer(double time)
+        {
+            if (selectedGadget != null && downGadget != null && selectMouseDown)
+            {
+                if (downGadget.HandleMouseDown(mouseX, mouseY, true))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private static Screen? FindScreen(int x, int y)
         {
             foreach (Screen screen in screens)
@@ -215,7 +320,7 @@ namespace SDLSharp.GUI
                 mouseY = y;
                 diffMouseX = mouseX - prevMouseX;
                 diffMouseY = mouseY - prevMouseY;
-                //lastInputTime = currentTime;
+                lastInputTime = currentTime;
                 return true;
             }
             return false;
@@ -258,6 +363,7 @@ namespace SDLSharp.GUI
                 activeWindow?.SetActive(false);
                 activeWindow = window;
                 activeWindow?.SetActive(true);
+                if (moveWindowToFrontOnActivate && activeWindow != null) { activeWindow.ToFront(); }
             }
         }
 

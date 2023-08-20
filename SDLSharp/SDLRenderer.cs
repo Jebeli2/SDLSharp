@@ -256,6 +256,22 @@
         {
             _ = SDL_RenderFillRectF(handle, ref rect);
         }
+        public void FillColorRect(Rectangle rect, Color colorTopLeft, Color colorTopRight, Color colorBottomLeft, Color colorBottomRight)
+        {
+            rectVertices[0].color = ToSDLColor(colorTopLeft);
+            rectVertices[0].position.X = rect.X;
+            rectVertices[0].position.Y = rect.Y;
+            rectVertices[1].color = ToSDLColor(colorTopRight);
+            rectVertices[1].position.X = rect.Right - 1;
+            rectVertices[1].position.Y = rect.Y;
+            rectVertices[2].color = ToSDLColor(colorBottomLeft);
+            rectVertices[2].position.X = rect.X;
+            rectVertices[2].position.Y = rect.Bottom - 1;
+            rectVertices[3].color = ToSDLColor(colorBottomRight);
+            rectVertices[3].position.X = rect.Right - 1;
+            rectVertices[3].position.Y = rect.Bottom - 1;
+            _ = SDL_RenderGeometry(handle, IntPtr.Zero, rectVertices, 4, rectIndices, NUM_RECT_INDICES);
+        }
 
         public void FillColorRect(RectangleF rect, Color colorTopLeft, Color colorTopRight, Color colorBottomLeft, Color colorBottomRight)
         {
@@ -274,6 +290,23 @@
             _ = SDL_RenderGeometry(handle, IntPtr.Zero, rectVertices, 4, rectIndices, NUM_RECT_INDICES);
         }
 
+        public Size MeasureText(SDLFont? font, ReadOnlySpan<char> text)
+        {
+            if (text != null && text.Length > 0)
+            {
+                font ??= SDLApplication.DefaultFont;
+                if (font != null)
+                {
+                    stringBuffer.Clear();
+                    stringBuffer.Append(text);
+                    if (SDL_ttf.TTF_SizeUTF8(font.Handle, stringBuffer, out int w, out int h) == SDL_OK)
+                    {
+                        return new Size(w, h);
+                    }
+                }
+            }
+            return Size.Empty;
+        }
 
         public void DrawText(SDLFont? font, ReadOnlySpan<char> text, float x, float y, float width, float height, Color color, HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center, VerticalAlignment verticalAlignment = VerticalAlignment.Center, float offsetX = 0, float offsetY = 0)
         {

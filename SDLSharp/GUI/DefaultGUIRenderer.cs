@@ -24,6 +24,8 @@ namespace SDLSharp.GUI
 
             WindowFillUnFocused = MkColor(43, 230);
             WindowFillFocused = MkColor(45, 230);
+            WindowTitleUnFocused = MkColor(220, 160);
+            WindowTitleFocused = MkColor(225, 190);
             WindowHeaderGradientTop = MkColor(74, 255);
             WindowHeaderGradientBot = MkColor(48, 255);
             WindowHeaderGradientTopActive = Color.FromArgb(200, 62 + 10, 92 + 10, 154 + 10);
@@ -38,6 +40,14 @@ namespace SDLSharp.GUI
             ButtonGradientTopHover = MkColor(84, 255);
             ButtonGradientBotHover = MkColor(68, 255);
 
+            PropGradientTop = MkColor(0, 32);
+            PropGradientBot = MkColor(0, 92);
+            KnobGradientTop = MkColor(100, 100);
+            KnobGradientBot = MkColor(128, 100);
+            KnobGradientTopHover = MkColor(220, 100);
+            KnobGradientBotHover = MkColor(128, 100);
+
+
         }
         public Color BorderDark { get; set; }
         public Color BorderLight { get; set; }
@@ -47,6 +57,8 @@ namespace SDLSharp.GUI
 
         public Color WindowFillUnFocused { get; set; }
         public Color WindowFillFocused { get; set; }
+        public Color WindowTitleUnFocused { get; set; }
+        public Color WindowTitleFocused { get; set; }
 
         public Color WindowHeaderGradientTop { get; set; }
         public Color WindowHeaderGradientBot { get; set; }
@@ -60,6 +72,14 @@ namespace SDLSharp.GUI
         public Color ButtonGradientBotPushed { get; set; }
         public Color ButtonGradientTopHover { get; set; }
         public Color ButtonGradientBotHover { get; set; }
+
+        public Color PropGradientTop { get; set; }
+        public Color PropGradientBot { get; set; }
+        public Color KnobGradientTop { get; set; }
+        public Color KnobGradientBot { get; set; }
+        public Color KnobGradientTopHover { get; set; }
+        public Color KnobGradientBotHover { get; set; }
+
 
         private static Color MkColor(int gray, int alpha)
         {
@@ -93,6 +113,10 @@ namespace SDLSharp.GUI
             {
                 DrawBoolGadget(renderer, gadget, offsetX, offsetY);
             }
+            else if (gadget.IsPropGadget)
+            {
+                DrawPropGadget(renderer, gadget, offsetX, offsetY);
+            }
 
         }
         private void DrawRequester(SDLRenderer renderer, Requester requester, int offsetX, int offsetY)
@@ -107,27 +131,36 @@ namespace SDLSharp.GUI
 
         private void DrawWindow(SDLRenderer renderer, Window window, int offsetX, int offsetY)
         {
-            Rectangle bounds = window.GetBounds();
-            Rectangle inner = window.GetInnerBounds();
-            bounds.Offset(offsetX, offsetY);
-            inner.Offset(offsetX, offsetY);
-            bool active = window.Active;
-            Color bg = WindowFillUnFocused;
-            Color bt = WindowHeaderGradientTop;
-            Color bb = WindowHeaderGradientBot;
-            if (active)
+            if (!window.BackDrop)
             {
-                bg = WindowFillFocused;
-                bt = WindowHeaderGradientTopActive;
-                bb = WindowHeaderGradientBotActive;
+                Rectangle bounds = window.GetBounds();
+                Rectangle inner = window.GetInnerBounds();
+                bounds.Offset(offsetX, offsetY);
+                inner.Offset(offsetX, offsetY);
+                bool active = window.Active;
+                Color bg = WindowFillUnFocused;
+                Color bt = WindowHeaderGradientTop;
+                Color bb = WindowHeaderGradientBot;
+                if (active)
+                {
+                    bg = WindowFillFocused;
+                    bt = WindowHeaderGradientTopActive;
+                    bb = WindowHeaderGradientBotActive;
+                }
+                renderer.FillRect(bounds, bg);
+                if (!window.Borderless)
+                {
+                    if (window.BorderTop > 2) { renderer.FillVertGradient(bounds.Left, bounds.Top, bounds.Width, window.BorderTop, bt, bb); }
+                    if (window.BorderLeft > 2) renderer.FillRect(bounds.Left, inner.Top, window.BorderLeft, inner.Height, bb);
+                    if (window.BorderRight > 2) renderer.FillRect(bounds.Right - window.BorderRight - 1, inner.Top, window.BorderRight, inner.Height, bb);
+                    if (window.BorderBottom > 2) renderer.FillVertGradient(bounds.Left, bounds.Bottom - window.BorderBottom - 1, bounds.Width, window.BorderBottom, bb, bt);
+                    DrawBox(renderer, bounds, BorderLight, BorderDark);
+                    if (!string.IsNullOrEmpty(window.Title))
+                    {
+                        renderer.DrawText(null, window.Title, inner.X, bounds.Y, inner.Width, window.BorderTop, active ? WindowTitleFocused : WindowTitleUnFocused);
+                    }
+                }
             }
-            renderer.FillRect(bounds, bg);
-
-            if (window.BorderTop > 2) { renderer.FillVertGradient(bounds.Left, bounds.Top, bounds.Width, window.BorderTop, bt, bb); }
-            if (window.BorderLeft > 2) renderer.FillRect(bounds.Left, inner.Top, window.BorderLeft, inner.Height, bb);
-            if (window.BorderRight > 2) renderer.FillRect(bounds.Right - window.BorderRight - 1, inner.Top, window.BorderRight, inner.Height, bb);
-            if (window.BorderBottom > 2) renderer.FillVertGradient(bounds.Left, bounds.Bottom - window.BorderBottom - 1, bounds.Width, window.BorderBottom, bb, bt);
-            DrawBox(renderer, bounds, BorderLight, BorderDark);
         }
 
         private void DrawBoolGadget(SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)
@@ -163,6 +196,10 @@ namespace SDLSharp.GUI
                     gradBottom = ButtonGradientBotHover;
                 }
                 gfx.FillVertGradient(bounds, gradTop, gradBottom);
+                if (!gadget.BackgroundColor.IsEmpty)
+                {
+                    gfx.FillRect(bounds, Color.FromArgb(64, gadget.BackgroundColor));
+                }
             }
             if (gadget.IsBorderGadget)
             {
@@ -181,6 +218,9 @@ namespace SDLSharp.GUI
             Color tc = gadget.Enabled ? TextColor : DisabledTextColor;
             if (hasIcon && hasText)
             {
+                Size textSize = gfx.MeasureText(null, gadget.Text);
+                gfx.DrawIcon(gadget.Icon, bounds.X, bounds.Y, bounds.Width / 2 - textSize.Width / 2 - 10, bounds.Height, tc, HorizontalAlignment.Right, VerticalAlignment.Center, offset, offset);
+                gfx.DrawText(null, gadget.Text, bounds.X, bounds.Y, bounds.Width, bounds.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, gadget.TextOffsetX + offset, gadget.TextOffsetY + offset);
 
             }
             else if (hasIcon)
@@ -193,6 +233,35 @@ namespace SDLSharp.GUI
             }
         }
 
+        private void DrawPropGadget(SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)
+        {
+            if (gadget.PropInfo != null)
+            {
+                PropInfo propInfo = gadget.PropInfo;
+                Rectangle bounds = gadget.GetBounds();
+                bool active = gadget.Active;
+                bool hover = gadget.MouseHover;
+                bool selected = gadget.Selected;
+                bool knobHit = propInfo.KnobHit;
+                bool knobHover = propInfo.KnobHover;
+                Rectangle knob = propInfo.GetKnob(bounds);
+                bounds.Offset(offsetX, offsetY);
+                knob.Offset(offsetX, offsetY);
+                gfx.FillVertGradient(bounds, PropGradientTop, PropGradientBot);
+                if (!propInfo.Borderless)
+                {
+                    DrawBox(gfx, bounds, BorderLight, BorderDark);
+                }
+                if ((knobHover && hover) || (knobHover && selected) || (knobHit))
+                {
+                    gfx.FillVertGradient(knob, KnobGradientTopHover, KnobGradientBotHover);
+                }
+                else
+                {
+                    gfx.FillVertGradient(knob, KnobGradientTop, KnobGradientBot);
+                }
+            }
+        }
         private static void DrawBox(SDLRenderer gfx, Rectangle rect, Color shinePen, Color shadowPen)
         {
             gfx.DrawRect(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2, shinePen);

@@ -36,6 +36,10 @@ namespace SDLSharp
             FillVertGradient(renderer, new Rectangle(x, y, w, h), top, bottom);
         }
 
+        public static void FillVertGradient(this SDLRenderer renderer, Rectangle rect, Color top, Color bottom)
+        {
+            renderer.FillColorRect(rect, top, top, bottom, bottom);
+        }
         public static void FillVertGradient(this SDLRenderer renderer, RectangleF rect, Color top, Color bottom)
         {
             renderer.FillColorRect(rect, top, top, bottom, bottom);

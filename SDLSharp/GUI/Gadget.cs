@@ -19,13 +19,17 @@ namespace SDLSharp.GUI
         private bool mouseHover;
         private bool selected;
         private bool noHighlight;
+        private bool toggleSelect;
         private GadgetType gadgetType;
         private SysGadgetType sysGadgetType;
         private bool transparentBackground;
+        private Color bgColor = Color.Empty;
         private string? text;
         private Icons icon;
         private Rectangle? bounds;
         private Window? window;
+        private PropInfo? propInfo;
+        private GadToolsInfo? gadInfo;
         private bool leftBorder;
         private bool topBorder;
         private bool rightBorder;
@@ -36,12 +40,23 @@ namespace SDLSharp.GUI
         private bool relHeight;
         private bool immediate;
         private bool relVerify;
+        private int textOffsetX;
+        private int textOffsetY;
 
         public Gadget()
         {
             GadgetId = ++nextGadgetId;
             immediate = true;
             relVerify = true;
+        }
+
+        internal Gadget(GadgetKind kind)
+        {
+            GadgetId = ++nextGadgetId;
+            immediate = true;
+            relVerify = true;
+            gadInfo = new GadToolsInfo(this);
+            gadInfo.Kind = kind;
         }
 
         public event EventHandler<EventArgs>? GadgetDown;
@@ -69,7 +84,22 @@ namespace SDLSharp.GUI
         public GadgetType GadgetType
         {
             get => gadgetType;
-            set => gadgetType = value;
+            set
+            {
+                if (gadgetType != value)
+                {
+                    gadgetType = value;
+                    switch (gadgetType)
+                    {
+                        case GadgetType.PropGadget:
+                            propInfo = new PropInfo(this);
+                            break;
+                        case GadgetType.BoolGadget:
+                            propInfo = null;
+                            break;
+                    }
+                }
+            }
         }
 
         public SysGadgetType SysGadgetType
@@ -135,15 +165,33 @@ namespace SDLSharp.GUI
             set => transparentBackground = value;
         }
 
+        public Color BackgroundColor
+        {
+            get => bgColor;
+            set
+            {
+                if (bgColor != value)
+                {
+                    bgColor = value;
+                }
+            }
+        }
         public bool Selected
         {
             get => selected;
+            set => selected = value;
         }
 
         public bool NoHighlight
         {
             get => noHighlight;
-            internal set => noHighlight = value;
+            set => noHighlight = value;
+        }
+
+        public bool ToggleSelect
+        {
+            get => toggleSelect;
+            set => toggleSelect = value;
         }
 
         internal void CheckAutoFlags()
@@ -214,15 +262,47 @@ namespace SDLSharp.GUI
             internal set => relVerify = value;
         }
         public bool Enabled => enabled;
+        public bool Disbled
+        {
+            get => !enabled;
+            set => enabled = !value;
+        }
         public bool Active => active;
         public bool MouseHover => mouseHover;
 
+        public int TextOffsetX
+        {
+            get => textOffsetX;
+            set
+            {
+                if (textOffsetX != value)
+                {
+                    textOffsetX = value;
+
+                }
+            }
+        }
+        public int TextOffsetY
+        {
+            get => textOffsetY;
+            set
+            {
+                if (textOffsetY != value)
+                {
+                    textOffsetY = value;
+
+                }
+            }
+        }
+
         public bool IsBoolGadget => gadgetType == GadgetType.BoolGadget;
-        public bool IsPropGadget => gadgetType == GadgetType.PropGadget;
+        public bool IsPropGadget => gadgetType == GadgetType.PropGadget && propInfo != null;
         public bool IsStrGadget => gadgetType == GadgetType.StrGadget;
         public bool IsCustomGadget => gadgetType == GadgetType.CustomGadget;
         public Window? Window => window;
 
+        internal PropInfo? PropInfo => propInfo;
+        internal GadToolsInfo? GadInfo => gadInfo;
         internal Rectangle GetBounds()
         {
             if (bounds == null)
@@ -235,6 +315,7 @@ namespace SDLSharp.GUI
         internal void InvalidateBounds()
         {
             bounds = null;
+            propInfo?.Invalidate();
         }
 
         internal void SetWindow(Window window)
@@ -323,10 +404,34 @@ namespace SDLSharp.GUI
 
         internal void SetSelected(bool selected)
         {
-            if (this.selected != selected)
+            if (toggleSelect)
             {
-                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(selected ? "selected" : "deselected")}");
+                if (selected)
+                {
+                    this.selected = !this.selected;
+                    SDLLog.Verbose(LogCategory.APPLICATION, $"{this} toggle {(this.selected ? "selected" : "deselected")}");
+                }
+                window?.Invalidate();
+            }
+            else if (this.selected != selected)
+            {
                 this.selected = selected;
+                if (!this.selected) { propInfo?.HandleDeselection(); }
+                SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(this.selected ? "selected" : "deselected")}");
+                window?.Invalidate();
+            }
+        }
+
+
+        internal void ModifyProp(PropFlags flags, int horizPot, int vertPot, int horizBody, int vertBody)
+        {
+            if (propInfo != null)
+            {
+                propInfo.Flags = flags;
+                propInfo.HorizPot = horizPot;
+                propInfo.VertPot = vertPot;
+                propInfo.HorizBody = horizBody;
+                propInfo.VertBody = vertBody;
                 window?.Invalidate();
             }
         }
@@ -334,6 +439,11 @@ namespace SDLSharp.GUI
         internal bool HandleMouseDown(int x, int y, bool isTimerRepeat = false)
         {
             bool result = false;
+            if (propInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= propInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
+            }
             if (immediate) { RaiseGadgetDown(); result |= true; }
             if (result) { window?.Invalidate(); }
             return result;
@@ -341,7 +451,24 @@ namespace SDLSharp.GUI
         internal bool HandleMouseUp(int x, int y)
         {
             bool result = false;
+            if (propInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= propInfo.HandleMouseUp(bounds, x, y);
+            }
             if (RelVerify) { RaiseGadgetUp(); result |= true; }
+            if (result) { window?.Invalidate(); }
+            return result;
+        }
+
+        internal bool HandleMouseMove(int x, int y)
+        {
+            bool result = false;
+            if (propInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= propInfo.HandleMouseMove(bounds, x, y);
+            }
             if (result) { window?.Invalidate(); }
             return result;
         }
