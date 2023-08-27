@@ -33,14 +33,15 @@
             int top = 0,
             int total = 0,
             int visible = 2,
-            PropFreedom freedom = PropFreedom.Horizontal
+            PropFreedom freedom = PropFreedom.Horizontal,
+            bool scaled = false
             )
 
         {
             switch (kind)
             {
                 case GadgetKind.Button: return CreateButton(leftEdge, topEdge, width, height, text, icon, bgColor, disabled, selected, toggleSelect, clickAction);
-                case GadgetKind.Checkbox: return CreateCheckbox(leftEdge, topEdge, width, height, text, _cheked, checkedStateChangedAction);
+                case GadgetKind.Checkbox: return CreateCheckbox(leftEdge, topEdge, width, height, text, _cheked, checkedStateChangedAction, scaled);
                 case GadgetKind.Text: return CreateText(leftEdge, topEdge, width, height, text);
                 case GadgetKind.Number: return CreateNumber(leftEdge, topEdge, width, height, intValue, text ?? "{0}");
                 case GadgetKind.Slider: return CreateSlider(leftEdge, topEdge, width, height, min, max, level, freedom, valueChangedAction);
@@ -99,20 +100,21 @@
         }
 
         private static Gadget CreateCheckbox(int leftEdge, int topEdge, int width, int height,
-            string? text, bool _checked, Action<bool>? checkedStateChangedAction)
+            string? text, bool _checked, Action<bool>? checkedStateChangedAction, bool scaled)
         {
             Gadget gadget = new Gadget(GadgetKind.Checkbox)
             {
                 LeftEdge = leftEdge,
                 TopEdge = topEdge,
                 Width = width,
-                Height = height,
+                Height = scaled ? height : CHECKBOX_HEIGHT,
                 Text = text,
                 GadgetType = GadgetType.CustomGadget
             };
             if (gadget.GadInfo != null)
             {
                 gadget.GadInfo.CheckboxChecked = _checked;
+                gadget.GadInfo.Scaled = scaled;
                 gadget.GadInfo.CheckedStateChangedAction = checkedStateChangedAction;
             }
             gadget.CustomRenderAction = RenderCheckbox;
@@ -408,10 +410,14 @@
                 Rectangle inner = gadget.GetInnerBounds();
                 bounds.Offset(offsetX, offsetY);
                 inner.Offset(offsetX, offsetY);
+                bool scaled = info.Scaled;
                 Rectangle box = bounds;
                 box.Width = CHECKBOX_WIDTH;
-                box.Height = CHECKBOX_HEIGHT;
-                box.Y += (bounds.Height - box.Height) / 2;
+                if (!scaled)
+                {
+                    box.Height = CHECKBOX_HEIGHT;
+                    box.Y += (bounds.Height - box.Height) / 2;
+                }
                 gui.RenderGadgetBorder(gfx, box, gadget.Active, gadget.MouseHover, gadget.Selected);
                 if (info.CheckboxChecked)
                 {

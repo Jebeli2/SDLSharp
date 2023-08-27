@@ -23,7 +23,7 @@
         internal int ScrollerTop { get; set; }
 
         internal bool CheckboxChecked { get; set; }
-
+        internal bool Scaled { get; set; }
         internal Action<int>? ValueChangedAction { get; set; }
         internal Action<bool>? CheckedStateChangedAction { get; set; }
         internal string? Format { get; set; }
