@@ -119,11 +119,11 @@
         protected virtual void OnWindowPaint(SDLWindowPaintEventArgs e) { }
         protected virtual void OnWindowSizeChanged(int width, int height) { }
 
-        internal void OnWindowResized(SDLWindowSizeEventArgs e) 
-        { 
+        internal void OnWindowResized(SDLWindowSizeEventArgs e)
+        {
             width = e.Width;
             height = e.Height;
-            OnWindowSizeChanged(width,height);
+            OnWindowSizeChanged(width, height);
         }
         internal void OnWindowSizeChanged(SDLWindowSizeEventArgs e)
         {
@@ -137,8 +137,7 @@
         internal protected virtual void OnMouseMove(SDLMouseEventArgs e) { }
         internal protected virtual void OnKeyDown(SDLKeyEventArgs e) { }
         internal protected virtual void OnKeyUp(SDLKeyEventArgs e) { }
-
-
+        internal protected virtual void OnTextInput(SDLTextInputEventArgs e) { }
         protected virtual void OnDispose() { }
 
         internal void InternalOnUpdate(SDLWindowUpdateEventArgs e)

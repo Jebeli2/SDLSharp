@@ -14,10 +14,22 @@ namespace SDLSharp
             renderer.Color = color;
             renderer.ClearScreen();
         }
+
+        public static void DrawLine(this SDLRenderer renderer, int x1, int y1, int x2, int y2, Color color)
+        {
+            renderer.Color = color;
+            renderer.DrawLine(x1, y1, x2, y2);
+        }
+
         public static void DrawRect(this SDLRenderer renderer, int x, int y, int width, int height, Color color)
         {
             renderer.Color = color;
             renderer.DrawRect(new Rectangle(x, y, width, height));
+        }
+        public static void DrawRect(this SDLRenderer renderer, Rectangle rect, Color color)
+        {
+            renderer.Color = color;
+            renderer.DrawRect(rect);
         }
 
         public static void FillRect(this SDLRenderer renderer, int x, int y, int width, int height, Color color)

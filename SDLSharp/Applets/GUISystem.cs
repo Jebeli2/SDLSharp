@@ -28,7 +28,7 @@ namespace SDLSharp.Applets
 
         protected override void OnWindowSizeChanged(int width, int height)
         {
-            Intuition.WindowSizeChanged(width,height);
+            Intuition.WindowSizeChanged(width, height);
         }
 
         protected internal override void OnMouseButtonDown(SDLMouseEventArgs e)
@@ -46,6 +46,20 @@ namespace SDLSharp.Applets
             if (Intuition.MouseMoved(e.X, e.Y)) { e.Handled = true; }
         }
 
+        protected internal override void OnKeyDown(SDLKeyEventArgs e)
+        {
+            if (Intuition.KeyDown(e)) { e.Handled = true; }
+        }
+
+        protected internal override void OnKeyUp(SDLKeyEventArgs e)
+        {
+            if (Intuition.KeyUp(e)) { e.Handled = true; }
+        }
+
+        protected internal override void OnTextInput(SDLTextInputEventArgs e)
+        {
+            if (Intuition.TextInput(e)) { e.Handled = true; }
+        }
 
     }
 }

@@ -22,6 +22,7 @@
 
         private Window? winButTest;
         private Window? winPropTest;
+        private Window? winStrTest;
 
         private Gadget? button1_1;
         private Gadget? button1_2;
@@ -30,6 +31,7 @@
         private Gadget? button2_1;
         private Gadget? button2_2;
         private Gadget? button2_3;
+        private Gadget? button2_4;
         public TestSDLWindow()
             : base("Test SDL")
         {
@@ -56,7 +58,8 @@
 
             button2_1 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 10, width: -20, height: 40, text: "Back", clickAction: GoToTitle);
             button2_2 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 60, width: -20, height: 40, text: "Buttons", clickAction: ShowButtonTest);
-            button2_3 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 110, width: -20, height: 40, text: "Props & Strings", clickAction: ShowPropTest);
+            button2_3 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 110, width: -20, height: 40, text: "Props", clickAction: ShowPropTest);
+            button2_4 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 160, width: -20, height: 40, text: "Strings", clickAction: ShowStrTest);
 
             GoToTitle();
         }
@@ -140,6 +143,11 @@
                 Intuition.CloseWindow(winPropTest);
                 winPropTest = null;
             }
+            if (winStrTest != null)
+            {
+                Intuition.CloseWindow(winStrTest);
+                winStrTest = null;
+            }
         }
         private void GoToTitle()
         {
@@ -173,7 +181,7 @@
                 Width = 400,
                 Height = 400,
                 Title = "Test GUI",
-                Gadgets = new Gadget[] { button2_1!, button2_2!, button2_3! },
+                Gadgets = new Gadget[] { button2_1!, button2_2!, button2_3!, button2_4! },
                 MinWidth = 200,
                 MinHeight = 200,
                 Activate = true,
@@ -204,6 +212,8 @@
                     () => { GetApplet<MusicPlayer>().PrevMusic(); }));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: -248, topEdge: 210, width: 240, height: 30, text: "Play Next", clickAction:
                     () => { GetApplet<MusicPlayer>().NextMusic(); }));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Checkbox, leftEdge: 10, topEdge: 250, width: -20, height: 30, text: "Debug Borders", _cheked: Intuition.ShowDebugBounds, checkedStateChangedAction:
+                    (b) => { Intuition.ShowDebugBounds = b; }));
 
                 winButTest = Intuition.OpenWindow(new NewWindow
                 {
@@ -269,7 +279,7 @@
                     TopEdge = 10,
                     Width = 500,
                     Height = 500,
-                    Title = "Props & Strings",
+                    Title = "Props",
                     Gadgets = gadgets,
                     MinWidth = 200,
                     MinHeight = 200,
@@ -293,6 +303,49 @@
         {
             Intuition.CloseWindow(winPropTest);
             winPropTest = null;
+        }
+
+        private void ShowStrTest()
+        {
+            if (winStrTest == null)
+            {
+
+                List<Gadget> gadgets = new List<Gadget>();
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Text, leftEdge: 10, topEdge: 10, width: -20, height: 30, text: "String Demo"));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.String, leftEdge: 10, topEdge: 50, width: -20, height: 30, buffer: "Hello World"));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.String, leftEdge: 10, topEdge: 90, width: -20, height: 30, buffer: "This gadget contains quite a large text in its buffer. Be careful..."));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Integer, leftEdge: 10, topEdge: 130, width: -20, height: 30, intValue: 12345));
+
+                winStrTest = Intuition.OpenWindow(new NewWindow
+                {
+                    LeftEdge = 400,
+                    TopEdge = 10,
+                    Width = 500,
+                    Height = 500,
+                    Title = "Strings",
+                    Gadgets = gadgets,
+                    MinWidth = 200,
+                    MinHeight = 200,
+                    Activate = true,
+                    SuperBitmap = true,
+                    Sizing = true,
+                    Dragging = true,
+                    Closing = true,
+                    Maximizing = true,
+                });
+                winStrTest.WindowClose += WinStrTest_WindowClose;
+            }
+            else
+            {
+                Intuition.WindowToFront(winStrTest);
+                Intuition.ActivateWindow(winStrTest);
+            }
+        }
+
+        private void WinStrTest_WindowClose(object? sender, EventArgs e)
+        {
+            Intuition.CloseWindow(winStrTest);
+            winStrTest = null;
         }
     }
 }

@@ -23,7 +23,6 @@ namespace SDLSharp.GUI
         private static int timerTick;
         private static int tickIntervall = 100;
 
-
         private static Screen? mouseHoverSceen;
         private static Window? mouseHoverWindow;
         private static Gadget? mouseHoverGadget;
@@ -37,9 +36,27 @@ namespace SDLSharp.GUI
         private static Gadget? selectedGadget;
 
         private static Queue<Window> activationWindows = new();
+        private static Queue<Gadget> activationGadgets = new();
 
         private static bool moveWindowToFrontOnActivate = true;
 
+        public static bool ShowDebugBounds
+        {
+            get => guiRenderer.ShowDebugBounds;
+            set
+            {
+                if (guiRenderer.ShowDebugBounds != value)
+                {
+                    guiRenderer.ShowDebugBounds = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        public static void ActivateGadget(Gadget gadget)
+        {
+            activationGadgets.Enqueue(gadget);
+        }
         public static void ActivateWindow(Window window)
         {
             activationWindows.Enqueue(window);
@@ -112,6 +129,7 @@ namespace SDLSharp.GUI
         internal static void Update(double time)
         {
             CheckWindowActivationQueue();
+            CheckGadgetActivationQueue();
             CheckTimer(time);
 
         }
@@ -175,6 +193,27 @@ namespace SDLSharp.GUI
             bool handled = CheckHandled(screen, window, gadget);
             if (button == MouseButton.Left) { selectMouseDown = false; }
             if (CheckGadgetUp(x, y, button)) { handled = true; lastInputTime = currentTime; }
+            return handled;
+        }
+
+        internal static bool KeyDown(SDLKeyEventArgs e)
+        {
+            bool handled = false;
+            if (CheckGadgetKeyDown(e)) { handled = true; lastInputTime = currentTime; }
+            return handled;
+        }
+
+        internal static bool KeyUp(SDLKeyEventArgs e)
+        {
+            bool handled = false;
+            if (CheckGadgetKeyUp(e)) { handled = true; lastInputTime = currentTime; }
+            return handled;
+        }
+
+        internal static bool TextInput(SDLTextInputEventArgs e)
+        {
+            bool handled = false;
+            if (CheckGadgetTextInput(e)) { handled = true; lastInputTime = currentTime; }
             return handled;
         }
         private static bool CheckHandled(Screen? screen, Window? window, Gadget? gadget)
@@ -266,12 +305,82 @@ namespace SDLSharp.GUI
             return result;
         }
 
+        private static bool CheckGadgetKeyDown(SDLKeyEventArgs e)
+        {
+            ActionResult result = ActionResult.None;
+            if (activeGadget != null)
+            {
+                Gadget useGadget = activeGadget;
+                result |= useGadget.HandleKeyDown(e);
+                if (result == ActionResult.NavigateNext)
+                {
+                    Gadget? next = useGadget.FindNextGadget();
+                    if (next != null) { ActivateGadget(next); }
+                }
+                else if (result == ActionResult.NavigatePrevious)
+                {
+                    Gadget? next = useGadget.FindPreviousGadget();
+                    if (next != null) { ActivateGadget(next); }
+                }
+                else if (result == ActionResult.GadgetUp)
+                {
+
+                }
+            }
+            return result != ActionResult.None;
+        }
+        private static bool CheckGadgetKeyUp(SDLKeyEventArgs e)
+        {
+            ActionResult result = ActionResult.None;
+            if (activeGadget != null)
+            {
+                Gadget useGadget = activeGadget;
+                result |= useGadget.HandleKeyUp(e);
+                if (result == ActionResult.NavigateNext)
+                {
+                    Gadget? next = useGadget.FindNextGadget();
+                    if (next != null) { ActivateGadget(next); }
+                }
+                else if (result == ActionResult.NavigatePrevious)
+                {
+                    Gadget? next = useGadget.FindPreviousGadget();
+                    if (next != null) { ActivateGadget(next); }
+                }
+                else if (result == ActionResult.GadgetUp)
+                {
+
+                }
+            }
+            return result != ActionResult.None;
+        }
+
+        private static bool CheckGadgetTextInput(SDLTextInputEventArgs e)
+        {
+            if (activeGadget != null)
+            {
+                return activeGadget.HandleTextInput(e);
+            }
+            return false;
+        }
+
         private static void CheckWindowActivationQueue()
         {
             if (activationWindows.Count > 0)
             {
                 Window win = activationWindows.Dequeue();
                 SetActiveWindow(win);
+            }
+        }
+
+        private static void CheckGadgetActivationQueue()
+        {
+            if (activationGadgets.Count > 0)
+            {
+                Gadget gad = activationGadgets.Peek();
+                if (gad.Window == activeWindow)
+                {
+                    SetActiveGadget(activationGadgets.Dequeue());
+                }
             }
         }
 
@@ -402,6 +511,10 @@ namespace SDLSharp.GUI
             return OpenScreen(nwb);
         }
 
+        private static void Invalidate()
+        {
+            foreach (Screen screen in screens) { screen.Invalidate(); }
+        }
 
     }
 }

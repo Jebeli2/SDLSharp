@@ -60,4 +60,14 @@
         Horizontal = 2,
     }
 
+    [Flags]
+    public enum ActionResult
+    {
+        None = 0x0000,
+        Consumed = 0x0001,
+        GadgetUp = 0x0002,
+        NavigateNext = 0x0004,
+        NavigatePrevious = 0x0008,
+    }
+
 }

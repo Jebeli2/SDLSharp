@@ -21,7 +21,11 @@
         internal int ScrollerTotal { get; set; }
         internal int ScrollerVisible { get; set; }
         internal int ScrollerTop { get; set; }
+
+        internal bool CheckboxChecked { get; set; }
+
         internal Action<int>? ValueChangedAction { get; set; }
+        internal Action<bool>? CheckedStateChangedAction { get; set; }
         internal string? Format { get; set; }
 
     }

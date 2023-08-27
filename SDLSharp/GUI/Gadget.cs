@@ -14,6 +14,10 @@ namespace SDLSharp.GUI
         private int topEdge;
         private int width;
         private int height;
+        private int borderTop;
+        private int borderLeft;
+        private int borderRight;
+        private int borderBottom;
         private bool enabled = true;
         private bool active;
         private bool mouseHover;
@@ -29,6 +33,7 @@ namespace SDLSharp.GUI
         private Rectangle? bounds;
         private Window? window;
         private PropInfo? propInfo;
+        private StringInfo? stringInfo;
         private GadToolsInfo? gadInfo;
         private bool leftBorder;
         private bool topBorder;
@@ -40,6 +45,8 @@ namespace SDLSharp.GUI
         private bool relHeight;
         private bool immediate;
         private bool relVerify;
+        private bool longInt;
+        private bool tabCycle;
         private int textOffsetX;
         private int textOffsetY;
 
@@ -48,6 +55,8 @@ namespace SDLSharp.GUI
             GadgetId = ++nextGadgetId;
             immediate = true;
             relVerify = true;
+            tabCycle = true;
+            SetBorders(1, 1, 1, 1);
         }
 
         internal Gadget(GadgetKind kind)
@@ -55,6 +64,7 @@ namespace SDLSharp.GUI
             GadgetId = ++nextGadgetId;
             immediate = true;
             relVerify = true;
+            tabCycle = true;
             gadInfo = new GadToolsInfo(this);
             gadInfo.Kind = kind;
         }
@@ -63,7 +73,18 @@ namespace SDLSharp.GUI
 
         public event EventHandler<EventArgs>? GadgetUp;
 
+        internal Action<IGuiRenderer, SDLRenderer, Gadget, int, int>? CustomRenderAction;
+
         internal void Render(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
+        {
+            //Rectangle clip = GetBounds();
+            //clip.Offset(offsetX, offsetY);
+            //gfx.PushClip(clip);
+            RenderGadget(gfx, renderer, offsetX, offsetY);
+            //gfx.PopClip();
+        }
+
+        private void RenderGadget(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
         {
             renderer.RenderGadget(gfx, this, offsetX, offsetY);
         }
@@ -91,6 +112,10 @@ namespace SDLSharp.GUI
                     gadgetType = value;
                     switch (gadgetType)
                     {
+                        case GadgetType.StrGadget:
+                            stringInfo = new StringInfo(this);
+                            SetBorders(2, 2, 2, 2);
+                            break;
                         case GadgetType.PropGadget:
                             propInfo = new PropInfo(this);
                             break;
@@ -261,6 +286,18 @@ namespace SDLSharp.GUI
             get => relVerify;
             internal set => relVerify = value;
         }
+
+        public bool LongInt
+        {
+            get => longInt;
+            internal set => longInt = value;
+        }
+
+        public bool TabCycle
+        {
+            get => tabCycle;
+            internal set => tabCycle = value;
+        }
         public bool Enabled => enabled;
         public bool Disbled
         {
@@ -299,9 +336,10 @@ namespace SDLSharp.GUI
         public bool IsPropGadget => gadgetType == GadgetType.PropGadget && propInfo != null;
         public bool IsStrGadget => gadgetType == GadgetType.StrGadget;
         public bool IsCustomGadget => gadgetType == GadgetType.CustomGadget;
+        public bool IsIntegerGadget => gadgetType == GadgetType.StrGadget && longInt;
         public Window? Window => window;
-
         internal PropInfo? PropInfo => propInfo;
+        internal StringInfo? StringInfo => stringInfo;
         internal GadToolsInfo? GadInfo => gadInfo;
         internal Rectangle GetBounds()
         {
@@ -310,6 +348,24 @@ namespace SDLSharp.GUI
                 bounds = CalculateBounds();
             }
             return bounds.Value;
+        }
+
+        internal Rectangle GetInnerBounds()
+        {
+            Rectangle rect = GetBounds();
+            rect.X += borderLeft;
+            rect.Y += borderTop;
+            rect.Width -= (borderLeft + borderRight);
+            rect.Height -= (borderTop + borderBottom);
+            return rect;
+        }
+
+        internal void SetBorders(int left, int top, int right, int bottom)
+        {
+            borderLeft = left;
+            borderTop = top;
+            borderRight = right;
+            borderBottom = bottom;
         }
 
         internal void InvalidateBounds()
@@ -321,6 +377,16 @@ namespace SDLSharp.GUI
         internal void SetWindow(Window window)
         {
             this.window = window;
+        }
+
+        internal Gadget? FindNextGadget()
+        {
+            return window?.FindNextGadget(this);
+        }
+
+        internal Gadget? FindPreviousGadget()
+        {
+            return window?.FindPreviousGadget(this);
         }
 
         private Rectangle CalculateBounds()
@@ -381,7 +447,6 @@ namespace SDLSharp.GUI
         internal bool Contains(int x, int y)
         {
             return GetBounds().Contains(x, y);
-            //return x >= leftEdge && y >= topEdge && x - leftEdge <= width && y - topEdge <= height;
         }
         internal void SetActive(bool active)
         {
@@ -444,6 +509,11 @@ namespace SDLSharp.GUI
                 Rectangle bounds = GetBounds();
                 result |= propInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
             }
+            else if (stringInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= stringInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
+            }
             if (immediate) { RaiseGadgetDown(); result |= true; }
             if (result) { window?.Invalidate(); }
             return result;
@@ -455,6 +525,11 @@ namespace SDLSharp.GUI
             {
                 Rectangle bounds = GetBounds();
                 result |= propInfo.HandleMouseUp(bounds, x, y);
+            }
+            else if (stringInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= stringInfo.HandleMouseUp(bounds, x, y);
             }
             if (RelVerify) { RaiseGadgetUp(); result |= true; }
             if (result) { window?.Invalidate(); }
@@ -469,10 +544,43 @@ namespace SDLSharp.GUI
                 Rectangle bounds = GetBounds();
                 result |= propInfo.HandleMouseMove(bounds, x, y);
             }
+            else if (stringInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= stringInfo.HandleMouseMove(bounds, x, y);
+            }
             if (result) { window?.Invalidate(); }
             return result;
         }
 
+        internal ActionResult HandleKeyDown(SDLKeyEventArgs e)
+        {
+            ActionResult result = CheckNavKeys(e);
+            if (result == ActionResult.None)
+            {
+                result |= stringInfo?.HandleKeyDown(e) ?? ActionResult.None;
+                if (result != ActionResult.None) { window?.Invalidate(); }
+            }
+            return result;
+        }
+        internal ActionResult HandleKeyUp(SDLKeyEventArgs e)
+        {
+            ActionResult result = CheckNavKeys(e);
+            if (result == ActionResult.None)
+            {
+                result |= stringInfo?.HandleKeyUp(e) ?? ActionResult.None;
+                if (result != ActionResult.None) { window?.Invalidate(); }
+            }
+            return result;
+        }
+
+        internal bool HandleTextInput(SDLTextInputEventArgs e)
+        {
+            bool result = false;
+            result |= stringInfo?.HandleTextInput(e) ?? false;
+            if (result) { window?.Invalidate(); }
+            return result;
+        }
         internal void RaiseGadgetDown()
         {
             EventHelper.Raise(this, GadgetDown, EventArgs.Empty);
@@ -482,6 +590,26 @@ namespace SDLSharp.GUI
             EventHelper.Raise(this, GadgetUp, EventArgs.Empty);
         }
 
+        private ActionResult CheckNavKeys(SDLKeyEventArgs e)
+        {
+            if (e.ScanCode == ScanCode.SCANCODE_TAB && e.State == KeyButtonState.Pressed)
+            {
+                if ((e.KeyMod & KeyMod.SHIFT) != 0)
+                {
+                    return ActionResult.NavigatePrevious;
+                }
+                else
+                {
+                    return ActionResult.NavigateNext;
+                }
+            }
+            else if (e.ScanCode == ScanCode.SCANCODE_RETURN && e.State == KeyButtonState.Pressed)
+            {
+                RaiseGadgetUp();
+                return ActionResult.GadgetUp;
+            }
+            return ActionResult.None;
+        }
 
         private string GetGadgetName()
         {

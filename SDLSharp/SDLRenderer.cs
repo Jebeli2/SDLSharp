@@ -38,6 +38,8 @@
         private readonly SDL_Vertex[] rectVertices = new SDL_Vertex[4];
         private readonly Stack<IntPtr> prevTargets = new();
         private readonly Stack<Rectangle> prevClips = new();
+        private bool checkStateOnPaint = true;
+        private bool disableClipping = false;
 
         internal SDLRenderer(SDLWindow window)
         {
@@ -167,7 +169,38 @@
                 _ = SDL_SetRenderTarget(handle, oldTarget);
             }
         }
+        private Rectangle CombineClip(Rectangle clip)
+        {
+            if (prevClips.Count > 0)
+            {
+                Rectangle current = prevClips.Peek();
+                return Rectangle.Intersect(current, clip);
+            }
+            return clip;
+        }
 
+        public void PushClip(Rectangle clip)
+        {
+            if (disableClipping) return;
+            clip = CombineClip(clip);
+            _ = SDL_RenderSetClipRect(handle, ref clip);
+            prevClips.Push(clip);
+        }
+
+        public void PopClip()
+        {
+            if (disableClipping) return;
+            if (prevClips.Count > 0) { _ = prevClips.Pop(); }
+            if (prevClips.Count > 0)
+            {
+                Rectangle clip = prevClips.Peek();
+                _ = SDL_RenderSetClipRect(handle, ref clip);
+            }
+            else
+            {
+                _ = SDL_RenderSetClipRect(handle, IntPtr.Zero);
+            }
+        }
 
         public SDLTexture? CreateTexture(string name, int width, int height)
         {
@@ -511,6 +544,8 @@
 
         internal void BeginPaint()
         {
+            prevTargets.Clear();
+            prevClips.Clear();
             SetColor(Color.Black);
             SetBlendMode(BlendMode.Blend);
             _ = SDL_RenderClear(handle);
@@ -518,6 +553,11 @@
 
         internal void EndPaint()
         {
+            if (checkStateOnPaint)
+            {
+                if (prevClips.Count > 0) { SDLLog.Warn(LogCategory.RENDER, $"ClipRects not empty: {prevClips.Count} {(prevClips.Count == 1 ? "was" : "were")} not popped"); }
+                if (prevTargets.Count > 0) { SDLLog.Warn(LogCategory.RENDER, $"Targets not empty: {prevTargets.Count} {(prevTargets.Count == 1 ? "was" : "were")} not popped"); }
+            }
             SDL_RenderPresent(handle);
         }
 

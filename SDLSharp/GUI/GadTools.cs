@@ -1,17 +1,14 @@
 ﻿namespace SDLSharp.GUI
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Drawing;
-    using System.Linq;
-    using System.Reflection.Emit;
-    using System.Text;
-    using System.Threading.Tasks;
-    using static System.Net.Mime.MediaTypeNames;
 
     public static class GadTools
     {
+        private const int CHECKBOX_WIDTH = 28;
+        private const int CHECKBOX_HEIGHT = 22;
+        private const int INTERWIDTH = 8;
 
         public static Gadget CreateGadget(GadgetKind kind,
             int leftEdge = 0,
@@ -21,12 +18,15 @@
             string? text = null,
             Icons icon = Icons.NONE,
             Color? bgColor = null,
+            string? buffer = null,
             int intValue = 0,
             bool disabled = false,
             bool selected = false,
             bool toggleSelect = false,
+            bool _cheked = false,
             Action? clickAction = null,
             Action<int>? valueChangedAction = null,
+            Action<bool>? checkedStateChangedAction = null,
             int min = 0,
             int max = 15,
             int level = 0,
@@ -40,10 +40,13 @@
             switch (kind)
             {
                 case GadgetKind.Button: return CreateButton(leftEdge, topEdge, width, height, text, icon, bgColor, disabled, selected, toggleSelect, clickAction);
+                case GadgetKind.Checkbox: return CreateCheckbox(leftEdge, topEdge, width, height, text, _cheked, checkedStateChangedAction);
                 case GadgetKind.Text: return CreateText(leftEdge, topEdge, width, height, text);
                 case GadgetKind.Number: return CreateNumber(leftEdge, topEdge, width, height, intValue, text ?? "{0}");
                 case GadgetKind.Slider: return CreateSlider(leftEdge, topEdge, width, height, min, max, level, freedom, valueChangedAction);
                 case GadgetKind.Scroller: return CreateScroller(leftEdge, topEdge, width, height, top, total, visible, freedom, valueChangedAction);
+                case GadgetKind.String: return CreateString(leftEdge, topEdge, width, height, buffer);
+                case GadgetKind.Integer: return CreateInteger(leftEdge, topEdge, width, height, intValue);
             }
             throw new NotSupportedException($"GadgetKind {kind} not supported");
         }
@@ -95,6 +98,29 @@
             return gadget;
         }
 
+        private static Gadget CreateCheckbox(int leftEdge, int topEdge, int width, int height,
+            string? text, bool _checked, Action<bool>? checkedStateChangedAction)
+        {
+            Gadget gadget = new Gadget(GadgetKind.Checkbox)
+            {
+                LeftEdge = leftEdge,
+                TopEdge = topEdge,
+                Width = width,
+                Height = height,
+                Text = text,
+                GadgetType = GadgetType.CustomGadget
+            };
+            if (gadget.GadInfo != null)
+            {
+                gadget.GadInfo.CheckboxChecked = _checked;
+                gadget.GadInfo.CheckedStateChangedAction = checkedStateChangedAction;
+            }
+            gadget.CustomRenderAction = RenderCheckbox;
+            gadget.GadgetUp += CheckboxGadgetUp;
+            return gadget;
+        }
+
+
         private static Gadget CreateText(int leftEdge, int topEdge, int width, int height,
             string? text)
         {
@@ -105,6 +131,7 @@
                 Width = width,
                 Height = height,
                 Text = text,
+                TabCycle = false,
                 NoHighlight = true,
                 TransparentBackground = true
             };
@@ -119,12 +146,47 @@
                 Width = width,
                 Height = height,
                 Text = string.Format(format, intValue),
+                TabCycle = false,
                 NoHighlight = true,
                 TransparentBackground = true
             };
             if (gadget.GadInfo != null)
             {
                 gadget.GadInfo.Format = format;
+            }
+            return gadget;
+        }
+
+        private static Gadget CreateString(int leftEdge, int topEdge, int width, int height, string? buffer)
+        {
+            Gadget gadget = new Gadget(GadgetKind.String)
+            {
+                LeftEdge = leftEdge,
+                TopEdge = topEdge,
+                Width = width,
+                Height = height,
+                GadgetType = GadgetType.StrGadget,
+            };
+            if (gadget.StringInfo != null && buffer != null)
+            {
+                gadget.StringInfo.Buffer = buffer;
+            }
+            return gadget;
+        }
+        private static Gadget CreateInteger(int leftEdge, int topEdge, int width, int height, int intValue)
+        {
+            Gadget gadget = new Gadget(GadgetKind.String)
+            {
+                LeftEdge = leftEdge,
+                TopEdge = topEdge,
+                Width = width,
+                Height = height,
+                LongInt = true,
+                GadgetType = GadgetType.StrGadget,
+            };
+            if (gadget.StringInfo != null)
+            {
+                gadget.StringInfo.Buffer = intValue.ToString();
             }
             return gadget;
         }
@@ -189,6 +251,20 @@
 
         }
 
+        private static void CheckboxGadgetUp(object? sender, EventArgs e)
+        {
+            CheckboxCheckChanged(sender as Gadget);
+        }
+
+        private static void CheckboxCheckChanged(Gadget? gadget)
+        {
+            if (gadget != null && gadget.GadInfo != null)
+            {
+                bool check = !gadget.GadInfo.CheckboxChecked;
+                gadget.GadInfo.CheckboxChecked = check;
+                gadget.GadInfo.CheckedStateChangedAction?.Invoke(check);
+            }
+        }
 
         private static void SliderGadgetUp(object? sender, EventArgs e)
         {
@@ -322,6 +398,30 @@
                 }
             }
             return false;
+        }
+
+        private static void RenderCheckbox(IGuiRenderer gui, SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)
+        {
+            if (IsValid(gadget, GadgetKind.Checkbox, out GadToolsInfo? info))
+            {
+                Rectangle bounds = gadget.GetBounds();
+                Rectangle inner = gadget.GetInnerBounds();
+                bounds.Offset(offsetX, offsetY);
+                inner.Offset(offsetX, offsetY);
+                Rectangle box = bounds;
+                box.Width = CHECKBOX_WIDTH;
+                box.Height = CHECKBOX_HEIGHT;
+                box.Y += (bounds.Height - box.Height) / 2;
+                gui.RenderGadgetBorder(gfx, box, gadget.Active, gadget.MouseHover, gadget.Selected);
+                if (info.CheckboxChecked)
+                {
+                    gfx.DrawIcon(Icons.CHECK, box.X, box.Y, box.Width, box.Height, Color.White);
+                }
+                Rectangle textBox = inner;
+                textBox.X += (INTERWIDTH + CHECKBOX_WIDTH);
+                textBox.Width -= (INTERWIDTH + CHECKBOX_WIDTH);
+                gfx.DrawText(null, gadget.Text, textBox.X, textBox.Y, textBox.Width, textBox.Height, Color.White, HorizontalAlignment.Left);
+            }
         }
 
     }

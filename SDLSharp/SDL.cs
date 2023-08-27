@@ -2284,9 +2284,8 @@
             out Rectangle rect
         );
 
-        /* renderer refers to an SDL_Renderer* */
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SDL_RenderPresent(IntPtr renderer);
+        internal static extern void SDL_RenderPresent(IntPtr renderer);
 
         /* renderer refers to an SDL_Renderer* */
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
@@ -2298,21 +2297,11 @@
             int pitch
         );
 
-        /* renderer refers to an SDL_Renderer* */
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int SDL_RenderSetClipRect(
-            IntPtr renderer,
-            ref Rectangle rect
-        );
+        internal static extern int SDL_RenderSetClipRect(IntPtr renderer, ref Rectangle rect);
 
-        /* renderer refers to an SDL_Renderer*
-		 * This overload allows for IntPtr.Zero (null) to be passed for rect.
-		 */
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int SDL_RenderSetClipRect(
-            IntPtr renderer,
-            IntPtr rect
-        );
+        internal static extern int SDL_RenderSetClipRect(IntPtr renderer, IntPtr rect);
 
         /* renderer refers to an SDL_Renderer* */
         [DllImport(nativeLibName, CallingConvention = CallingConvention.Cdecl)]

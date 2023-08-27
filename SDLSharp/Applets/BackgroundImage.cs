@@ -36,6 +36,7 @@ namespace SDLSharp.Applets
         protected override void OnDispose()
         {
             image?.Dispose();
+            image = null;
         }
     }
 }

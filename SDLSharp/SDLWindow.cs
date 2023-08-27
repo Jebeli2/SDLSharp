@@ -851,6 +851,7 @@
         {
             SDLLog.Debug(LogCategory.INPUT, $"Window {windowId} Text Input '{text}'");
             SDLTextInputEventArgs e = new(text);
+            foreach (SDLApplet applet in inputApplets) { applet.OnTextInput(e); if (e.Handled) break; }
             OnTextInput(e);
         }
 

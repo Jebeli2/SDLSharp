@@ -71,6 +71,14 @@ namespace SDLSharp.GUI
                 }
             }
         }
+
+        internal void Invalidate()
+        {
+            foreach(Window window in windows)
+            {
+                window.Invalidate();
+            }
+        }
         internal void SetActive(bool active)
         {
             if (this.active != active)

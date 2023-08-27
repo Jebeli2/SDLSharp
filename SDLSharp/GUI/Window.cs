@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SDLSharp.GUI
+﻿namespace SDLSharp.GUI
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Text;
+
     public class Window
     {
         private static int nextWindowId;
@@ -206,6 +202,39 @@ namespace SDLSharp.GUI
             EventHelper.Raise(this, WindowClose, EventArgs.Empty);
         }
 
+        internal Gadget? FindNextGadget(Gadget gadget)
+        {
+            int index = gadgets.IndexOf(gadget);
+            if (index >= 0)
+            {
+                while (true)
+                {
+                    index++;
+                    if (index >= gadgets.Count) { index = 0; }
+                    Gadget gad = gadgets[index];
+                    if (gad == gadget) return null;
+                    if (gad.Enabled && gad.TabCycle) return gad;
+                }
+            }
+            return null;
+        }
+        internal Gadget? FindPreviousGadget(Gadget gadget)
+        {
+            int index = gadgets.IndexOf(gadget);
+            if (index >= 0)
+            {
+                while (true)
+                {
+                    index--;
+                    if (index < 0) { index = gadgets.Count - 1; }
+                    Gadget gad = gadgets[index];
+                    if (gad == gadget) return null;
+                    if (gad.Enabled && gad.TabCycle) return gad;
+                }
+            }
+            return null;
+        }
+
         internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
         {
             if (superBitMap)
@@ -237,21 +266,21 @@ namespace SDLSharp.GUI
 
         private void RenderWindow(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
         {
+            int renderOffsetX = superBitMap ? -leftEdge : 0;
+            int renderOffsetY = superBitMap ? -topEdge : 0;
             renderer.RenderWindow(gfx, this, offsetX, offsetY);
-            if (superBitMap)
+            foreach (var gad in gadgets.Where(g => g.IsBorderGadget))
             {
-                foreach (Gadget gadget in gadgets)
-                {
-                    gadget.Render(gfx, renderer, -leftEdge, -topEdge);
-                }
+                gad.Render(gfx, renderer, renderOffsetX, renderOffsetY);
             }
-            else
+            Rectangle inner = GetInnerBounds();
+            inner.Offset(offsetX, offsetY);
+            gfx.PushClip(inner);
+            foreach (var gad in gadgets.Where(g => !g.IsBorderGadget))
             {
-                foreach (Gadget gadget in gadgets)
-                {
-                    gadget.Render(gfx, renderer, 0, 0);
-                }
+                gad.Render(gfx, renderer, renderOffsetX, renderOffsetY);
             }
+            gfx.PopClip();
         }
 
         internal void MoveWindow(int dX, int dY, bool dragging = false)
@@ -320,6 +349,7 @@ namespace SDLSharp.GUI
                     TopEdge = 0,
                     Width = 0,
                     Height = sysGadgetHeight,
+                    TabCycle = false,
                     RelWidth = true,
                     TransparentBackground = true,
                     TopBorder = true,
@@ -337,6 +367,7 @@ namespace SDLSharp.GUI
                     TopEdge = 0,
                     Width = sysGadgetWidth,
                     Height = sysGadgetHeight,
+                    TabCycle = false,
                     TransparentBackground = true,
                     Icon = Icons.CROSS,
                     TopBorder = true,
@@ -356,6 +387,7 @@ namespace SDLSharp.GUI
                     TopEdge = 0,
                     Width = sysGadgetWidth,
                     Height = sysGadgetHeight,
+                    TabCycle = false,
                     RelRight = true,
                     TransparentBackground = true,
                     Icon = Icons.DOCUMENT,
@@ -375,6 +407,7 @@ namespace SDLSharp.GUI
                     TopEdge = 0,
                     Width = sysGadgetWidth,
                     Height = sysGadgetHeight,
+                    TabCycle = false,
                     RelRight = true,
                     TransparentBackground = true,
                     Icon = Icons.DOCUMENT,
@@ -392,6 +425,7 @@ namespace SDLSharp.GUI
                     TopEdge = -sysGadgetHeight,
                     Width = sysGadgetWidth,
                     Height = sysGadgetHeight,
+                    TabCycle = false,
                     RelRight = true,
                     RelBottom = true,
                     TransparentBackground = true,
