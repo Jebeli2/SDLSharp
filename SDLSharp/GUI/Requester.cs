@@ -60,6 +60,13 @@ namespace SDLSharp.GUI
         }
         public Window? Window => window;
 
+        internal void InvalidateBounds()
+        {
+            foreach (Gadget gadget in gadgets)
+            {
+                gadget.InvalidateBounds();
+            }
+        }
         internal void SetWindow(Window window)
         {
             this.window = window;
@@ -89,7 +96,7 @@ namespace SDLSharp.GUI
                         res.X -= res.Right - win.Right;
                         if (res.X < 0) { res.X = 0; }
                     }
-                    if (res.Bottom < win.Bottom)
+                    if (res.Bottom > win.Bottom)
                     {
                         res.Y -= res.Bottom - win.Bottom;
                         if (res.Y < 0) { res.Y = 0; }
@@ -116,10 +123,37 @@ namespace SDLSharp.GUI
             return rect;
         }
 
-        internal void AddGadget(Gadget gadget)
+        internal bool Contains(int x, int y)
         {
-            gadgets.Add(gadget);
+            return GetBounds().Contains(x, y);
         }
+        //internal void AddGadget(Gadget gadget)
+        //{
+        //    gadgets.Add(gadget);
+        //}
+
+        internal int AddGadget(Gadget gadget, int position)
+        {
+            int result;
+            if (position < 0 || position >= gadgets.Count)
+            {
+                gadgets.Add(gadget);
+                result = gadgets.Count;
+            }
+            else
+            {
+                gadgets.Insert(position, gadget);
+                result = position;
+            }
+            gadget.SetRequester(this);
+            if (gadget.SysGadgetType == SysGadgetType.None)
+            {
+                gadget.CheckAutoFlags();
+            }
+            gadget.InvalidateBounds();
+            return result;
+        }
+
 
         public Gadget? FindGadget(int x, int y)
         {
@@ -132,6 +166,29 @@ namespace SDLSharp.GUI
                 }
             }
             return null;
+        }
+
+        internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
+        {
+            if (window != null)
+            {
+                if (window.SuperBitmap)
+                {
+                    renderer.RenderRequester(gfx, this, -window.LeftEdge, -window.TopEdge);
+                    foreach (Gadget gadget in gadgets)
+                    {
+                        gadget.Render(gfx, renderer, -window.LeftEdge, -window.TopEdge);
+                    }
+                }
+                else
+                {
+                    renderer.RenderRequester(gfx, this, 0, 0);
+                    foreach (Gadget gadget in gadgets)
+                    {
+                        gadget.Render(gfx, renderer);
+                    }
+                }
+            }
         }
 
     }

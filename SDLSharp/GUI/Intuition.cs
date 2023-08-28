@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace SDLSharp.GUI
 {
@@ -72,7 +73,15 @@ namespace SDLSharp.GUI
             int count = 0;
             foreach (Gadget gadget in gadgets)
             {
-                int insertPos = window.AddGadget(gadget, position);
+                int insertPos = -1;
+                if (requester != null)
+                {
+                    insertPos = requester.AddGadget(gadget, position);
+                }
+                else
+                {
+                    insertPos = window.AddGadget(gadget, position);
+                }
                 if (result < 0) { result = insertPos; }
                 count++;
                 if (count >= numgad) { break; }
@@ -129,6 +138,11 @@ namespace SDLSharp.GUI
 
         public static bool Request(Requester req, Window window)
         {
+            if (window.Request(req))
+            {
+                ClearGadgetsIfWindowMatches(window);
+                return true;
+            }
             return false;
         }
         public static void WindowToBack(Window window)
@@ -424,6 +438,23 @@ namespace SDLSharp.GUI
             }
             return false;
         }
+
+        private static void ClearGadgetsIfWindowMatches(Window window)
+        {
+            if (activeGadget != null && activeGadget.Window == window)
+            {
+                SetActiveGadget(null);
+            }
+            if (selectedGadget != null && selectedGadget.Window == window)
+            {
+                SetSelectedGadget(null);
+            }
+            if (mouseHoverGadget != null && mouseHoverGadget.Window == window)
+            {
+                SetMouseHoverGadget(null);
+            }
+        }
+
 
         private static Screen? FindScreen(int x, int y)
         {

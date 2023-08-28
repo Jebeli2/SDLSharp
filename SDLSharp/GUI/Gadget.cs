@@ -32,6 +32,7 @@ namespace SDLSharp.GUI
         private Icons icon;
         private Rectangle? bounds;
         private Window? window;
+        private Requester? requester;
         private PropInfo? propInfo;
         private StringInfo? stringInfo;
         private GadToolsInfo? gadInfo;
@@ -75,7 +76,7 @@ namespace SDLSharp.GUI
 
         internal Action<IGuiRenderer, SDLRenderer, Gadget, int, int>? CustomRenderAction;
 
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
+        internal void Render(SDLRenderer gfx, IGuiRenderer renderer, int offsetX = 0, int offsetY = 0)
         {
             //Rectangle clip = GetBounds();
             //clip.Offset(offsetX, offsetY);
@@ -228,6 +229,7 @@ namespace SDLSharp.GUI
         }
 
         public bool IsBorderGadget => leftBorder || topBorder || rightBorder || bottomBorder;
+        public bool IsSysGadget => sysGadgetType != SysGadgetType.None;
         public bool LeftBorder
         {
             get => leftBorder;
@@ -372,11 +374,18 @@ namespace SDLSharp.GUI
         {
             bounds = null;
             propInfo?.Invalidate();
+            stringInfo?.Invalidate();
         }
 
         internal void SetWindow(Window window)
         {
             this.window = window;
+        }
+
+        internal void SetRequester(Requester requester)
+        {
+            this.requester = requester;
+            window = this.requester.Window;
         }
 
         internal Gadget? FindNextGadget()
@@ -434,13 +443,13 @@ namespace SDLSharp.GUI
                     bounds.Height -= window.BorderBottom;
                 }
             }
-            //if (requester != null)
-            //{
-            //    bounds.X += requester.LeftEdge;
-            //    bounds.Y += requester.TopEdge;
-            //    bounds.Width = requester.Width;
-            //    bounds.Height = requester.Height;
-            //}
+            if (requester != null)
+            {
+                bounds.X += requester.LeftEdge;
+                bounds.Y += requester.TopEdge;
+                bounds.Width = requester.Width;
+                bounds.Height = requester.Height;
+            }
             return bounds;
         }
 

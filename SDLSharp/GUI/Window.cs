@@ -117,7 +117,7 @@
         public bool Active => active;
         public bool Borderless => borderless;
         public bool MouseHover => mouseHover;
-
+        public bool SuperBitmap => superBitMap;
         public bool IsMaximized => maximized;
         public bool IsMinimized => minimized;
         public bool IsRestored => !maximized && !minimized;
@@ -306,6 +306,10 @@
             {
                 gad.Render(gfx, renderer, renderOffsetX, renderOffsetY);
             }
+            foreach (var req in requests)
+            {
+                req.Render(gfx, renderer);
+            }
             gfx.PopClip();
         }
 
@@ -363,6 +367,10 @@
             foreach (Gadget gadget in gadgets)
             {
                 gadget.InvalidateBounds();
+            }
+            foreach(Requester requester in requests)
+            {
+                requester.InvalidateBounds();
             }
         }
         private void InitSysGadgets()
@@ -553,7 +561,7 @@
 
         internal int AddGadget(Gadget gadget, int position)
         {
-            int result ;
+            int result;
             if (position < 0 || position >= gadgets.Count)
             {
                 gadgets.Add(gadget);
@@ -594,29 +602,35 @@
         }
         internal Gadget? FindGadget(int x, int y)
         {
-            //if (InRequest && requests.Count > 0)
-            //{
-            //    Requester req = requests[^1];
-            //    if (req.Contains(x, y))
-            //    {
-            //        return req.FindGadget(x, y);
-            //    }
-            //    return InReqFindGadget(x, y);
-            //}
-            //else
-            //{
-            for (int i = gadgets.Count - 1; i >= 0; i--)
+            if (inRequest && requests.Count > 0)
             {
-                Gadget gad = gadgets[i];
-                if (gad.Enabled && gad.Contains(x, y))
+                Requester req = requests[^1];
+                if (req.Contains(x, y))
                 {
-                    return gad;
+                    return req.FindGadget(x, y);
+                }
+                for (int i = gadgets.Count - 1; i >= 0; i--)
+                {
+                    Gadget gad = gadgets[i];
+                    if (gad.Enabled && gad.IsBorderGadget && gad.IsSysGadget && gad.Contains(x, y))
+                    {
+                        return gad;
+                    }
+                }
+                return null;
+            }
+            else
+            {
+                for (int i = gadgets.Count - 1; i >= 0; i--)
+                {
+                    Gadget gad = gadgets[i];
+                    if (gad.Enabled && gad.Contains(x, y))
+                    {
+                        return gad;
+                    }
                 }
             }
             return null;
-
-            //return NormalFindGadget(x, y);
-            //}
         }
 
         private void CheckBitmap(SDLRenderer renderer)

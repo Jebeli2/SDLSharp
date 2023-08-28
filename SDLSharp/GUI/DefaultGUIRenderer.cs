@@ -10,6 +10,7 @@ namespace SDLSharp.GUI
 
     using SDLSharp;
     using System.Reflection;
+    using System.Xml;
 
     internal class DefaultGUIRenderer : IGuiRenderer
     {
@@ -165,7 +166,35 @@ namespace SDLSharp.GUI
         }
         private void DrawRequester(SDLRenderer renderer, Requester requester, int offsetX, int offsetY)
         {
-
+            if (requester.Window != null)
+            {
+                Rectangle bounds = requester.GetBounds();
+                Rectangle inner = requester.GetInnerBounds();
+                bounds.Offset(offsetX, offsetY);
+                inner.Offset(offsetX, offsetY);
+                bool selected = true;
+                bool active = requester.Window.Active;
+                bool hover = requester.Window.MouseHover;
+                Color gradTop = ButtonGradientTopUnFocused;
+                Color gradBottom = ButtonGradientBotUnFocused;
+                if (selected)
+                {
+                    gradTop = ButtonGradientTopPushed;
+                    gradBottom = ButtonGradientBotPushed;
+                }
+                else if (active)
+                {
+                    gradTop = ButtonGradientTopFocused;
+                    gradBottom = ButtonGradientBotFocused;
+                }
+                else if (hover)
+                {
+                    gradTop = ButtonGradientTopHover;
+                    gradBottom = ButtonGradientBotHover;
+                }
+                renderer.FillVertGradient(bounds, gradTop, gradBottom);
+                DrawBox(renderer, bounds, BorderLight, BorderDark);
+            }
         }
 
         private void DrawScreen(SDLRenderer renderer, Screen screen, int offsetX, int offsetY)
