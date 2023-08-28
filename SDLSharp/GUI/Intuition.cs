@@ -97,6 +97,16 @@ namespace SDLSharp.GUI
             }
         }
 
+        public static void EndRequest(Requester req, Window window)
+        {
+
+        }
+
+        public static void InitRequest(Requester requester, Window window)
+        {
+            requester.SetWindow(window);
+        }
+
         public static void ModifyProp(Gadget gadget, PropFlags flags, int horizPot, int vertPot, int horizBody, int vertBody)
         {
             gadget.ModifyProp(flags, horizPot, vertPot, horizBody, vertBody);
@@ -115,6 +125,11 @@ namespace SDLSharp.GUI
             Window window = new Window(newWindow, workbench);
             if (newWindow.Activate) { activationWindows.Enqueue(window); }
             return window;
+        }
+
+        public static bool Request(Requester req, Window window)
+        {
+            return false;
         }
         public static void WindowToBack(Window window)
         {

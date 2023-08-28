@@ -24,6 +24,7 @@
             bool selected = false,
             bool toggleSelect = false,
             bool _cheked = false,
+            bool endGadget = false,
             Action? clickAction = null,
             Action<int>? valueChangedAction = null,
             Action<bool>? checkedStateChangedAction = null,

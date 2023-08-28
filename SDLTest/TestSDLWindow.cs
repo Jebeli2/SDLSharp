@@ -23,6 +23,7 @@
         private Window? winButTest;
         private Window? winPropTest;
         private Window? winStrTest;
+        private Requester? requester;
 
         private Gadget? button1_1;
         private Gadget? button1_2;
@@ -202,6 +203,11 @@
         {
             if (winButTest == null)
             {
+                requester = new Requester();
+                requester.PointRel = true;
+                requester.Width = 200;
+                requester.Height = 200;
+
                 List<Gadget> gadgets = new List<Gadget>();
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Text, leftEdge: 10, topEdge: 10, width: -20, height: 30, text: "Button Demo"));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 50, width: -20, height: 30, text: "Toggle Button", toggleSelect: true));
@@ -212,7 +218,23 @@
                     () => { GetApplet<MusicPlayer>().PrevMusic(); }));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: -248, topEdge: 210, width: 240, height: 30, text: "Play Next", clickAction:
                     () => { GetApplet<MusicPlayer>().NextMusic(); }));
-                gadgets.Add(GadTools.CreateGadget(GadgetKind.Checkbox, leftEdge: 10, topEdge: 250, width: -20, height: 30, text: "Debug Borders", _cheked: Intuition.ShowDebugBounds, checkedStateChangedAction:
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 250, width: 30, height: 30, icon: Icons.MUSIC, toggleSelect: true,
+                    selected: GetApplet<MusicVisualizer>().Enabled, clickAction: () => { GetApplet<MusicVisualizer>().Enabled ^= true; }));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 50, topEdge: 250, width: 30, height: 30, icon: Icons.LINE_GRAPH, toggleSelect: true,
+                    selected: GetApplet<LinesApp>().Enabled, clickAction: () => { GetApplet<LinesApp>().Enabled ^= true; }));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 90, topEdge: 250, width: 30, height: 30, icon: Icons.BOX, toggleSelect: true,
+                    selected: GetApplet<RainingBoxesApp>().Enabled, clickAction: () => { GetApplet<RainingBoxesApp>().Enabled ^= true; }));
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 130, topEdge: 250, width: 30, height: 30, icon: Icons.ADDRESS,
+                    clickAction: () =>
+                    {
+                        if (winButTest != null)
+                        {
+                            Intuition.InitRequest(requester, winButTest);
+                            Intuition.Request(requester, winButTest);
+                        }
+                    }));
+
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Checkbox, leftEdge: 10, topEdge: 290, width: -20, height: 30, text: "Debug Borders", _cheked: Intuition.ShowDebugBounds, checkedStateChangedAction:
                     (b) => { Intuition.ShowDebugBounds = b; }));
 
                 winButTest = Intuition.OpenWindow(new NewWindow
@@ -233,6 +255,11 @@
                     Maximizing = true,
                 });
                 winButTest.WindowClose += WinButTest_WindowClose;
+
+                List<Gadget> reqGads = new();
+                reqGads.Add(GadTools.CreateGadget(GadgetKind.Text, leftEdge: 10, topEdge: 10, width: -20, height: 20, text: "Question?"));
+                reqGads.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: -30, width: -20, height: 20, text: "OK", endGadget: true));
+                Intuition.AddGList(winButTest, reqGads, 0, reqGads.Count, requester);
             }
             else
             {

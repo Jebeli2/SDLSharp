@@ -26,6 +26,8 @@
         private string? title;
         private Screen screen;
         private readonly List<Gadget> gadgets = new();
+        private readonly List<Requester> requests = new();
+        private bool inRequest;
         private bool active;
         private bool borderless;
         private bool backDrop;
@@ -148,6 +150,30 @@
         {
             get => sizeBRight;
             internal set => sizeBRight = value;
+        }
+
+        internal bool Request(Requester req)
+        {
+            if (req.Window == this)
+            {
+                requests.Add(req);
+                inRequest = true;
+                Invalidate();
+                return true;
+            }
+            return false;
+        }
+
+        internal void EndRequest(Requester req)
+        {
+            if (req.Window == this && requests.Remove(req))
+            {
+                if (requests.Count == 0)
+                {
+                    inRequest = false;
+                }
+                Invalidate();
+            }
         }
         internal void SetBounds(Rectangle bounds)
         {
@@ -527,7 +553,7 @@
 
         internal int AddGadget(Gadget gadget, int position)
         {
-            int result = -1;
+            int result ;
             if (position < 0 || position >= gadgets.Count)
             {
                 gadgets.Add(gadget);
