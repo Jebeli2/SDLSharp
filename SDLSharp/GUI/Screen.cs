@@ -6,16 +6,12 @@ using System.Threading.Tasks;
 
 namespace SDLSharp.GUI
 {
-    public class Screen
+    public class Screen : IntuiBox
     {
         private static int nextScreenId;
 
         private readonly List<Window> windows = new();
 
-        private int leftEdge;
-        private int topEdge;
-        private int width;
-        private int height;
         private int mouseY;
         private int mouseX;
         private string? title;
@@ -23,21 +19,13 @@ namespace SDLSharp.GUI
         private bool active;
         private bool mouseHover;
 
-        internal Screen(NewScreen newScreen)
+        internal Screen(NewScreen newScreen) : base()
         {
-            leftEdge = newScreen.LeftEdge;
-            topEdge = newScreen.TopEdge;
-            width = newScreen.Width;
-            height = newScreen.Height;
+            SetDimensions(newScreen.LeftEdge, newScreen.TopEdge, newScreen.Width, newScreen.Height);
             defaultTitle = newScreen.DefaultTitle;
             ScreenId = ++nextScreenId;
         }
         public int ScreenId { get; internal set; }
-
-        public int LeftEdge => leftEdge;
-        public int TopEdge => topEdge;
-        public int Width => width;
-        public int Height => height;
         public int MouseX => mouseX;
         public int MouseY => mouseY;
         public bool Active => active;
@@ -53,15 +41,18 @@ namespace SDLSharp.GUI
             windows.Remove(window);
         }
 
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
+        public override void Render(SDLRenderer gfx, IGuiRenderer gui)
         {
-            renderer.RenderScreen(gfx, this, leftEdge, topEdge);
-            foreach (Window window in windows) { window.Render(gfx, renderer); }
+            gui.RenderScreen(gfx,this,LeftEdge,TopEdge);
+            foreach(Window win in windows)
+            {
+                win.Render(gfx, gui);
+            }
         }
+
         internal void UpdateScreenSize(int width, int height)
         {
-            this.width = width;
-            this.height = height;
+            SetSize(width, height);
             foreach (Window window in windows)
             {
                 if (window.IsMaximized)
@@ -71,10 +62,9 @@ namespace SDLSharp.GUI
                 }
             }
         }
-
-        internal void Invalidate()
+        protected override void OnInvalidate()
         {
-            foreach(Window window in windows)
+            foreach (Window window in windows)
             {
                 window.Invalidate();
             }
@@ -94,15 +84,10 @@ namespace SDLSharp.GUI
             this.mouseHover = mouseHover;
         }
 
-        internal bool Contains(int x, int y)
-        {
-            return x >= leftEdge && y >= topEdge && x - leftEdge <= width && y - topEdge <= height;
-        }
-
         internal Window? FindWindow(int x, int y)
         {
-            x -= leftEdge;
-            y -= topEdge;
+            x -= LeftEdge;
+            y -= TopEdge;
             for (int i = windows.Count - 1; i >= 0; i--)
             {
                 Window win = windows[i];

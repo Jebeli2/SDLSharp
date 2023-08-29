@@ -28,5 +28,9 @@
         internal Action<bool>? CheckedStateChangedAction { get; set; }
         internal string? Format { get; set; }
 
+        internal void Invalidate()
+        {
+
+        }
     }
 }

@@ -108,7 +108,7 @@ namespace SDLSharp.GUI
 
         public static void EndRequest(Requester req, Window window)
         {
-
+            window.EndRequest(req);
         }
 
         public static void InitRequest(Requester requester, Window window)
@@ -327,7 +327,12 @@ namespace SDLSharp.GUI
                 upGadget = mouseHoverGadget;
                 if (upGadget != null && upGadget == downGadget)
                 {
-                    result |= upGadget.HandleMouseUp(x, y);
+                    Gadget useGadget = upGadget;
+                    result |= useGadget.HandleMouseUp(x, y);
+                    if (useGadget.EndGadget && useGadget.Requester != null && useGadget.Window != null)
+                    {
+                        EndRequest(useGadget.Requester, useGadget.Window);
+                    }
                 }
                 SetSelectedGadget(null);
             }

@@ -7,23 +7,16 @@ using System.Threading.Tasks;
 
 namespace SDLSharp.GUI
 {
-    public class Gadget
+    public class Gadget : IntuiBox
     {
         private static int nextGadgetId;
-        private int leftEdge;
-        private int topEdge;
-        private int width;
-        private int height;
-        private int borderTop;
-        private int borderLeft;
-        private int borderRight;
-        private int borderBottom;
         private bool enabled = true;
         private bool active;
         private bool mouseHover;
         private bool selected;
         private bool noHighlight;
         private bool toggleSelect;
+        private bool endGadget;
         private GadgetType gadgetType;
         private SysGadgetType sysGadgetType;
         private bool transparentBackground;
@@ -51,7 +44,7 @@ namespace SDLSharp.GUI
         private int textOffsetX;
         private int textOffsetY;
 
-        public Gadget()
+        public Gadget() : base()
         {
             GadgetId = ++nextGadgetId;
             immediate = true;
@@ -60,7 +53,7 @@ namespace SDLSharp.GUI
             SetBorders(1, 1, 1, 1);
         }
 
-        internal Gadget(GadgetKind kind)
+        internal Gadget(GadgetKind kind) : base()
         {
             GadgetId = ++nextGadgetId;
             immediate = true;
@@ -76,18 +69,16 @@ namespace SDLSharp.GUI
 
         internal Action<IGuiRenderer, SDLRenderer, Gadget, int, int>? CustomRenderAction;
 
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer, int offsetX = 0, int offsetY = 0)
+        public override void Render(SDLRenderer gfx, IGuiRenderer gui)
         {
-            //Rectangle clip = GetBounds();
-            //clip.Offset(offsetX, offsetY);
-            //gfx.PushClip(clip);
-            RenderGadget(gfx, renderer, offsetX, offsetY);
-            //gfx.PopClip();
-        }
-
-        private void RenderGadget(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
-        {
-            renderer.RenderGadget(gfx, this, offsetX, offsetY);
+            if (window != null && window.SuperBitmap)
+            {
+                gui.RenderGadget(gfx, this, -window.LeftEdge, -window.TopEdge);
+            }
+            else
+            {
+                gui.RenderGadget(gfx, this, 0, 0);
+            }
         }
         public int GadgetId { get; internal set; }
 
@@ -133,58 +124,6 @@ namespace SDLSharp.GUI
             get => sysGadgetType;
             internal set => sysGadgetType = value;
         }
-
-        public int LeftEdge
-        {
-            get => leftEdge;
-            set
-            {
-                if (leftEdge != value)
-                {
-                    leftEdge = value;
-                    //CheckAutoFlags();
-                }
-            }
-        }
-
-        public int TopEdge
-        {
-            get => topEdge;
-            set
-            {
-                if (topEdge != value)
-                {
-                    topEdge = value;
-                    //CheckAutoFlags();
-                }
-            }
-        }
-
-        public int Width
-        {
-            get => width;
-            set
-            {
-                if (width != value)
-                {
-                    width = value;
-                    //CheckAutoFlags();
-                }
-            }
-        }
-
-        public int Height
-        {
-            get => height;
-            set
-            {
-                if (height != value)
-                {
-                    height = value;
-                    //CheckAutoFlags();
-                }
-            }
-        }
         public bool TransparentBackground
         {
             get => transparentBackground;
@@ -222,10 +161,13 @@ namespace SDLSharp.GUI
 
         internal void CheckAutoFlags()
         {
-            if (topEdge < 0) { relBottom = true; }
-            if (leftEdge < 0) { relRight = true; }
-            if (width <= 0) { relWidth = true; }
-            if (height <= 0) { relHeight = true; }
+            if (TopEdge < 0)
+            {
+                relBottom = true;
+            }
+            if (LeftEdge < 0) { relRight = true; }
+            if (Width <= 0) { relWidth = true; }
+            if (Height <= 0) { relHeight = true; }
         }
 
         public bool IsBorderGadget => leftBorder || topBorder || rightBorder || bottomBorder;
@@ -306,6 +248,11 @@ namespace SDLSharp.GUI
             get => !enabled;
             set => enabled = !value;
         }
+        public bool EndGadget
+        {
+            get => endGadget;
+            set => endGadget = value;
+        }
         public bool Active => active;
         public bool MouseHover => mouseHover;
 
@@ -340,52 +287,42 @@ namespace SDLSharp.GUI
         public bool IsCustomGadget => gadgetType == GadgetType.CustomGadget;
         public bool IsIntegerGadget => gadgetType == GadgetType.StrGadget && longInt;
         public Window? Window => window;
+        public Requester? Requester => requester;
         internal PropInfo? PropInfo => propInfo;
         internal StringInfo? StringInfo => stringInfo;
         internal GadToolsInfo? GadInfo => gadInfo;
-        internal Rectangle GetBounds()
+
+        public override Rectangle GetBounds()
         {
-            if (bounds == null)
-            {
-                bounds = CalculateBounds();
-            }
+            bounds ??= CalculateBounds();
             return bounds.Value;
         }
 
-        internal Rectangle GetInnerBounds()
+        protected override void OnInvalidate()
         {
-            Rectangle rect = GetBounds();
-            rect.X += borderLeft;
-            rect.Y += borderTop;
-            rect.Width -= (borderLeft + borderRight);
-            rect.Height -= (borderTop + borderBottom);
-            return rect;
-        }
-
-        internal void SetBorders(int left, int top, int right, int bottom)
-        {
-            borderLeft = left;
-            borderTop = top;
-            borderRight = right;
-            borderBottom = bottom;
-        }
-
-        internal void InvalidateBounds()
-        {
-            bounds = null;
             propInfo?.Invalidate();
             stringInfo?.Invalidate();
+            gadInfo?.Invalidate();
+            window?.InvalidateFromGadget();
+        }
+
+        protected internal override void InvalidateBounds()
+        {
+            bounds = null;
+            base.InvalidateBounds();
         }
 
         internal void SetWindow(Window window)
         {
             this.window = window;
+            InvalidateBounds();
         }
 
         internal void SetRequester(Requester requester)
         {
             this.requester = requester;
             window = this.requester.Window;
+            InvalidateBounds();
         }
 
         internal Gadget? FindNextGadget()
@@ -452,18 +389,13 @@ namespace SDLSharp.GUI
             }
             return bounds;
         }
-
-        internal bool Contains(int x, int y)
-        {
-            return GetBounds().Contains(x, y);
-        }
         internal void SetActive(bool active)
         {
             if (this.active != active)
             {
                 SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(active ? "activated" : "deactivated")}");
                 this.active = active;
-                window?.Invalidate();
+                window?.InvalidateFromGadget();
             }
         }
 
@@ -472,7 +404,7 @@ namespace SDLSharp.GUI
             if (this.mouseHover != mouseHover)
             {
                 this.mouseHover = mouseHover;
-                window?.Invalidate();
+                window?.InvalidateFromGadget();
             }
         }
 
@@ -485,14 +417,14 @@ namespace SDLSharp.GUI
                     this.selected = !this.selected;
                     SDLLog.Verbose(LogCategory.APPLICATION, $"{this} toggle {(this.selected ? "selected" : "deselected")}");
                 }
-                window?.Invalidate();
+                window?.InvalidateFromGadget();
             }
             else if (this.selected != selected)
             {
                 this.selected = selected;
                 if (!this.selected) { propInfo?.HandleDeselection(); }
                 SDLLog.Verbose(LogCategory.APPLICATION, $"{this} {(this.selected ? "selected" : "deselected")}");
-                window?.Invalidate();
+                window?.InvalidateFromGadget();
             }
         }
 
@@ -506,7 +438,7 @@ namespace SDLSharp.GUI
                 propInfo.VertPot = vertPot;
                 propInfo.HorizBody = horizBody;
                 propInfo.VertBody = vertBody;
-                window?.Invalidate();
+                window?.InvalidateFromGadget();
             }
         }
 
@@ -524,7 +456,7 @@ namespace SDLSharp.GUI
                 result |= stringInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
             }
             if (immediate) { RaiseGadgetDown(); result |= true; }
-            if (result) { window?.Invalidate(); }
+            if (result) { window?.InvalidateFromGadget(); }
             return result;
         }
         internal bool HandleMouseUp(int x, int y)
@@ -541,7 +473,7 @@ namespace SDLSharp.GUI
                 result |= stringInfo.HandleMouseUp(bounds, x, y);
             }
             if (RelVerify) { RaiseGadgetUp(); result |= true; }
-            if (result) { window?.Invalidate(); }
+            if (result) { window?.InvalidateFromGadget(); }
             return result;
         }
 
@@ -558,7 +490,7 @@ namespace SDLSharp.GUI
                 Rectangle bounds = GetBounds();
                 result |= stringInfo.HandleMouseMove(bounds, x, y);
             }
-            if (result) { window?.Invalidate(); }
+            if (result) { window?.InvalidateFromGadget(); }
             return result;
         }
 
@@ -568,7 +500,7 @@ namespace SDLSharp.GUI
             if (result == ActionResult.None)
             {
                 result |= stringInfo?.HandleKeyDown(e) ?? ActionResult.None;
-                if (result != ActionResult.None) { window?.Invalidate(); }
+                if (result != ActionResult.None) { window?.InvalidateFromGadget(); }
             }
             return result;
         }
@@ -578,7 +510,7 @@ namespace SDLSharp.GUI
             if (result == ActionResult.None)
             {
                 result |= stringInfo?.HandleKeyUp(e) ?? ActionResult.None;
-                if (result != ActionResult.None) { window?.Invalidate(); }
+                if (result != ActionResult.None) { window?.InvalidateFromGadget(); }
             }
             return result;
         }
@@ -587,7 +519,7 @@ namespace SDLSharp.GUI
         {
             bool result = false;
             result |= stringInfo?.HandleTextInput(e) ?? false;
-            if (result) { window?.Invalidate(); }
+            if (result) { window?.InvalidateFromGadget(); }
             return result;
         }
         internal void RaiseGadgetDown()

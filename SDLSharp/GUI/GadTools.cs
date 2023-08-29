@@ -41,7 +41,7 @@
         {
             switch (kind)
             {
-                case GadgetKind.Button: return CreateButton(leftEdge, topEdge, width, height, text, icon, bgColor, disabled, selected, toggleSelect, clickAction);
+                case GadgetKind.Button: return CreateButton(leftEdge, topEdge, width, height, text, icon, bgColor, disabled, selected, toggleSelect, endGadget, clickAction);
                 case GadgetKind.Checkbox: return CreateCheckbox(leftEdge, topEdge, width, height, text, _cheked, checkedStateChangedAction, scaled);
                 case GadgetKind.Text: return CreateText(leftEdge, topEdge, width, height, text);
                 case GadgetKind.Number: return CreateNumber(leftEdge, topEdge, width, height, intValue, text ?? "{0}");
@@ -77,6 +77,7 @@
             bool disabled,
             bool selected,
             bool toggleSelect,
+            bool endGadget,
             Action? clickAction
         )
         {
@@ -91,7 +92,8 @@
                 BackgroundColor = bgColor ?? Color.Empty,
                 Disbled = disabled,
                 Selected = selected,
-                ToggleSelect = toggleSelect
+                ToggleSelect = toggleSelect,
+                EndGadget = endGadget
             };
             if (clickAction != null)
             {

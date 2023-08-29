@@ -5,24 +5,12 @@
     using System.Drawing;
     using System.Text;
 
-    public class Window
+    public class Window : IntuiBox
     {
         private static int nextWindowId;
 
-        private int leftEdge;
-        private int topEdge;
-        private int width;
-        private int height;
         private int mouseY;
         private int mouseX;
-        private int minWidth;
-        private int minHeight;
-        private int maxWidth;
-        private int maxHeight;
-        private int borderTop;
-        private int borderLeft;
-        private int borderRight;
-        private int borderBottom;
         private string? title;
         private Screen screen;
         private readonly List<Gadget> gadgets = new();
@@ -58,19 +46,14 @@
         private int oldTopEdge;
         private int oldWidth;
         private int oldHeight;
-        internal Window(NewWindow newWindow, Screen wbScreen)
+        internal Window(NewWindow newWindow, Screen wbScreen) : base()
         {
             WindowId = ++nextWindowId;
-            leftEdge = newWindow.LeftEdge;
-            topEdge = newWindow.TopEdge;
-            width = newWindow.Width;
-            height = newWindow.Height;
+            SetDimensions(newWindow.LeftEdge, newWindow.TopEdge, newWindow.Width, newWindow.Height);
             title = newWindow.Title;
             screen = newWindow.Screen ?? wbScreen;
-            minWidth = newWindow.MinWidth;
-            minHeight = newWindow.MinHeight;
-            maxWidth = newWindow.MaxWidth;
-            maxHeight = newWindow.MaxHeight;
+            SetMinSize(newWindow.MinWidth, newWindow.MinHeight);
+            SetMaxSize(newWindow.MaxWidth, newWindow.MaxHeight);
             superBitMap = newWindow.SuperBitmap;
             closeable = newWindow.Closing;
             dragable = newWindow.Dragging;
@@ -81,10 +64,7 @@
             minimizable = newWindow.Minimizing;
             if (!borderless)
             {
-                borderLeft = 4;
-                borderRight = HasRightBar ? sysGadgetWidth : 4;
-                borderBottom = HasBottomBar ? sysGadgetHeight : 4;
-                borderTop = HasTitleBar ? 28 : 4;
+                SetBorders(4, HasTitleBar ? 28 : 4, HasRightBar ? sysGadgetWidth : 4, HasBottomBar ? sysGadgetHeight : 4);
             }
             screen.AddWindow(this);
             InitSysGadgets();
@@ -97,23 +77,10 @@
         public event EventHandler<EventArgs>? WindowClose;
 
         public int WindowId { get; internal set; }
-        public int LeftEdge => leftEdge;
-        public int TopEdge => topEdge;
-        public int Width => width;
-        public int Height => height;
         public int MouseX => mouseX;
         public int MouseY => mouseY;
         public string? Title => title;
         public Screen Screen => screen;
-        public int MinWidth => minWidth;
-        public int MinHeight => minHeight;
-        public int MaxWidth => maxWidth;
-        public int MaxHeight => maxHeight;
-
-        public int BorderLeft => borderLeft;
-        public int BorderTop => borderTop;
-        public int BorderRight => borderRight;
-        public int BorderBottom => borderBottom;
         public bool Active => active;
         public bool Borderless => borderless;
         public bool MouseHover => mouseHover;
@@ -158,7 +125,7 @@
             {
                 requests.Add(req);
                 inRequest = true;
-                Invalidate();
+                OnInvalidate();
                 return true;
             }
             return false;
@@ -172,7 +139,7 @@
                 {
                     inRequest = false;
                 }
-                Invalidate();
+                OnInvalidate();
             }
         }
         internal void SetBounds(Rectangle bounds)
@@ -181,24 +148,13 @@
         }
         internal void SetBounds(int x, int y, int w, int h)
         {
-            leftEdge = x;
-            topEdge = y;
-            width = w;
-            height = h;
-        }
-        internal Rectangle GetBounds()
-        {
-            return new Rectangle(screen.LeftEdge + leftEdge, screen.TopEdge + topEdge, width, height);
+            SetDimensions(x, y, w, h);
         }
 
-        internal Rectangle GetInnerBounds()
+
+        public override Rectangle GetBounds()
         {
-            Rectangle rect = GetBounds();
-            rect.X += borderLeft;
-            rect.Y += borderTop;
-            rect.Width -= (borderLeft + borderRight);
-            rect.Height -= (borderTop + borderBottom);
-            return rect;
+            return new Rectangle(screen.LeftEdge + LeftEdge, screen.TopEdge + TopEdge, Width, Height);
         }
 
         internal void SetActive(bool active)
@@ -218,10 +174,6 @@
                 this.mouseHover = mouseHover;
                 valid = false;
             }
-        }
-        internal bool Contains(int x, int y)
-        {
-            return x >= leftEdge && y >= topEdge && x - leftEdge <= width && y - topEdge <= height;
         }
         internal void RaiseWindowClose()
         {
@@ -261,7 +213,7 @@
             return null;
         }
 
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
+        public override void Render(SDLRenderer gfx, IGuiRenderer gui)
         {
             if (superBitMap)
             {
@@ -270,7 +222,7 @@
                     CheckBitmap(gfx);
                     gfx.PushTarget(bitmap);
                     gfx.ClearScreen(Color.FromArgb(0, 0, 0, 0));
-                    RenderWindow(gfx, renderer, -leftEdge, -topEdge);
+                    RenderWindow(gfx, gui, -LeftEdge, -TopEdge);
                     gfx.PopTarget();
                     valid = true;
                 }
@@ -283,28 +235,27 @@
                         gfx.DrawTexture(bitmap, src, dst);
                     }
                 }
+
             }
             else
             {
-                RenderWindow(gfx, renderer, 0, 0);
+                RenderWindow(gfx, gui, 0, 0);
             }
         }
 
         private void RenderWindow(SDLRenderer gfx, IGuiRenderer renderer, int offsetX, int offsetY)
         {
-            int renderOffsetX = superBitMap ? -leftEdge : 0;
-            int renderOffsetY = superBitMap ? -topEdge : 0;
             renderer.RenderWindow(gfx, this, offsetX, offsetY);
             foreach (var gad in gadgets.Where(g => g.IsBorderGadget))
             {
-                gad.Render(gfx, renderer, renderOffsetX, renderOffsetY);
+                gad.Render(gfx, renderer);
             }
             Rectangle inner = GetInnerBounds();
             inner.Offset(offsetX, offsetY);
             gfx.PushClip(inner);
             foreach (var gad in gadgets.Where(g => !g.IsBorderGadget))
             {
-                gad.Render(gfx, renderer, renderOffsetX, renderOffsetY);
+                gad.Render(gfx, renderer);
             }
             foreach (var req in requests)
             {
@@ -315,14 +266,14 @@
 
         internal void MoveWindow(int dX, int dY, bool dragging = false)
         {
-            int w = width;
-            int h = height;
+            int w = Width;
+            int h = Height;
             if (maximized)
             {
                 w = oldWidth;
                 h = oldHeight;
             }
-            Rectangle newDim = CheckDimensions(leftEdge + dX, topEdge + dY, w, h);
+            Rectangle newDim = CheckDimensions(screen.Width, screen.Height, LeftEdge + dX, TopEdge + dY, w, h);
             SetBounds(newDim);
             if (dragging)
             {
@@ -334,9 +285,9 @@
 
         internal void SizeWindow(int dX, int dY, bool sizing = false)
         {
-            int w = width + dX;
-            int h = height + dY;
-            Rectangle newDim = CheckDimensions(leftEdge, topEdge, w, h);
+            int w = Width + dX;
+            int h = Height + dY;
+            Rectangle newDim = CheckDimensions(screen.Width, screen.Height, LeftEdge, TopEdge, w, h);
             SetBounds(newDim);
             if (sizing)
             {
@@ -346,29 +297,24 @@
             InvalidateBounds();
         }
 
-        private Rectangle CheckDimensions(int x, int y, int w, int h)
+        protected override void OnInvalidate()
         {
-            int sw = screen.Width;
-            int sh = screen.Height;
-            if (maxWidth > 0 && w > maxWidth) { w = maxWidth; }
-            if (maxHeight > 0 && h > maxHeight) { h = maxHeight; }
-            if (w < minWidth) { w = minWidth; }
-            if (h < minHeight) { h = minHeight; }
-            if (x < 0) { x = 0; }
-            if (y < 0) { y = 0; }
-            if (x + w > sw) { x -= (x + w) - sw; }
-            if (y + h > sh) { y -= (y + h) - sh; }
-            return new Rectangle(x, y, w, h);
+            valid = false;
         }
 
-        internal void InvalidateBounds()
+        internal void InvalidateFromGadget()
         {
-            Invalidate();
+            valid = false;
+        }
+
+        protected internal override void InvalidateBounds()
+        {
+            base.InvalidateBounds();
             foreach (Gadget gadget in gadgets)
             {
                 gadget.InvalidateBounds();
             }
-            foreach(Requester requester in requests)
+            foreach (Requester requester in requests)
             {
                 requester.InvalidateBounds();
             }
@@ -500,10 +446,10 @@
         {
             if (IsRestored)
             {
-                oldLeftEdge = leftEdge;
-                oldTopEdge = topEdge;
-                oldWidth = width;
-                oldHeight = height;
+                oldLeftEdge = LeftEdge;
+                oldTopEdge = TopEdge;
+                oldWidth = Width;
+                oldHeight = Height;
             }
             SetMaximized();
             SetBounds(0, 0, screen.Width, screen.Height);
@@ -521,10 +467,10 @@
         {
             if (IsRestored)
             {
-                oldLeftEdge = leftEdge;
-                oldTopEdge = topEdge;
-                oldWidth = width;
-                oldHeight = height;
+                oldLeftEdge = LeftEdge;
+                oldTopEdge = TopEdge;
+                oldWidth = Width;
+                oldHeight = Height;
             }
             SetMinimized();
             InvalidateBounds();
@@ -581,10 +527,6 @@
             return result;
         }
 
-        internal void Invalidate()
-        {
-            valid = false;
-        }
         internal void Close()
         {
             bitmap?.Dispose();
@@ -635,7 +577,7 @@
 
         private void CheckBitmap(SDLRenderer renderer)
         {
-            if (bitmap == null || bitmap.Width < width || bitmap.Height < height)
+            if (bitmap == null || bitmap.Width < Width || bitmap.Height < Height)
             {
                 InitBitmap(renderer);
             }
@@ -643,7 +585,7 @@
         private void InitBitmap(SDLRenderer renderer)
         {
             bitmap?.Dispose();
-            bitmap = renderer.CreateTexture(GetWindowName(), width, height);
+            bitmap = renderer.CreateTexture(GetWindowName(), Width, Height);
             if (bitmap != null) { bitmap.BlendMode = BlendMode.Blend; }
         }
 

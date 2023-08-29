@@ -7,52 +7,16 @@ using System.Threading.Tasks;
 
 namespace SDLSharp.GUI
 {
-    public class Requester
+    public class Requester : IntuiBox
     {
-        private int leftEdge;
-        private int topEdge;
-        private int width;
-        private int height;
-        private int borderTop;
-        private int borderLeft;
-        private int borderRight;
-        private int borderBottom;
         private bool pointRel;
         private Window? window;
         private readonly List<Gadget> gadgets = new();
 
-        public Requester()
+        public Requester() : base()
         {
-            borderTop = 4;
-            borderLeft = 4;
-            borderRight = 4;
-            borderBottom = 4;
+            SetBorders(4, 4, 4, 4);
         }
-        public int LeftEdge
-        {
-            get => leftEdge;
-            set => leftEdge = value;
-        }
-        public int TopEdge
-        {
-            get => topEdge;
-            set => topEdge = value;
-        }
-        public int Width
-        {
-            get => width;
-            set => width = value;
-        }
-        public int Height
-        {
-            get => height;
-            set => height = value;
-        }
-        public int BorderLeft => borderLeft;
-        public int BorderTop => borderTop;
-        public int BorderRight => borderRight;
-        public int BorderBottom => borderBottom;
-
         public bool PointRel
         {
             get => pointRel;
@@ -60,7 +24,8 @@ namespace SDLSharp.GUI
         }
         public Window? Window => window;
 
-        internal void InvalidateBounds()
+
+        protected internal override void InvalidateBounds()
         {
             foreach (Gadget gadget in gadgets)
             {
@@ -70,27 +35,19 @@ namespace SDLSharp.GUI
         internal void SetWindow(Window window)
         {
             this.window = window;
+            foreach (Gadget gadget in gadgets)
+            {
+                gadget.SetWindow(window);
+            }
         }
-
-        internal void SetBounds(Rectangle bounds)
-        {
-            SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
-        }
-        internal void SetBounds(int x, int y, int w, int h)
-        {
-            leftEdge = x;
-            topEdge = y;
-            width = w;
-            height = h;
-        }
-        internal Rectangle GetBounds()
+        public override Rectangle GetBounds()
         {
             if (window != null)
             {
                 if (pointRel)
                 {
                     Rectangle win = window.GetInnerBounds();
-                    Rectangle res = new Rectangle(win.X + win.Width / 2 - width / 2, win.Y + win.Height / 2 - height / 2, width, height);
+                    Rectangle res = new Rectangle(win.X + win.Width / 2 - Width / 2, win.Y + win.Height / 2 - Height / 2, Width, Height);
                     if (res.Right > win.Right)
                     {
                         res.X -= res.Right - win.Right;
@@ -101,36 +58,17 @@ namespace SDLSharp.GUI
                         res.Y -= res.Bottom - win.Bottom;
                         if (res.Y < 0) { res.Y = 0; }
                     }
-                    leftEdge = Math.Max(0, res.X - win.Left);
-                    topEdge = Math.Min(0, res.Y - win.Top);
+                    LeftEdge = Math.Max(0, res.X - win.Left);
+                    TopEdge = Math.Max(0, res.Y - win.Top);
                     return res;
                 }
                 else
                 {
-                    new Rectangle(window.LeftEdge + window.BorderLeft + leftEdge, window.TopEdge + window.BorderTop + topEdge, width, height);
+                    return new Rectangle(window.LeftEdge + window.BorderLeft + LeftEdge, window.TopEdge + window.BorderTop + TopEdge, Width, Height);
                 }
             }
-            return new Rectangle(leftEdge, topEdge, width, height);
+            return new Rectangle(LeftEdge, TopEdge, Width, Height);
         }
-
-        internal Rectangle GetInnerBounds()
-        {
-            Rectangle rect = GetBounds();
-            rect.X += borderLeft;
-            rect.Y += borderTop;
-            rect.Width -= (borderLeft + borderRight);
-            rect.Height -= (borderTop + borderBottom);
-            return rect;
-        }
-
-        internal bool Contains(int x, int y)
-        {
-            return GetBounds().Contains(x, y);
-        }
-        //internal void AddGadget(Gadget gadget)
-        //{
-        //    gadgets.Add(gadget);
-        //}
 
         internal int AddGadget(Gadget gadget, int position)
         {
@@ -168,25 +106,21 @@ namespace SDLSharp.GUI
             return null;
         }
 
-        internal void Render(SDLRenderer gfx, IGuiRenderer renderer)
+        public override void Render(SDLRenderer gfx, IGuiRenderer gui)
         {
             if (window != null)
             {
                 if (window.SuperBitmap)
                 {
-                    renderer.RenderRequester(gfx, this, -window.LeftEdge, -window.TopEdge);
-                    foreach (Gadget gadget in gadgets)
-                    {
-                        gadget.Render(gfx, renderer, -window.LeftEdge, -window.TopEdge);
-                    }
+                    gui.RenderRequester(gfx, this, -window.LeftEdge, -window.TopEdge);
                 }
                 else
                 {
-                    renderer.RenderRequester(gfx, this, 0, 0);
-                    foreach (Gadget gadget in gadgets)
-                    {
-                        gadget.Render(gfx, renderer);
-                    }
+                    gui.RenderRequester(gfx, this, 0, 0);
+                }
+                foreach (Gadget gadget in gadgets)
+                {
+                    gadget.Render(gfx, gui);
                 }
             }
         }
