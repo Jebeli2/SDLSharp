@@ -12,6 +12,7 @@ namespace SDLSharp.GUI
         public int TopEdge { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public SDLFont? Font { get; set; }
         public string? DefaultTitle { get; set; }   
 
     }

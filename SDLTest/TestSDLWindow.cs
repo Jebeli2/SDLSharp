@@ -15,8 +15,7 @@
 
         private const string DC = @"D:\Users\jebel\Music\iTunes\iTunes Media\Music\Alt-J\Relaxer\05 Deadcrush.mp3";
 
-        private Icons icon = Icons.MIN;
-        private double lastTime;
+        private SDLFont? font;
         private Window? window1;
         private Window? window2;
 
@@ -41,13 +40,16 @@
         {
             base.OnHandleCreated(e);
             ContentManager.AddResourceManager(Properties.Resources.ResourceManager);
+            font = LoadFont(nameof(Properties.Resources.LiberationSans_Regular), 16);
             GetApplet<BackgroundImage>().Image = LoadTexture(nameof(Properties.Resources.badlands));
             GetApplet<MusicPlayer>().PlayNow(nameof(Properties.Resources.jesu_joy_of_mans_desiring));
             GetApplet<MusicPlayer>().AddToPlayList(DC, "Deathcrush");
+            var icons = GetApplet<IconShow>();
             var boxes = GetApplet<RainingBoxesApp>();
             var music = GetApplet<MusicVisualizer>();
             var lines = GetApplet<LinesApp>();
             var gui = GetApplet<GUISystem>();
+            icons.RenderPrio = 2000;
             boxes.RenderPrio = -500;
             music.RenderPrio = -600;
             lines.RenderPrio = -750;
@@ -69,37 +71,7 @@
         {
             base.OnClose(e);
             CloseAllWindows();
-        }
-
-        private void NextIcon()
-        {
-            icon++;
-            if (icon > Icons.MAX)
-            {
-                icon = Icons.MIN;
-                return;
-            }
-            while (!Enum.IsDefined(icon))
-            {
-                icon++;
-            }
-        }
-
-        protected override void OnUpdate(SDLWindowUpdateEventArgs e)
-        {
-            base.OnUpdate(e);
-
-            if (e.TotalTime - lastTime > 1000)
-            {
-                lastTime = e.TotalTime;
-                NextIcon();
-            }
-        }
-        protected override void OnPaint(SDLWindowPaintEventArgs e)
-        {
-            base.OnPaint(e);
-            e.Renderer.DrawIcon(icon, Width / 2, Height / 2, Color.White);
-            e.Renderer.DrawText(null, icon.ToString(), Width / 2, Height / 2 + 20, Color.White);
+            font?.Dispose();
         }
 
         protected override void OnKeyUp(SDLKeyEventArgs e)
@@ -124,31 +96,11 @@
 
         private void CloseAllWindows()
         {
-            if (window1 != null)
-            {
-                Intuition.CloseWindow(window1);
-                window1 = null;
-            }
-            if (window2 != null)
-            {
-                Intuition.CloseWindow(window2);
-                window2 = null;
-            }
-            if (winButTest != null)
-            {
-                Intuition.CloseWindow(winButTest);
-                winButTest = null;
-            }
-            if (winPropTest != null)
-            {
-                Intuition.CloseWindow(winPropTest);
-                winPropTest = null;
-            }
-            if (winStrTest != null)
-            {
-                Intuition.CloseWindow(winStrTest);
-                winStrTest = null;
-            }
+            Intuition.CloseWindow(ref window1);
+            Intuition.CloseWindow(ref window2);
+            Intuition.CloseWindow(ref winButTest);
+            Intuition.CloseWindow(ref winPropTest);
+            Intuition.CloseWindow(ref winStrTest);
         }
         private void GoToTitle()
         {
@@ -166,7 +118,8 @@
                 Sizing = false,
                 Dragging = false,
                 Closing = false,
-                BackDrop = true
+                BackDrop = true,
+                Font = font
             });
 
 
@@ -189,14 +142,10 @@
                 SuperBitmap = true,
                 Sizing = true,
                 Dragging = true,
-                Closing = true
+                Closing = true,
+                Font = font,
+                CloseAction = GoToTitle
             });
-            window2.WindowClose += Window2_WindowClose;
-        }
-
-        private void Window2_WindowClose(object? sender, EventArgs e)
-        {
-            GoToTitle();
         }
 
         private void ShowButtonTest()
@@ -224,7 +173,10 @@
                     selected: GetApplet<LinesApp>().Enabled, clickAction: () => { GetApplet<LinesApp>().Enabled ^= true; }));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 90, topEdge: 250, width: 30, height: 30, icon: Icons.BOX, toggleSelect: true,
                     selected: GetApplet<RainingBoxesApp>().Enabled, clickAction: () => { GetApplet<RainingBoxesApp>().Enabled ^= true; }));
-                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 130, topEdge: 250, width: 30, height: 30, icon: Icons.HELP,
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 130, topEdge: 250, width: 30, height: 30, icon: Icons.IMAGE, toggleSelect: true,
+                    selected: GetApplet<IconShow>().Enabled, clickAction: () => { GetApplet<IconShow>().Enabled ^= true; }));
+
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 170, topEdge: 250, width: 30, height: 30, icon: Icons.HELP,
                     clickAction: () =>
                     {
                         if (winButTest != null)
@@ -253,8 +205,9 @@
                     Dragging = true,
                     Closing = true,
                     Maximizing = true,
+                    Font = font,
+                    CloseAction = () => { Intuition.CloseWindow(ref winButTest); }
                 });
-                winButTest.WindowClose += WinButTest_WindowClose;
 
                 List<Gadget> reqGads = new();
                 reqGads.Add(GadTools.CreateGadget(GadgetKind.Text, leftEdge: 10, topEdge: 10, width: -20, height: 20, text: "Question?"));
@@ -266,12 +219,6 @@
                 Intuition.WindowToFront(winButTest);
                 Intuition.ActivateWindow(winButTest);
             }
-        }
-
-        private void WinButTest_WindowClose(object? sender, EventArgs e)
-        {
-            Intuition.CloseWindow(winButTest);
-            winButTest = null;
         }
 
         private void ShowPropTest()
@@ -316,20 +263,15 @@
                     Dragging = true,
                     Closing = true,
                     Maximizing = true,
+                    Font = font,
+                    CloseAction = () => { Intuition.CloseWindow(ref winPropTest); }
                 });
-                winPropTest.WindowClose += WinPropTest_WindowClose;
             }
             else
             {
                 Intuition.WindowToFront(winPropTest);
                 Intuition.ActivateWindow(winPropTest);
             }
-        }
-
-        private void WinPropTest_WindowClose(object? sender, EventArgs e)
-        {
-            Intuition.CloseWindow(winPropTest);
-            winPropTest = null;
         }
 
         private void ShowStrTest()
@@ -359,8 +301,9 @@
                     Dragging = true,
                     Closing = true,
                     Maximizing = true,
+                    Font = font,
+                    CloseAction = () => { Intuition.CloseWindow(ref winStrTest); }
                 });
-                winStrTest.WindowClose += WinStrTest_WindowClose;
             }
             else
             {
@@ -369,10 +312,5 @@
             }
         }
 
-        private void WinStrTest_WindowClose(object? sender, EventArgs e)
-        {
-            Intuition.CloseWindow(winStrTest);
-            winStrTest = null;
-        }
     }
 }

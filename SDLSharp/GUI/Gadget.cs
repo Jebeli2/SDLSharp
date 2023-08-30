@@ -292,6 +292,11 @@ namespace SDLSharp.GUI
         internal StringInfo? StringInfo => stringInfo;
         internal GadToolsInfo? GadInfo => gadInfo;
 
+        protected override SDLFont? GetFont()
+        {
+            return font ?? requester?.Font ?? window?.Font;
+        }
+
         public override Rectangle GetBounds()
         {
             bounds ??= CalculateBounds();

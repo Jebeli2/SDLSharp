@@ -62,6 +62,7 @@
             backDrop = newWindow.BackDrop;
             maximizable = newWindow.Maximizing;
             minimizable = newWindow.Minimizing;
+            font = newWindow.Font;
             if (!borderless)
             {
                 SetBorders(4, HasTitleBar ? 28 : 4, HasRightBar ? sysGadgetWidth : 4, HasBottomBar ? sysGadgetHeight : 4);
@@ -72,6 +73,11 @@
             if (gadgets != null && gadgets.Count > 0)
             {
                 Intuition.AddGList(this, gadgets, -1, gadgets.Count);
+            }
+            Action? closeAction = newWindow.CloseAction;
+            if (closeAction != null)
+            {
+                WindowClose += (o, e) => { closeAction(); };
             }
         }
         public event EventHandler<EventArgs>? WindowClose;
@@ -151,6 +157,10 @@
             SetDimensions(x, y, w, h);
         }
 
+        protected override SDLFont? GetFont()
+        {
+            return font ?? screen.Font;
+        }
 
         public override Rectangle GetBounds()
         {

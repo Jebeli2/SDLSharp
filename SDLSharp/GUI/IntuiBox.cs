@@ -21,11 +21,14 @@
         private int minHeight;
         private int maxWidth;
         private int maxHeight;
+        protected SDLFont? font;
 
         protected IntuiBox()
         {
 
         }
+
+
         public int LeftEdge
         {
             get => leftEdge;
@@ -164,6 +167,24 @@
                     SetMaxSize(maxWidth, value);
                 }
             }
+        }
+
+        public SDLFont? Font
+        {
+            get { return GetFont(); }
+            set
+            {
+                if (font != value)
+                {
+                    font = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        protected virtual SDLFont? GetFont()
+        {
+            return font;
         }
         public virtual Rectangle GetBounds()
         {

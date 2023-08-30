@@ -30,7 +30,7 @@ namespace SDLSharp.GUI
             WindowFillUnFocused = MkColor(43, 230);
             WindowFillFocused = MkColor(45, 230);
             WindowTitleUnFocused = MkColor(220, 160);
-            WindowTitleFocused = MkColor(225, 190);
+            WindowTitleFocused = MkColor(245, 222);
             WindowHeaderGradientTop = MkColor(74, 255);
             WindowHeaderGradientBot = MkColor(48, 255);
             WindowHeaderGradientTopActive = Color.FromArgb(200, 62 + 10, 92 + 10, 154 + 10);
@@ -230,7 +230,7 @@ namespace SDLSharp.GUI
                     DrawBox(renderer, bounds, BorderLight, BorderDark);
                     if (!string.IsNullOrEmpty(window.Title))
                     {
-                        renderer.DrawText(null, window.Title, inner.X, bounds.Y, inner.Width, window.BorderTop, active ? WindowTitleFocused : WindowTitleUnFocused);
+                        renderer.DrawText(window.Font, window.Title, inner.X, bounds.Y, inner.Width, window.BorderTop, active ? WindowTitleFocused : WindowTitleUnFocused);
                     }
                 }
             }
@@ -293,9 +293,9 @@ namespace SDLSharp.GUI
             Color tc = gadget.Enabled ? TextColor : DisabledTextColor;
             if (hasIcon && hasText)
             {
-                Size textSize = gfx.MeasureText(null, gadget.Text);
+                Size textSize = gfx.MeasureText(gadget.Font, gadget.Text);
                 gfx.DrawIcon(gadget.Icon, inner.X, inner.Y, inner.Width / 2 - textSize.Width / 2 - 10, inner.Height, tc, HorizontalAlignment.Right, VerticalAlignment.Center, offset, offset);
-                gfx.DrawText(null, gadget.Text, inner.X, inner.Y, inner.Width, inner.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, gadget.TextOffsetX + offset, gadget.TextOffsetY + offset);
+                gfx.DrawText(gadget.Font, gadget.Text, inner.X, inner.Y, inner.Width, inner.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, gadget.TextOffsetX + offset, gadget.TextOffsetY + offset);
 
             }
             else if (hasIcon)
@@ -304,7 +304,7 @@ namespace SDLSharp.GUI
             }
             else if (hasText)
             {
-                gfx.DrawText(null, gadget.Text, inner.X, inner.Y, inner.Width, inner.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, offset, offset);
+                gfx.DrawText(gadget.Font, gadget.Text, inner.X, inner.Y, inner.Width, inner.Height, tc, HorizontalAlignment.Center, VerticalAlignment.Center, offset, offset);
             }
         }
 
@@ -356,7 +356,7 @@ namespace SDLSharp.GUI
                 int y = inner.Y;
                 int last = buffer.Length;
                 int dispPos = strInfo.DispPos;
-                SDLFont? font = SDLApplication.DefaultFont;
+                SDLFont? font = gadget.Font ?? SDLApplication.DefaultFont;
                 if (font != null)
                 {
                     gfx.PushClip(inner);

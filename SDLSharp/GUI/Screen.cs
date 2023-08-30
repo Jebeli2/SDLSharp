@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace SDLSharp.GUI
         internal Screen(NewScreen newScreen) : base()
         {
             SetDimensions(newScreen.LeftEdge, newScreen.TopEdge, newScreen.Width, newScreen.Height);
+            font = newScreen.Font;
             defaultTitle = newScreen.DefaultTitle;
             ScreenId = ++nextScreenId;
         }
@@ -31,6 +33,7 @@ namespace SDLSharp.GUI
         public bool Active => active;
         public bool MouseHover => mouseHover;
 
+        internal IList<Window> Windows => windows;
         internal void AddWindow(Window window)
         {
             windows.Add(window);
@@ -41,10 +44,15 @@ namespace SDLSharp.GUI
             windows.Remove(window);
         }
 
+        internal void MoveScreen(int dX, int dY, bool dragging = false)
+        {
+            SetDimensions(LeftEdge + dX, TopEdge + dY, Width, Height);
+        }
+
         public override void Render(SDLRenderer gfx, IGuiRenderer gui)
         {
-            gui.RenderScreen(gfx,this,LeftEdge,TopEdge);
-            foreach(Window win in windows)
+            gui.RenderScreen(gfx, this, LeftEdge, TopEdge);
+            foreach (Window win in windows)
             {
                 win.Render(gfx, gui);
             }

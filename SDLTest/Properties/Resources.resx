@@ -133,6 +133,9 @@
   <data name="jesu-joy-of-mans-desiring" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\jesu-joy-of-mans-desiring.mp3;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="LiberationSans-Regular" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\LiberationSans-Regular.ttf;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="swish-11" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\swish-11.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

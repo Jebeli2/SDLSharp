@@ -40,6 +40,11 @@ namespace SDLSharp.GUI
                 gadget.SetWindow(window);
             }
         }
+
+        protected override SDLFont? GetFont()
+        {
+            return font ?? window?.Font;
+        }
         public override Rectangle GetBounds()
         {
             if (window != null)

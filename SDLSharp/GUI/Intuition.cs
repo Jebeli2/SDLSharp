@@ -7,6 +7,10 @@ using System.Xml;
 
 namespace SDLSharp.GUI
 {
+    /// <summary>
+    /// GUI System inspired by Intuition.
+    /// Should behave like "http://amigadev.elowar.com/read/ADCD_2.1/Includes_and_Autodocs_3._guide/node038E.html".
+    /// </summary>
     public static class Intuition
     {
         private static Screen? workbench;
@@ -88,6 +92,12 @@ namespace SDLSharp.GUI
             }
             return result;
         }
+
+        public static void ChangeWindowBox(Window? window, int left, int top, int width, int height)
+        {
+            window?.SetBounds(left, top, width, height);
+        }
+
         public static void CloseScreen(Screen? screen)
         {
             if (screen != null && screens.Contains(screen))
@@ -96,14 +106,38 @@ namespace SDLSharp.GUI
                 if (workbench == screen) { workbench = null; }
             }
         }
+
+        public static void CloseScreen(ref Screen? screen)
+        {
+            CloseScreen(screen);
+            screen = null;
+        }
         public static void CloseWindow(Window? window)
         {
             if (window != null)
             {
+                
                 Screen screen = window.Screen;
                 screen.RemoveWindow(window);
                 window.Close();
             }
+        }
+
+        public static void CloseWindow(ref Window? window)
+        {
+            CloseWindow(window);
+            window = null;
+        }
+
+        public static bool CloseWorkBench()
+        {
+            if (workbench != null && workbench.Windows.Count == 0)
+            {
+                CloseScreen(workbench);
+                workbench = null;
+                return true;
+            }
+            return false;
         }
 
         public static void EndRequest(Requester req, Window window)
@@ -121,6 +155,16 @@ namespace SDLSharp.GUI
             gadget.ModifyProp(flags, horizPot, vertPot, horizBody, vertBody);
         }
 
+        public static void MoveScreen(Screen? screen, int deltaX, int deltaY)
+        {
+            screen?.MoveScreen(deltaX, deltaY);
+        }
+        public static void MoveWindow(Window? window, int deltaX, int deltaY)
+        {
+            window?.MoveWindow(deltaX, deltaY);
+        }
+
+
 
         public static Screen OpenScreen(NewScreen newScreen)
         {
@@ -136,6 +180,11 @@ namespace SDLSharp.GUI
             return window;
         }
 
+        public static Screen OpenWorkBench()
+        {
+            workbench ??= MakeWorkbench();
+            return workbench;
+        }
         public static bool Request(Requester req, Window window)
         {
             if (window.Request(req))

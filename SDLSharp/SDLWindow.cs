@@ -623,6 +623,16 @@
             }
         }
 
+        public SDLFont? LoadFont(string name, int size)
+        {
+            byte[]? data = contentManager.FindContent(name);
+            if (data != null)
+            {
+                return SDLFont.LoadFont(data, name, size);
+            }
+            return null;
+        }
+
         public SDLTexture? LoadTexture(string name)
         {
             byte[]? data = contentManager.FindContent(name);

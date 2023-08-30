@@ -28,5 +28,7 @@ namespace SDLSharp.GUI
         public bool Maximizing { get; set; }
         public bool Minimizing { get; set; }
         public bool BackDrop { get; set; }
+        public SDLFont? Font { get; set; }
+        public Action? CloseAction { get; set; }
     }
 }
