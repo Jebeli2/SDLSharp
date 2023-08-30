@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDLSharp.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -55,6 +56,29 @@ namespace SDLSharp
         public static void FillVertGradient(this SDLRenderer renderer, RectangleF rect, Color top, Color bottom)
         {
             renderer.FillColorRect(rect, top, top, bottom, bottom);
+        }
+
+        public static void DrawSprite(this SDLRenderer renderer, ISprite? sprite, int x, int y)
+        {
+            if (sprite != null)
+            {
+                DrawImage(renderer, sprite.Image, sprite.SourceRect, new Rectangle(x - sprite.OffsetX, y - sprite.OffsetY, sprite.Width, sprite.Height));
+            }
+        }
+
+        public static void DrawImage(this SDLRenderer renderer, IImage? image, Rectangle src, Rectangle dst)
+        {
+            if (image is SDLTexture tex)
+            {
+                renderer.DrawTexture(tex, src, dst);
+            }
+        }
+        public static void DrawImage(this SDLRenderer renderer, IImage? image, int x, int y)
+        {
+            if (image is SDLTexture tex)
+            {
+                renderer.DrawTexture(tex, new Rectangle(x, y, image.Width, image.Height));
+            }
         }
 
     }

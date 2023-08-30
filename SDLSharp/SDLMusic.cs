@@ -9,34 +9,25 @@
     public class SDLMusic : SDLObject
     {
         private readonly string? tempFile;
-        private bool disposedValue;
 
         internal SDLMusic(IntPtr handle, string name, string? tempFile = null)
-            : base(handle, name)
+            : base(handle, name, Content.ContentFlags.Music)
         {
             this.tempFile = tempFile;
             SDLAudio.Track(this);
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void DisposeUnmanaged()
         {
-            if (!disposedValue)
+            SDLAudio.Untrack(this);
+            if (handle != IntPtr.Zero)
             {
-                if (disposing)
-                {
-                    SDLAudio.Untrack(this);
-                }
-                if (handle != IntPtr.Zero)
-                {
-                    SDL_mixer.Mix_FreeMusic(handle);
-                }
-                if (tempFile != null)
-                {
-                    File.Delete(tempFile);
-                }
-                disposedValue = true;
+                SDL_mixer.Mix_FreeMusic(handle);
             }
-            base.Dispose(disposing);
+            if (tempFile != null)
+            {
+                File.Delete(tempFile);
+            }
         }
     }
 }

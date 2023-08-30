@@ -27,7 +27,6 @@
         private int fontKerning;
         private string familyName;
         private string styleName;
-        private bool disposedValue;
 
         internal SDLFont(IntPtr handle, int ySize)
             : this(handle, ySize, IntPtr.Zero)
@@ -35,7 +34,7 @@
 
         }
         internal SDLFont(IntPtr handle, int ySize, IntPtr mem)
-            : base(handle, BuildFontName(handle, ySize))
+            : base(handle, BuildFontName(handle, ySize), Content.ContentFlags.Font)
         {
             fontId = ++nextFontId;
             this.mem = mem;
@@ -134,25 +133,17 @@
             return font;
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void DisposeUnmanaged()
         {
-            if (!disposedValue)
+            fontTracker.Untrack(this);
+            if (handle != IntPtr.Zero)
             {
-                if (disposing)
-                {
-                    fontTracker.Untrack(this);
-                }
-                if (handle != IntPtr.Zero)
-                {
-                    TTF_CloseFont(handle);
-                }
-                if (mem != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(mem);
-                }
-                disposedValue = true;
+                TTF_CloseFont(handle);
             }
-            base.Dispose(disposing);
+            if (mem != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(mem);
+            }
         }
 
     }

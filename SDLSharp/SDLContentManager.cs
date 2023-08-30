@@ -6,19 +6,27 @@
     using System.Text;
     using System.Threading.Tasks;
     using System.Resources;
-    public class SDLContentManager
+    using SDLSharp.Content;
+
+    public class SDLContentManager : IContentManager
     {
         private readonly SDLWindow window;
         private bool allowFromFileSystem = true;
         private string saveDirectory;
         private readonly List<ResourceManager> resourceManagers = new();
+        private readonly List<Content.Flare.ModManager> modManagers = new();
         private readonly List<string> knownNames = new();
+        private readonly List<IResLoader> loaders = new();
 
 
         internal SDLContentManager(SDLWindow window)
         {
             this.window = window;
             saveDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), SDLApplication.AppName);
+            AddResourceManager(Properties.Resources.ResourceManager);
+            RegisterResourceLoader(new ImageLoader(this.window));
+            RegisterResourceLoader(new MusicLoader());
+            RegisterResourceLoader(new SoundLoader());
 
         }
         public string SaveDirectory => saveDirectory;
@@ -32,7 +40,47 @@
             }
         }
 
+        public void AddModPath(string path)
+        {
+            var modManager = new Content.Flare.ModManager(path);
+            if (modManager.ModCount > 0)
+            {
+                modManagers.Add(modManager);
+            }
+        }
 
+        public void RegisterResourceLoader<T>(IResourceLoader<T> loader) where T : IResource
+        {
+            loaders.Add(loader);
+        }
+
+        public T? Load<T>(string name) where T : IResource
+        {
+            byte[]? data = FindContent(name);
+            foreach (var loader in GetResourceLoaders<T>())
+            {
+                loader.ContentManager = this;
+                T? result = loader.Load(name, data);
+                if (result != null) return result;
+            }
+            if (data == null)
+            {
+                SDLLog.Error(LogCategory.APPLICATION, $"No resource found for '{name}'");
+            }
+            else
+            {
+                SDLLog.Error(LogCategory.APPLICATION, $"No loader found for '{name}'");
+            }
+            return default;
+        }
+
+        private IEnumerable<IResourceLoader<T>> GetResourceLoaders<T>() where T : IResource
+        {
+            foreach (var loader in loaders)
+            {
+                if (loader is IResourceLoader<T> resourceLoader) { yield return resourceLoader; }
+            }
+        }
         public byte[]? FindContent(string? name)
         {
             byte[]? data = null;
@@ -40,6 +88,7 @@
             {
                 if (data == null && allowFromFileSystem) { data = FindInFileSystem(name); }
                 if (data == null) { data = FindInResManagers(name); }
+                if (data == null) { data = FindInModManagers(name); }
                 if (data == null) { SDLLog.Warn(LogCategory.APPLICATION, $"Could not find resource '{name}'"); }
             }
             return data;
@@ -71,6 +120,19 @@
                     byte[] umsData = new byte[ums.Length];
                     ums.Read(umsData, 0, umsData.Length);
                     return umsData;
+                }
+            }
+            return null;
+        }
+
+        private byte[]? FindInModManagers(string name)
+        {
+            foreach (var modManager in modManagers)
+            {
+                string? fileName = modManager.Locate(name);
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    return FindInFileSystem(fileName);
                 }
             }
             return null;

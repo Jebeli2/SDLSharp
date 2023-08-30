@@ -101,6 +101,7 @@
 
         protected SDLTexture? LoadTexture(string name)
         {
+            //return window?.ContentManager.Load<SDLTexture>(name);
             return window?.LoadTexture(name);
         }
 

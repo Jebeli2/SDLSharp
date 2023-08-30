@@ -443,7 +443,7 @@
             }
         }
 
-        private void ClearApplets()
+        protected void ClearApplets()
         {
             foreach (SDLApplet applet in applets)
             {
@@ -635,14 +635,12 @@
 
         public SDLTexture? LoadTexture(string name)
         {
-            byte[]? data = contentManager.FindContent(name);
-            return renderer.LoadTexture(name, data);
+            return contentManager.Load<SDLTexture>(name);
         }
 
         public SDLMusic? LoadMusic(string name)
         {
-            byte[]? data = contentManager.FindContent(name);
-            return SDLAudio.LoadMusic(name, data);
+            return contentManager.Load<SDLMusic>(name);
         }
         public SDLSound? LoadSound(string name)
         {

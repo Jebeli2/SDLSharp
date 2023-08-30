@@ -8,29 +8,19 @@
 
     public class SDLSound : SDLObject
     {
-        private bool disposedValue;
-
         public SDLSound(IntPtr handle, string name)
-            : base(handle, name)
+            : base(handle, name, Content.ContentFlags.Sound)
         {
             SDLAudio.Track(this);
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void DisposeUnmanaged()
         {
-            if (!disposedValue)
+            SDLAudio.Untrack(this);
+            if (handle != IntPtr.Zero)
             {
-                if (disposing)
-                {
-                    SDLAudio.Untrack(this);
-                }
-                if (handle != IntPtr.Zero)
-                {
-                    SDL_mixer.Mix_FreeChunk(handle);
-                }
-                disposedValue = true;
+                SDL_mixer.Mix_FreeChunk(handle);
             }
-            base.Dispose(disposing);
         }
 
     }

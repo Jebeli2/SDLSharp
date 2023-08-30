@@ -1,56 +1,24 @@
 ﻿namespace SDLSharp
 {
     using System;
+    using Content;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
 
-    public class SDLObject : IDisposable
+    public class SDLObject : Resource, IDisposable
     {
         protected readonly IntPtr handle;
-        private readonly string name;
-        private bool disposedValue;
 
-        protected SDLObject(IntPtr handle, string name)
+        protected SDLObject(IntPtr handle, string name, ContentFlags flags)
+            : base(name, flags)
         {
             this.handle = handle;
-            this.name = name;
         }
 
         public IntPtr Handle => handle;
-        public string Name => name;
 
-
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        ~SDLObject()
-        {
-
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        public override string ToString()
-        {
-            return name;
-        }
 
     }
 }

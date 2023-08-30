@@ -1,5 +1,6 @@
 ﻿namespace SDLSharp
 {
+    using SDLSharp.Graphics;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
@@ -7,7 +8,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class SDLTexture : SDLObject
+    public class SDLTexture : SDLObject, IImage
     {
         private readonly SDLRenderer renderer;
         private readonly int width;
@@ -19,10 +20,9 @@
         private byte alphaMod;
         private Color colorMod;
         private BlendMode blendMode;
-        private bool disposedValue;
 
         internal SDLTexture(SDLRenderer renderer, IntPtr handle, string name)
-            : base(handle, name)
+            : base(handle, name, Content.ContentFlags.Image)
         {
             this.renderer = renderer;
             _ = SDL.SDL_QueryTexture(this.handle, out format, out access, out width, out height);
@@ -57,8 +57,9 @@
             {
                 if (textureFilter != value)
                 {
-                    textureFilter = value;
                     _ = SDL.SDL_SetTextureScaleMode(handle, (SDL.SDL_ScaleMode)value);
+                    _ = SDL.SDL_GetTextureScaleMode(handle, out var tf);
+                    textureFilter = (TextureFilter)tf;
                 }
             }
         }
@@ -102,21 +103,13 @@
             }
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void DisposeUnmanaged()
         {
-            if (!disposedValue)
+            renderer.Untrack(this);
+            if (handle != IntPtr.Zero)
             {
-                if (disposing)
-                {
-                    renderer.Untrack(this);
-                }
-                if (handle != IntPtr.Zero)
-                {
-                    SDL.SDL_DestroyTexture(handle);
-                }
-                disposedValue = true;
+                SDL.SDL_DestroyTexture(handle);
             }
-            base.Dispose(disposing);
         }
 
     }

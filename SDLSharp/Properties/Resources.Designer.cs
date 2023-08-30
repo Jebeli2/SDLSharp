@@ -79,5 +79,33 @@ namespace SDLSharp.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] tiled_collision {
+            get {
+                object obj = ResourceManager.GetObject("tiled_collision", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///img=images/tilesets/tiled_collision.png
+        ///
+        ///tile=16,0,0,64,32,32,16
+        ///tile=17,64,0,64,32,32,16
+        ///tile=18,128,0,64,32,32,16
+        ///tile=19,192,0,64,32,32,16
+        ///tile=20,256,0,64,32,32,16
+        ///tile=21,320,0,64,32,32,16
+        ///.
+        /// </summary>
+        internal static string tileset_collision {
+            get {
+                return ResourceManager.GetString("tileset_collision", resourceCulture);
+            }
+        }
     }
 }

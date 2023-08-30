@@ -2,7 +2,9 @@
 {
     using SDLSharp;
     using SDLSharp.Applets;
+    using SDLSharp.Content.Flare;
     using SDLSharp.GUI;
+    using SDLSharp.Maps;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
@@ -12,6 +14,13 @@
 
     internal class TestSDLWindow : SDLWindow
     {
+        private const string MODPATH = @"d:\Users\jebel\Documents\flare-game-master\";
+        private const string MAPNAME1 = "maps/frontier_outpost.txt";
+        private const string MAPNAME2 = "maps/perdition_harbor.txt";
+        private const string MAPNAME3 = "maps/lake_kuuma.txt";
+        private const string MAPNAME4 = "maps/underworld.txt";
+        private const string MAPNAME5 = "maps/Act1_triston.txt";
+        private const string MAPNAME6 = "maps/hyperspace.txt";
 
         private const string DC = @"D:\Users\jebel\Music\iTunes\iTunes Media\Music\Alt-J\Relaxer\05 Deadcrush.mp3";
 
@@ -32,6 +41,8 @@
         private Gadget? button2_2;
         private Gadget? button2_3;
         private Gadget? button2_4;
+
+        private MapApplet? map;
         public TestSDLWindow()
             : base("Test SDL")
         {
@@ -40,8 +51,13 @@
         {
             base.OnHandleCreated(e);
             ContentManager.AddResourceManager(Properties.Resources.ResourceManager);
+            ContentManager.AddModPath(MODPATH);
+            ContentManager.RegisterResourceLoader(new ModMapLoader());
+            ContentManager.RegisterResourceLoader(new ModTileSetLoader());
+            ContentManager.RegisterResourceLoader(new ModParallaxLoader());
+
             font = LoadFont(nameof(Properties.Resources.LiberationSans_Regular), 16);
-            GetApplet<BackgroundImage>().Image = LoadTexture(nameof(Properties.Resources.badlands));
+            GetApplet<BackgroundImage>().Image = ContentManager.Load<SDLTexture>(nameof(Properties.Resources.badlands));
             GetApplet<MusicPlayer>().PlayNow(nameof(Properties.Resources.jesu_joy_of_mans_desiring));
             GetApplet<MusicPlayer>().AddToPlayList(DC, "Deathcrush");
             var icons = GetApplet<IconShow>();
@@ -56,7 +72,7 @@
 
             SDLApplication.MaxFramesPerSecond = 120;
             button1_1 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 10, width: -20, height: 40, text: "GUI Test", clickAction: GoToGUITest);
-            button1_2 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 60, width: -20, height: 40, text: "Blocks");
+            button1_2 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 60, width: -20, height: 40, text: "Map", clickAction: GoToMap);
             button1_3 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 110, width: -20, height: 40, text: "Particles");
 
             button2_1 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 10, width: -20, height: 40, text: "Back", clickAction: GoToTitle);
@@ -91,8 +107,52 @@
                 case ScanCode.SCANCODE_F5:
                     DisplayMode = DisplayMode.MultiMonitor;
                     break;
+                case ScanCode.SCANCODE_1:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME1);
+                    }
+                    break;
+                case ScanCode.SCANCODE_2:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME2);
+                    }
+                    break;
+                case ScanCode.SCANCODE_3:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME3);
+                    }
+                    break;
+                case ScanCode.SCANCODE_4:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME4);
+                    }
+                    break;
+                case ScanCode.SCANCODE_5:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME5);
+                    }
+                    break;
+                case ScanCode.SCANCODE_6:
+                    if (map != null)
+                    {
+                        map.Map = ContentManager.Load<Map>(MAPNAME6);
+                    }
+                    break;
             }
         }
+        private void GoToMap()
+        {
+            CloseAllWindows();
+            ClearApplets();
+            map = GetApplet<MapApplet>();
+            map.Map = ContentManager.Load<Map>(MAPNAME2);
+        }
+
 
         private void CloseAllWindows()
         {
@@ -157,7 +217,7 @@
                 requester.Width = 200;
                 requester.Height = 200;
 
-                List<Gadget> gadgets = new List<Gadget>();
+                List<Gadget> gadgets = new();
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Text, leftEdge: 10, topEdge: 10, width: -20, height: 30, text: "Button Demo"));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 50, width: -20, height: 30, text: "Toggle Button", toggleSelect: true));
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 90, width: -20, height: 30, text: "Icon Button", icon: Icons.YOUKO));
