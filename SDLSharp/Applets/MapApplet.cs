@@ -1,5 +1,7 @@
 ﻿namespace SDLSharp.Applets
 {
+    using SDLSharp.Actors;
+    using SDLSharp.Content;
     using SDLSharp.Maps;
     using System;
     using System.Collections.Generic;
@@ -22,8 +24,10 @@
 
         private static readonly Random rnd = new();
         private string mapName = "";
+        private string playerName = "";
         private Map? map;
         private readonly IMapRenderer mapRenderer;
+        private readonly ActorManager actorManager;
         private bool panning;
         private int panDX;
         private int panDY;
@@ -41,8 +45,10 @@
             : base("Map")
         {
             mapRenderer = renderer ?? new FlareMapRenderer();
+            actorManager = new ActorManager();
             MousePanning = true;
             mapState = MapState.None;
+            PlayerName = "";
         }
 
         public bool MousePanning { get; set; }
@@ -60,11 +66,22 @@
             }
         }
 
+        public string PlayerName
+        {
+            get => playerName;
+            set => SetPlayerName(value);
+        }
+
         public Map? Map
         {
             get => map;
         }
-
+        private void SetPlayerName(string? name)
+        {
+            if (string.IsNullOrEmpty(name)) { name = "male"; }
+            playerName = name;
+            actorManager.PlayerInfo = new ActorInfo { Id = playerName, Name = "Player", PosX = -1, PosY = -1 };
+        }
         private static string GetRandomBackground()
         {
             switch (rnd.Next() % 3)
@@ -73,6 +90,11 @@
                 case 2: return "images/menus/backgrounds/fire_temple.png";
                 default: return "images/menus/backgrounds/badlands.png";
             }
+        }
+
+        protected override void OnWindowLoad(SDLWindowLoadEventArgs e)
+        {
+            actorManager.ContentManager = ContentManager;
         }
 
         private void Update(double totalTime, double elapsedTime)
@@ -98,13 +120,13 @@
                     if (map != null)
                     {
                         mapRenderer.PrepareMap(map);
-                        SetMusic(map.Music);
                         mapState = MapState.Display;
                     }
                     break;
                 case MapState.Display:
                     if (map != null)
                     {
+                        actorManager.Update(totalTime, elapsedTime);
                         mapRenderer.Update(totalTime, elapsedTime, map);
                         if (MousePanning && panning && (panDX != 0 || panDY != 0))
                         {
@@ -120,6 +142,14 @@
         private void LoadMap()
         {
             map = ContentManager?.Load<Map>(mapName);
+            if (map != null)
+            {
+                SetMusic(map.Music);
+                actorManager.Clear();
+                PlayerName = "";
+                actorManager.SpawnPlayer(map);
+                actorManager.SpawnMapActors(map);
+            }
         }
 
         private void Paint(SDLRenderer renderer, double totalTime, double elapsedTime)
@@ -144,8 +174,8 @@
                         {
                             renderer.ClearScreen(map.BackgroundColor);
                         }
-                        List<IMapSprite> front = new();
-                        List<IMapSprite> back = new();
+                        List<IMapSprite> front = new(actorManager.GetLivingSprites());
+                        List<IMapSprite> back = new(actorManager.GetDeadSprites());
                         mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
                     }
                     break;

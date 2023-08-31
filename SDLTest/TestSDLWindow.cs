@@ -56,6 +56,8 @@
             ContentManager.RegisterResourceLoader(new ModMapLoader());
             ContentManager.RegisterResourceLoader(new ModTileSetLoader());
             ContentManager.RegisterResourceLoader(new ModParallaxLoader());
+            ContentManager.RegisterResourceLoader(new ModActorLoader());
+            ContentManager.RegisterResourceLoader(new ModAnimationSetLoader());
 
             font = LoadFont(nameof(Properties.Resources.LiberationSans_Regular), 16);
             GetApplet<BackgroundImage>().Image = ContentManager.Load<SDLTexture>(nameof(Properties.Resources.badlands));

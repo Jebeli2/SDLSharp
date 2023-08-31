@@ -71,6 +71,65 @@ namespace SDLSharp.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to name=Female
+        ///level=1
+        ///speed=3
+        ///humanoid=true
+        ///power=melee,1,5
+        ///# power=ranged,35,5
+        ///
+        ///portrait=images/portraits/female01.png
+        ///
+        ///sfx_attack=swing,soundfx/melee_attack.ogg
+        ///sfx_attack=shoot,soundfx/melee_attack.ogg
+        ///sfx_attack=cast,soundfx/melee_attack.ogg
+        ///sfx_hit=soundfx/female_hit.ogg
+        ///sfx_die=soundfx/female_die.ogg
+        ///sfx_critdie=soundfx/female_die.ogg
+        ///
+        ///# animation info
+        ///gfxpart=chest,animations/avatar/female/plate_cuirass.txt
+        ///gfxpart=feet,animations/avatar/female/plate_boots.txt
+        ///gfxpart=hands,animations/avatar/female/pla [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string female {
+            get {
+                return ResourceManager.GetString("female", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to name=Male
+        ///level=1
+        ///speed=4.5
+        ///humanoid=true
+        ///melee_range=1.1875
+        ///#power=ranged,35,5
+        ///power=melee,1,100
+        ///power=ranged,231,90
+        ///power=ranged,146,90
+        ///power=ranged,44,100
+        ///
+        ///portrait=images/portraits/male01.png
+        ///
+        ///sfx_attack=swing,soundfx/melee_attack.ogg
+        ///sfx_attack=shoot,soundfx/melee_attack.ogg
+        ///sfx_attack=cast,soundfx/melee_attack.ogg
+        ///sfx_hit=soundfx/male_hit.ogg
+        ///sfx_die=soundfx/male_die.ogg
+        ///sfx_critdie=soundfx/male_die.ogg
+        ///
+        ///# animation info
+        ///gfxpart=chest,animations/avatar/male/cloth_shirt.txt
+        ///gfxpart=feet,animations/avat [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string male {
+            get {
+                return ResourceManager.GetString("male", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         internal static byte[] Roboto_Regular {
@@ -92,7 +151,7 @@ namespace SDLSharp.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to 
-        ///img=images/tilesets/tiled_collision.png
+        ///img=tiled_collision
         ///
         ///tile=16,0,0,64,32,32,16
         ///tile=17,64,0,64,32,32,16

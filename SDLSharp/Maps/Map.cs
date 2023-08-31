@@ -1,10 +1,12 @@
 ﻿namespace SDLSharp.Maps
 {
+    using SDLSharp.Actors;
     using SDLSharp.Content;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
+    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -18,6 +20,8 @@
         private TileSet? collisionTileSet;
         private IMapCollision? collision;
         private MapParallax? parallax;
+        private List<ActorInfo> actorInfos = new();
+        //private List<EventInfo> eventInfos = new();
 
         public Map(string name, int width, int height)
             : base(name, ContentFlags.Data)
@@ -58,6 +62,13 @@
             set => parallax = value;
         }
         public IMapCollision? Collision => collision;
+
+        public IEnumerable<ActorInfo> ActorInfos => actorInfos;
+        public void AddActorInfo(ActorInfo info)
+        {
+            actorInfos.Add(info);
+        }
+
         public IEnumerable<MapLayer> Layers => layers;
 
         public void AddLayer(MapLayer layer)

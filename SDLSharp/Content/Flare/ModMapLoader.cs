@@ -1,5 +1,6 @@
 ﻿namespace SDLSharp.Content.Flare
 {
+    using SDLSharp.Actors;
     using SDLSharp.Maps;
     using System;
     using System.Collections.Generic;
@@ -48,7 +49,7 @@
             MapProjection projection = MapProjection.Isometric;
             Color bgColor = Color.Black;
             bool initDone = false;
-            //ActorInfo? npc = null;
+            ActorInfo? npc = null;
             //EventInfo? evt = null;
             while (infile.Next())
             {
@@ -66,7 +67,7 @@
                     if (!string.IsNullOrEmpty(parallaxName)) { map.Parallax = ContentManager?.Load<MapParallax>(parallaxName); }
                     initDone = true;
                 }
-                //if (map != null && infile.MatchNewSection("npc")) { npc = new ActorInfo(); map.AddActorInfo(npc); }
+                if (map != null && infile.MatchNewSection("npc")) { npc = new ActorInfo(); map.AddActorInfo(npc); }
                 //if (map != null && infile.MatchNewSection("event")) { evt = new EventInfo(); map.AddEventInfo(evt); }
                 switch (infile.Section)
                 {
@@ -87,7 +88,7 @@
                                 break;
                             case "orientation": projection = infile.GetEnumValue(MapProjection.Isometric); break;
                             case "background_color": bgColor = infile.GetColorRGBAValue(); break;
-                            default: SDLLog.Warn(LogCategory.APPLICATION, $"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); break;
+                            default: UnknownKey(name, infile); break;
                         }
                         break;
                     case "layer":
@@ -134,20 +135,20 @@
                                     }
                                 }
                                 break;
-                            default: SDLLog.Warn(LogCategory.APPLICATION, $"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); break;
+                            default: UnknownKey(name, infile); break;
                         }
                         break;
                     case "npc":
-                        //if (npc != null)
-                        //{
-                        //    switch (infile.Key)
-                        //    {
-                        //        case "type": break;
-                        //        case "location": npc.PosX = infile.PopFirstInt(); npc.PosY = infile.PopFirstInt(); break;
-                        //        case "filename": npc.Id = infile.GetStrVal(); break;
-                        //        default: Logger.Warn($"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); break;
-                        //    }
-                        //}
+                        if (npc != null)
+                        {
+                            switch (infile.Key)
+                            {
+                                case "type": break;
+                                case "location": npc.PosX = infile.PopFirstInt(); npc.PosY = infile.PopFirstInt(); break;
+                                case "filename": npc.Id = infile.GetStrVal(); break;
+                                default: UnknownKey(name, infile); break;
+                            }
+                        }
                         break;
                     case "event":
                         //if (evt != null)
