@@ -127,7 +127,7 @@
             SDLLog.Info(LogCategory.APPLICATION, "SDL Initialization Starting...");
             SDL_SetMainReady();
             _ = SDL_SetHint(SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING, "1");
-            if (SDL_Init(SDL_INIT_EVERYTHING) == SDL_OK)
+            if (SDL_Init(SDL_INIT_EVERYTHING & ~SDL_INIT_SENSOR) == SDL_OK)
             {
                 _ = SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
                 _ = SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");

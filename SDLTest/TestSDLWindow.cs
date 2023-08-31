@@ -7,6 +7,7 @@
     using SDLSharp.Maps;
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.Design;
     using System.Drawing;
     using System.Linq;
     using System.Text;
@@ -14,12 +15,12 @@
 
     internal class TestSDLWindow : SDLWindow
     {
-        private const string MODPATH = @"d:\Users\jebel\Documents\flare-game-master\";
+        private static readonly string MODPATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"flare-engine-master\");
         private const string MAPNAME1 = "maps/frontier_outpost.txt";
         private const string MAPNAME2 = "maps/perdition_harbor.txt";
         private const string MAPNAME3 = "maps/lake_kuuma.txt";
         private const string MAPNAME4 = "maps/underworld.txt";
-        private const string MAPNAME5 = "maps/Act1_triston.txt";
+        private const string MAPNAME5 = "maps/frontier_plains.txt";
         private const string MAPNAME6 = "maps/hyperspace.txt";
 
         private const string DC = @"D:\Users\jebel\Music\iTunes\iTunes Media\Music\Alt-J\Relaxer\05 Deadcrush.mp3";
@@ -110,37 +111,37 @@
                 case ScanCode.SCANCODE_1:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME1);
+                        map.MapName = MAPNAME1;
                     }
                     break;
                 case ScanCode.SCANCODE_2:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME2);
+                        map.MapName = MAPNAME2;
                     }
                     break;
                 case ScanCode.SCANCODE_3:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME3);
+                        map.MapName = MAPNAME3;
                     }
                     break;
                 case ScanCode.SCANCODE_4:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME4);
+                        map.MapName = MAPNAME4;
                     }
                     break;
                 case ScanCode.SCANCODE_5:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME5);
+                        map.MapName = MAPNAME5;
                     }
                     break;
                 case ScanCode.SCANCODE_6:
                     if (map != null)
                     {
-                        map.Map = ContentManager.Load<Map>(MAPNAME6);
+                        map.MapName = MAPNAME6;
                     }
                     break;
             }
@@ -150,7 +151,7 @@
             CloseAllWindows();
             ClearApplets();
             map = GetApplet<MapApplet>();
-            map.Map = ContentManager.Load<Map>(MAPNAME2);
+            map.MapName = MAPNAME1;
         }
 
 

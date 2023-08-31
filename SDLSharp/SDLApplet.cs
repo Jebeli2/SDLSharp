@@ -1,8 +1,10 @@
 ﻿namespace SDLSharp
 {
+    using SDLSharp.Content;
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Security.Authentication.ExtendedProtection;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -98,6 +100,8 @@
                 renderer = null;
             }
         }
+
+        public IContentManager? ContentManager => window?.ContentManager;
 
         protected SDLTexture? LoadTexture(string name)
         {
