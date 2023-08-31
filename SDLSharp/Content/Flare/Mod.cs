@@ -19,6 +19,8 @@
         public string Path => path;
         public string GetFileName(string fileName)
         {
+            if (fileName.StartsWith("\\")) { fileName = fileName.Substring(1); }
+            else if (fileName.StartsWith("/")) { fileName = fileName.Substring(1); }
             return System.IO.Path.Combine(path, fileName);
         }
 
