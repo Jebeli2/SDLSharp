@@ -35,6 +35,7 @@
         private SDLTexture? image;
         private SDLMusic? music;
         private SDLTexture? dialogBox;
+        private Actor? player;
 
         public MapApplet()
             : this(null)
@@ -47,11 +48,15 @@
             mapRenderer = renderer ?? new FlareMapRenderer();
             actorManager = new ActorManager();
             MousePanning = true;
+            CommandMoving = true;
+            FollowPlayer = true;
             mapState = MapState.None;
             PlayerName = "";
         }
 
         public bool MousePanning { get; set; }
+        public bool CommandMoving { get; set; }
+        public bool FollowPlayer { get; set; }
 
         public string MapName
         {
@@ -97,6 +102,21 @@
             actorManager.ContentManager = ContentManager;
         }
 
+        private void LoadMap()
+        {
+            map = ContentManager?.Load<Map>(mapName);
+            if (map != null)
+            {
+                SetMusic(map.Music);
+                actorManager.Clear();
+                actorManager.Map = map;
+                actorManager.Camera = mapRenderer;
+                PlayerName = "";
+                actorManager.SpawnPlayer(map);
+                actorManager.SpawnMapActors(map);
+                player = actorManager.Player;
+            }
+        }
         private void Update(double totalTime, double elapsedTime)
         {
             switch (mapState)
@@ -130,25 +150,21 @@
                         mapRenderer.Update(totalTime, elapsedTime, map);
                         if (MousePanning && panning && (panDX != 0 || panDY != 0))
                         {
-                            Pan(panDX, panDY);
-                            panDX = 0;
-                            panDY = 0;
+                            if (Pan(panDX, panDY))
+                            {
+                                panDX = 0;
+                                panDY = 0;
+                            }
+                        }
+                        else if (FollowPlayer && player != null && player.HasMoved)
+                        {
+                            if (!Move(player.PosX, player.PosY))
+                            {
+                                player.HasMoved = false;
+                            }
                         }
                     }
                     break;
-            }
-        }
-
-        private void LoadMap()
-        {
-            map = ContentManager?.Load<Map>(mapName);
-            if (map != null)
-            {
-                SetMusic(map.Music);
-                actorManager.Clear();
-                PlayerName = "";
-                actorManager.SpawnPlayer(map);
-                actorManager.SpawnMapActors(map);
             }
         }
 
@@ -263,6 +279,13 @@
             {
                 panning = false;
             }
+            else if (e.Button == MouseButton.Left)
+            {
+                if (CommandMoving && player != null)
+                {
+                    actorManager.MakeCommands(player, e.X, e.Y);
+                }
+            }
         }
 
         protected internal override void OnMouseMove(SDLMouseEventArgs e)
@@ -274,9 +297,14 @@
             }
         }
 
-        private void Pan(int dx, int dy)
+        private bool Move(float x, float y)
         {
-            mapRenderer.ShiftCam(dx, dy);
+            return mapRenderer.MoveCam(x, y);
+        }
+
+        private bool Pan(int dx, int dy)
+        {
+            return mapRenderer.ShiftCam(dx, dy);
         }
     }
 }

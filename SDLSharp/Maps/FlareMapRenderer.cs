@@ -1,6 +1,7 @@
 ﻿namespace SDLSharp.Maps
 {
     using SDLSharp.Graphics;
+    using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -9,8 +10,6 @@
 
     public class FlareMapRenderer : IMapRenderer
     {
-        private static readonly Random rnd = new Random();
-
         private int viewW;
         private int viewH;
         private int viewWHalf;
@@ -95,30 +94,43 @@
                 }
             }
         }
-
-        public void ShiftCam(int dX, int dY)
+        public bool MoveCam(float x, float y)
+        {
+            float dX = x - camX;
+            float dY = y - camY;
+            dX = dX.Clamp(-10, 10);
+            dY = dY.Clamp(-10, 10);
+            int dXi = (int)dX;
+            int dYi = (int)dY;
+            if (dXi != 0 || dYi != 0)
+            {
+                return ShiftCam(dXi, dYi);
+            }
+            return false;
+        }
+        public bool ShiftCam(int dX, int dY)
         {
             int vX = viewWHalf + dX;
             int vY = viewHHalf + dY;
             ScreenToMap(vX, vY, out float mX, out float mY);
-            SetCam(mX, mY);
+            return SetCam(mX, mY);
         }
 
-        public void SetCam(float x, float y)
+        public bool SetCam(float x, float y)
         {
             if (projection == MapProjection.Orthogonal)
             {
-                x = Clamp(x, minCamX, maxCamX);
-                y = Clamp(y, minCamY, maxCamY);
+                x = x.Clamp(minCamX, maxCamX);
+                y = y.Clamp(minCamY, maxCamY);
             }
             else if (projection == MapProjection.Isometric)
             {
-                x = Clamp(x, minCamX, maxCamX);
-                y = Clamp(y, minCamY, maxCamY);
+                x = x.Clamp(minCamX, maxCamX);
+                y = y.Clamp(minCamY, maxCamY);
             }
             x = MathF.Round(x, 3);
             y = MathF.Round(y, 3);
-            if (DifferentFloat(camX, x) || DifferentFloat(camY, y))
+            if (MathUtils.DifferentFloat(camX, x) || MathUtils.DifferentFloat(camY, y))
             {
                 camX = x;
                 camY = y;
@@ -127,8 +139,10 @@
                 biggestX = camX;
                 biggestY = camY;
                 UpdateShakyCam();
+                return true;
                 //audio.Update(camX, camY);
             }
+            return false;
         }
 
         private void UpdateShakyCam(double elapsedTime = 1)
@@ -139,8 +153,8 @@
             }
             if (shakyCamDuration > 0)
             {
-                shakyCamX = camX + (Rand() % 16 - 8) * 0.0078125f;
-                shakyCamY = camY + (Rand() % 16 - 8) * 0.0078125f;
+                shakyCamX = camX + (MathUtils.Rand() % 16 - 8) * 0.0078125f;
+                shakyCamY = camY + (MathUtils.Rand() % 16 - 8) * 0.0078125f;
             }
             else
             {
@@ -231,10 +245,10 @@
                 maxCamX += 10;
                 maxCamY += 10;
             }
-            minCamX = RoundForMap(minCamX);
-            minCamY = RoundForMap(minCamY);
-            maxCamX = RoundForMap(maxCamX);
-            maxCamY = RoundForMap(maxCamY);
+            minCamX = MathUtils.RoundForMap(minCamX);
+            minCamY = MathUtils.RoundForMap(minCamY);
+            maxCamX = MathUtils.RoundForMap(maxCamX);
+            maxCamY = MathUtils.RoundForMap(maxCamY);
             return true;
         }
 
@@ -797,26 +811,5 @@
             }
         }
 
-        public static float RoundForMap(float f)
-        {
-            return MathF.Round(f * 2, MidpointRounding.AwayFromZero) / 2;
-        }
-        public static T Clamp<T>(T val, T min, T max) where T : IComparable<T>
-        {
-            if (val.CompareTo(min) < 0) return min;
-            else if (val.CompareTo(max) > 0) return max;
-            return val;
-        }
-
-        public static bool DifferentFloat(float val1, float val2, float epsilon = 0.0000001f)
-        {
-            float diff = MathF.Abs(val1 - val2);
-            return diff > epsilon;
-        }
-
-        public static int Rand()
-        {
-            return rnd.Next();
-        }
     }
 }

@@ -3,14 +3,19 @@
     using SDLSharp.Content;
     using SDLSharp.Graphics;
     using SDLSharp.Maps;
+    using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
+    using System.Drawing;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
 
     public class Actor : Resource
     {
+        private readonly List<ActorCommand> commandQueue = new();
+        private ActorCommand? currentCommand;
+        private List<PointF>? path;
         private float posX;
         private float posY;
         private int direction;
@@ -51,6 +56,23 @@
         {
             get { return IsPlayer ? CollisionType.Player : CollisionType.Normal; }
         }
+        public ActorCommand? CurrentCommand => currentCommand;
+        public IList<PointF>? Path
+        {
+            get { return path; }
+            set
+            {
+                if (value != null && value.Count > 0)
+                {
+                    path = new List<PointF>(value);
+                }
+                else
+                {
+                    path = null;
+                }
+            }
+        }
+
         public bool HasMoved { get; set; }
         public string DisplayName { get; set; }
         public int Cooldown { get; set; }
@@ -197,6 +219,152 @@
                 return diffX <= 1 && diffY <= 1 && ((diffX + diffY) > 0);
             }
             return false;
+        }
+
+        public ActorCommand? GetNextCommand()
+        {
+            if (currentCommand == null && commandQueue.Count > 0)
+            {
+                currentCommand = commandQueue[0];
+                commandQueue.RemoveAt(0);
+                //Logger.Info($"Next Command {currentCommand} for Entity {this}, {commandQueue.Count} Commands remaining");
+                return currentCommand;
+            }
+            return null;
+        }
+
+        public void ClearCommands(ActorAction action)
+        {
+            //Logger.Info($"Clearing {action} Commands for Entity {this}");
+            if (currentCommand != null && currentCommand.Action == action)
+            {
+                currentCommand = null;
+            }
+            for (int i = commandQueue.Count - 1; i >= 0; i--)
+            {
+                if (commandQueue[i].Action == action)
+                {
+                    commandQueue.RemoveAt(i);
+                }
+            }
+        }
+        public void ClearCommands()
+        {
+            //Logger.Info($"Clearing Commands for Entity {this}");
+            currentCommand = null;
+            commandQueue.Clear();
+        }
+        public void QueueCommand(ActorCommand command)
+        {
+            commandQueue.Add(command);
+            //Logger.Info($"Queued Command {command} for Entity {this}");
+        }
+
+        public void ReplaceCommand(ActorCommand command)
+        {
+            ClearCommands(command.Action);
+            commandQueue.Add(command);
+        }
+
+        public void QueueMove(float destX, float destY)
+        {
+            QueueCommand(new ActorCommand { Action = ActorAction.Move, MapDestX = destX, MapDestY = destY });
+        }
+
+        public void QueueInteract(float destX, float destY)
+        {
+            QueueCommand(new ActorCommand { Action = ActorAction.Interact, MapDestX = destX, MapDestY = destY });
+        }
+
+        public void QueueAttack(Actor? enemy)
+        {
+            QueueCommand(new ActorCommand { Action = ActorAction.Attack, Enemy = enemy });
+        }
+
+        public void ReplaceMove(float destX, float destY)
+        {
+            ReplaceCommand(new ActorCommand { Action = ActorAction.Move, MapDestX = destX, MapDestY = destY });
+        }
+        public void ReplaceInteract(float destX, float destY)
+        {
+            ReplaceCommand(new ActorCommand { Action = ActorAction.Interact, MapDestX = destX, MapDestY = destY });
+        }
+
+        public void ReplaceAttack(Actor? enemy)
+        {
+            ReplaceCommand(new ActorCommand { Action = ActorAction.Attack, Enemy = enemy });
+        }
+
+        public void Stop()
+        {
+            SetAnimation("stance");
+            path = null;
+            ClearCommands(ActorAction.Move);
+        }
+
+        public void Face(Actor? other)
+        {
+            if (other != null)
+            {
+                SetDirection(MathUtils.CalcDirection(PosX, PosY, other.PosX, other.PosY));
+            }
+        }
+
+        public void Attack(Actor? other)
+        {
+            //enemy = null;
+            if (IsAdjacentTo(other))
+            {
+                Face(other);
+                SetAnimation("swing");
+                //manager.PlaySound(this, SfxType.Attack, "swing");
+                //enemy = other;
+                // temp
+                //enemy?.TakeHit(this);
+            }
+        }
+        public void TakeHit(Actor? other)
+        {
+            //enemy = null;
+            if (IsAdjacentTo(other))
+            {
+                Face(other);
+                //enemy = other;
+                //hitCount++;
+                // temp
+                //if (hitCount > 2 && !IsPlayer)
+                //{
+                //    if (Utils.Rand() % 3 > 1)
+                //    {
+                //        CritDie();
+                //    }
+                //    else
+                //    {
+                //        Die();
+                //    }
+                //}
+                //else
+                //{
+                //    SetAnimation("hit");
+                //    manager.PlaySound(this, SfxType.Hit);
+                //}
+            }
+        }
+
+        public void Die()
+        {
+            SetAnimation("die");
+            //manager.PlaySound(this, SfxType.Die);
+            Dying = true;
+            //Dead = true;
+        }
+
+        public void CritDie()
+        {
+            SetAnimation("critdie");
+            //manager.PlaySound(this, SfxType.CritDie);
+            Dying = true;
+            //Dead = true;
         }
 
     }
