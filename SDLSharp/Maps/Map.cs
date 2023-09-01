@@ -2,11 +2,11 @@
 {
     using SDLSharp.Actors;
     using SDLSharp.Content;
+    using SDLSharp.Events;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
-    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -21,7 +21,7 @@
         private IMapCollision? collision;
         private MapParallax? parallax;
         private List<ActorInfo> actorInfos = new();
-        //private List<EventInfo> eventInfos = new();
+        private List<EventInfo> eventInfos = new();
 
         public Map(string name, int width, int height)
             : base(name, ContentFlags.Data)
@@ -68,7 +68,12 @@
         {
             actorInfos.Add(info);
         }
+        public IEnumerable<EventInfo> EventInfos => eventInfos;
 
+        public void AddEventInfo(EventInfo info)
+        {
+            eventInfos.Add(info);
+        }
         public IEnumerable<MapLayer> Layers => layers;
 
         public void AddLayer(MapLayer layer)

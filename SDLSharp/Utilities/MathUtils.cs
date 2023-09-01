@@ -8,7 +8,7 @@
 
     public static class MathUtils
     {
-        private static readonly Random rnd = new Random();
+        private static readonly Random rnd = new();
 
         public static int Rand()
         {

@@ -2,12 +2,15 @@
 {
     using SDLSharp.Actors;
     using SDLSharp.Content;
+    using SDLSharp.Events;
     using SDLSharp.Maps;
+    using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     public class MapApplet : SDLApplet
@@ -22,12 +25,12 @@
             Display
         }
 
-        private static readonly Random rnd = new();
         private string mapName = "";
         private string playerName = "";
         private Map? map;
         private readonly IMapRenderer mapRenderer;
         private readonly ActorManager actorManager;
+        private readonly EventManager eventManager;
         private bool panning;
         private int panDX;
         private int panDY;
@@ -47,6 +50,8 @@
         {
             mapRenderer = renderer ?? new FlareMapRenderer();
             actorManager = new ActorManager();
+            eventManager = new EventManager();
+            actorManager.EventManager = eventManager;
             MousePanning = true;
             CommandMoving = true;
             FollowPlayer = true;
@@ -81,15 +86,15 @@
         {
             get => map;
         }
-        private void SetPlayerName(string? name)
+        private void SetPlayerName(string? name, int x = -1, int y = -1)
         {
             if (string.IsNullOrEmpty(name)) { name = "male"; }
             playerName = name;
-            actorManager.PlayerInfo = new ActorInfo { Id = playerName, Name = "Player", PosX = -1, PosY = -1 };
+            actorManager.PlayerInfo = new ActorInfo { Id = playerName, Name = "Player", PosX = x, PosY = y };
         }
         private static string GetRandomBackground()
         {
-            switch (rnd.Next() % 3)
+            switch (MathUtils.Rand() % 3)
             {
                 case 1: return "images/menus/backgrounds/ice_palace.png";
                 case 2: return "images/menus/backgrounds/fire_temple.png";
@@ -108,6 +113,7 @@
             if (map != null)
             {
                 SetMusic(map.Music);
+
                 actorManager.Clear();
                 actorManager.Map = map;
                 actorManager.Camera = mapRenderer;
@@ -115,7 +121,22 @@
                 actorManager.SpawnPlayer(map);
                 actorManager.SpawnMapActors(map);
                 player = actorManager.Player;
+                eventManager.Map = map;
+                eventManager.Camera = mapRenderer;
+                eventManager.ExecuteOnLoadEvents();
             }
+        }
+
+        private bool CheckTravel()
+        {
+            if (eventManager.Travel && !string.IsNullOrEmpty(eventManager.TravelMap))
+            {
+                SetPlayerName(playerName,eventManager.TravelX,eventManager.TravelY);
+                eventManager.Travel = false;
+                MapName = eventManager.TravelMap;
+                return true;
+            }
+            return false;
         }
         private void Update(double totalTime, double elapsedTime)
         {
@@ -162,6 +183,10 @@
                             {
                                 player.HasMoved = false;
                             }
+                        }
+                        else
+                        {
+                            CheckTravel();
                         }
                     }
                     break;
@@ -295,6 +320,10 @@
                 panDX = -e.RelX;
                 panDY = -e.RelY;
             }
+            mapRenderer.ScreenToMap(e.X, e.Y, out float mx, out float my);
+            mx = MathUtils.RoundForMap(mx);
+            my = MathUtils.RoundForMap(my);
+            eventManager.CheckHotSpotEvents(mx, my);
         }
 
         private bool Move(float x, float y)

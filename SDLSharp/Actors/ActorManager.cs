@@ -1,6 +1,7 @@
 ﻿namespace SDLSharp.Actors
 {
     using SDLSharp.Content;
+    using SDLSharp.Events;
     using SDLSharp.Maps;
     using SDLSharp.Utilities;
     using System;
@@ -22,6 +23,7 @@
         private Actor? player;
         private Map? map;
         private IMapCamera? camera;
+        private EventManager? eventManager;
 
         public ActorManager()
         {
@@ -39,6 +41,12 @@
         {
             get => camera;
             set => camera = value;
+        }
+
+        public EventManager? EventManager
+        {
+            get => eventManager;
+            set => eventManager = value;
         }
         public ActorInfo? PlayerInfo { get; set; }
         public Actor? Player => player;
@@ -100,6 +108,7 @@
                 if (actor != null)
                 {
                     map.Collision?.Block(actor.PosX, actor.PosY, false);
+                    eventManager?.CreateNPCEvent(actor);
                 }
             }
         }
@@ -111,7 +120,7 @@
             camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
             mapX = MathUtils.RoundForMap(mapX);
             mapY = MathUtils.RoundForMap(mapY);
-            bool hasEvent = false;// eventManager.HasAnyEventsAt(mapX, mapY);
+            bool hasEvent = eventManager?.HasAnyEventsAt(mapX, mapY) ?? false;
             Actor? mouseEnemy = null;
             Actor? mouseActor = GetActor(mouseX, mouseY);
             bool hasEnemy = mouseEnemy != null;
@@ -164,7 +173,7 @@
                     }
                     break;
                 case ActorAction.Interact:
-                    //eventManager.CheckClickEvents(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY);
+                    eventManager?.CheckClickEvents(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY);
                     break;
                 case ActorAction.Attack:
                     actor.Attack(cmd.Enemy);

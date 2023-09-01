@@ -1,12 +1,12 @@
 ﻿namespace SDLSharp.Content.Flare
 {
     using SDLSharp.Actors;
+    using SDLSharp.Events;
     using SDLSharp.Maps;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
-    using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -50,7 +50,7 @@
             Color bgColor = Color.Black;
             bool initDone = false;
             ActorInfo? npc = null;
-            //EventInfo? evt = null;
+            EventInfo? evt = null;
             while (infile.Next())
             {
                 if (!initDone && infile.MatchDifferentSection("header"))
@@ -68,7 +68,7 @@
                     initDone = true;
                 }
                 if (map != null && infile.MatchNewSection("npc")) { npc = new ActorInfo(); map.AddActorInfo(npc); }
-                //if (map != null && infile.MatchNewSection("event")) { evt = new EventInfo(); map.AddEventInfo(evt); }
+                if (map != null && infile.MatchNewSection("event")) { evt = new EventInfo(); map.AddEventInfo(evt); }
                 switch (infile.Section)
                 {
                     case "header":
@@ -151,65 +151,78 @@
                         }
                         break;
                     case "event":
-                        //if (evt != null)
-                        //{
-                        //    switch (infile.Key)
-                        //    {
-                        //        case "type": evt.Type = infile.GetStrVal(); break;
-                        //        case "activate": evt.Activation = StringToEventActivation(infile.GetStrVal()); break;
-                        //        case "cooldown": evt.Cooldown = FileParser.ParseDurationMS(infile.GetStrVal()); break;
-                        //        case "delay": evt.Delay = FileParser.ParseDurationMS(infile.GetStrVal()); break;
-                        //        case "location": evt.Location = infile.PopFirstRect(); break;
-                        //        case "hotspot":
-                        //            if (infile.GetStrVal() == "location")
-                        //            {
-                        //                evt.HotSpot = evt.Location;
-                        //            }
-                        //            else
-                        //            {
-                        //                evt.HotSpot = infile.PopFirstRect();
-                        //            }
-                        //            break;
-                        //        case "reachable_from": evt.ReachableFrom = infile.PopFirstRect(); break;
-                        //        case "msg": evt.Msg = infile.GetStrVal(); break;
-                        //        case "music": evt.Music = infile.GetStrVal(); break;
-                        //        case "tooltip": evt.ToolTip = infile.GetStrVal(); break;
-                        //        case "book": evt.Book = infile.GetStrVal(); break;
-                        //        case "repeat": evt.Repeat = infile.GetBoolVal(); break;
-                        //        case "stash": evt.Stash = infile.GetBoolVal(); break;
-                        //        case "intermap":
-                        //            evt.Map = infile.PopFirstString();
-                        //            evt.MapX = infile.PopFirstInt();
-                        //            evt.MapY = infile.PopFirstInt();
-                        //            break;
-                        //        case "intramap":
-                        //            evt.TeleportX = infile.PopFirstInt();
-                        //            evt.TeleportY = infile.PopFirstInt();
-                        //            break;
-                        //        case "shakycam": evt.ShakyCam = FileParser.ParseDurationMS(infile.GetStrVal()); break;
-                        //        case "power": evt.PowerId = infile.PopFirstInt(); break;
-                        //        case "power_path": break;
-                        //        case "spawn": break;
-                        //        case "mapmod": break;
-                        //        case "soundfx":
-                        //            evt.SoundFX = infile.PopFirstString();
-                        //            evt.SoundX = (int)evt.CenterX;
-                        //            evt.SoundY = (int)evt.CenterY;
-                        //            if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundX = infile.PopFirstInt(); }
-                        //            if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundY = infile.PopFirstInt(); }
-                        //            break;
-                        //        case "requires_status": evt.RequiresStatus = infile.GetStrValues(); break;
-                        //        case "requires_not_status": evt.RequiresNotStatus = infile.GetStrValues(); break;
-                        //        case "set_status": evt.SetStatus = infile.GetStrValues(); break;
-                        //        case "unset_status": evt.UnsetStatus = infile.GetStrValues(); break;
-                        //        default: Logger.Warn($"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); break;
-                        //    }
-                        //}
+                        if (evt != null)
+                        {
+                            switch (infile.Key)
+                            {
+                                case "type": evt.Type = infile.GetStrVal(); break;
+                                case "activate": evt.Activation = StringToEventActivation(infile.GetStrVal()); break;
+                                case "cooldown": evt.Cooldown = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                case "delay": evt.Delay = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                case "location": evt.Location = infile.PopFirstRect(); break;
+                                case "hotspot":
+                                    if (infile.GetStrVal() == "location")
+                                    {
+                                        evt.HotSpot = evt.Location;
+                                    }
+                                    else
+                                    {
+                                        evt.HotSpot = infile.PopFirstRect();
+                                    }
+                                    break;
+                                case "reachable_from": evt.ReachableFrom = infile.PopFirstRect(); break;
+                                case "msg": evt.Msg = infile.GetStrVal(); break;
+                                case "music": evt.Music = infile.GetStrVal(); break;
+                                case "tooltip": evt.ToolTip = infile.GetStrVal(); break;
+                                case "book": evt.Book = infile.GetStrVal(); break;
+                                case "repeat": evt.Repeat = infile.GetBoolVal(); break;
+                                case "stash": evt.Stash = infile.GetBoolVal(); break;
+                                case "intermap":
+                                    evt.Map = infile.PopFirstString();
+                                    evt.MapX = infile.PopFirstInt();
+                                    evt.MapY = infile.PopFirstInt();
+                                    break;
+                                case "intramap":
+                                    evt.TeleportX = infile.PopFirstInt();
+                                    evt.TeleportY = infile.PopFirstInt();
+                                    break;
+                                case "shakycam": evt.ShakyCam = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                case "power": evt.PowerId = infile.PopFirstInt(); break;
+                                case "power_path": break;
+                                case "spawn": break;
+                                case "mapmod": break;
+                                case "soundfx":
+                                    evt.SoundFX = infile.PopFirstString();
+                                    evt.SoundX = (int)evt.CenterX;
+                                    evt.SoundY = (int)evt.CenterY;
+                                    if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundX = infile.PopFirstInt(); }
+                                    if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundY = infile.PopFirstInt(); }
+                                    break;
+                                case "requires_status": evt.RequiresStatus = infile.GetStrValues(); break;
+                                case "requires_not_status": evt.RequiresNotStatus = infile.GetStrValues(); break;
+                                case "set_status": evt.SetStatus = infile.GetStrValues(); break;
+                                case "unset_status": evt.UnsetStatus = infile.GetStrValues(); break;
+                                default: UnknownKey(name, infile); break;
+                            }
+                        }
                         break;
                 }
             }
             return map ?? new Map(name, width, height);
         }
 
+        private static EventActivation StringToEventActivation(string str)
+        {
+            return str switch
+            {
+                "on_trigger" => EventActivation.Trigger,
+                "on_load" => EventActivation.Load,
+                "on_mapexit" => EventActivation.Exit,
+                "on_leave" => EventActivation.Leave,
+                "on_clear" => EventActivation.Clear,
+                "static" => EventActivation.Static,
+                _ => EventActivation.None,
+            };
+        }
     }
 }
