@@ -257,7 +257,7 @@
         }
 
         private void ExecuteEventComponent(Event evt, EventComponent ec)
-        {            
+        {
             switch (ec.Type)
             {
                 case EventComponentType.InterMap:
@@ -281,7 +281,7 @@
                     map?.Modify(ec.MapMods);
                     break;
                 case EventComponentType.Spawn:
-                    //context.Application.EnemyManager.SpawnMapSpawns(map, ec.MapSpawns);
+                    map?.Spawn(ec.MapSpawns);
                     break;
                 case EventComponentType.SoundFX:
                     //var snd = context.Audio.GetSound(ec.StringParam);

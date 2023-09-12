@@ -189,7 +189,7 @@
                                 case "shakycam": evt.ShakyCam = FileParser.ParseDurationMS(infile.GetStrVal()); break;
                                 case "power": evt.PowerId = infile.PopFirstInt(); break;
                                 case "power_path": break;
-                                case "spawn": break;
+                                case "spawn": evt.MapSpawns = ParseMapSpawns(infile.GetStrVal()); break;
                                 case "mapmod": evt.MapMods = ParseMapMods(infile.GetStrVal()); break;
                                 case "soundfx":
                                     evt.SoundFX = infile.PopFirstString();
@@ -211,6 +211,28 @@
             return map ?? new Map(name, width, height);
         }
 
+        private static List<MapSpawn> ParseMapSpawns(string value)
+        {
+            var list = new List<MapSpawn>();
+            foreach (string s in value.Split(';'))
+            {
+                var spawn = ParseMapSpawn(s);
+                if (spawn != null)
+                {
+                    list.Add(spawn);
+                }
+
+            }
+            return list;
+        }
+
+        private static MapSpawn ParseMapSpawn(string value)
+        {
+            string type = FileParser.PopFirstString(ref value);
+            int x = FileParser.PopFirstInt(ref value);
+            int y = FileParser.PopFirstInt(ref value);
+            return new MapSpawn { Type = type, MapX = x, MapY = y };
+        }
         private static List<MapMod> ParseMapMods(string value)
         {
             var list = new List<MapMod>();

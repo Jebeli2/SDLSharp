@@ -12,5 +12,10 @@
         public int MapX { get; set; }
         public int MapY { get; set; }
         public int MapValue { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Layer}({MapX}/{MapY})=>{MapValue}";
+        }
     }
 }

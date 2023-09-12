@@ -12,5 +12,10 @@
         public int MapX { get; set; }
         public int MapY { get; set; }
         public int Direction { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Type}@({MapX}/{MapY})";
+        }
     }
 }

@@ -131,6 +131,19 @@
                 }
             }
         }
+
+        public void Spawn(IEnumerable<MapSpawn> mapSpawns)
+        {
+            foreach(MapSpawn spawn in mapSpawns)
+            {
+                Spawn(spawn);
+            }
+        }
+
+        public void Spawn(MapSpawn mapSpawn)
+        {
+
+        }
         protected override void DisposeUnmanaged()
         {
             tileSet?.Dispose();
