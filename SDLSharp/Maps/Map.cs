@@ -107,7 +107,29 @@
             {
                 collision = new AStar.MapCollision(width, height);
             }
+        }
 
+        public void Modify(IEnumerable<MapMod> mapMods)
+        {
+            foreach (MapMod mod in mapMods)
+            {
+                Modify(mod);
+            }
+        }
+        public void Modify(MapMod mapMod)
+        {
+            if (mapMod.Layer == "collision" && collision != null)
+            {
+                collision.ColMap[mapMod.MapX, mapMod.MapY] = mapMod.MapValue;
+            }
+            else
+            {
+                MapLayer? layer = layers.FirstOrDefault(x => x.Name == mapMod.Layer);
+                if (layer != null)
+                {
+                    layer[mapMod.MapX, mapMod.MapY] = mapMod.MapValue;
+                }
+            }
         }
         protected override void DisposeUnmanaged()
         {

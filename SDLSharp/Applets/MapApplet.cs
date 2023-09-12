@@ -27,6 +27,8 @@
 
         private string mapName = "";
         private string playerName = "";
+        private int playerX = -1;
+        private int playerY = -1;
         private Map? map;
         private readonly IMapRenderer mapRenderer;
         private readonly ActorManager actorManager;
@@ -70,16 +72,23 @@
             {
                 if (mapName != value)
                 {
-                    mapName = value;
-                    mapState = MapState.None;
+                    SetMapName(value);
                 }
             }
+        }
+
+        public void SetMapName(string name, int posX = -1, int posY = -1)
+        {
+            mapName = name;
+            mapState = MapState.None;
+            playerX = posX;
+            playerY = posY;
         }
 
         public string PlayerName
         {
             get => playerName;
-            set => SetPlayerName(value);
+            set => SetPlayerName(value, playerX, playerY);
         }
 
         public Map? Map
@@ -115,6 +124,7 @@
                 SetMusic(map.Music);
 
                 actorManager.Clear();
+                eventManager.Clear();
                 actorManager.Map = map;
                 actorManager.Camera = mapRenderer;
                 PlayerName = "";
@@ -124,6 +134,7 @@
                 eventManager.Map = map;
                 eventManager.Camera = mapRenderer;
                 eventManager.ExecuteOnLoadEvents();
+                if (player != null) { player.HasMoved = true; }
             }
         }
 
@@ -131,9 +142,11 @@
         {
             if (eventManager.Travel && !string.IsNullOrEmpty(eventManager.TravelMap))
             {
-                SetPlayerName(playerName,eventManager.TravelX,eventManager.TravelY);
+                string map = eventManager.TravelMap;
+                int x = eventManager.TravelX;
+                int y = eventManager.TravelY;
                 eventManager.Travel = false;
-                MapName = eventManager.TravelMap;
+                SetMapName(map, x, y);
                 return true;
             }
             return false;

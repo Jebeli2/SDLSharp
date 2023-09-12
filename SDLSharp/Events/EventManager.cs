@@ -22,10 +22,10 @@
         private float tooltipMapY;
         private int tooltipOffsetX;
         private int tooltipOffsetY;
-        private string travelMap;
-        private int travelX;
-        private int travelY;
-        private bool travel;
+        private string travelMap = "";
+        private int travelX = -1;
+        private int travelY = -1;
+        private bool travel = false;
 
         public EventManager()
         {
@@ -58,6 +58,13 @@
             get => travel;
             set => travel = false;
         }
+
+        public void Clear()
+        {
+            events.Clear();
+            delayedEvents.Clear();
+        }
+
         public void AddEvent(Event evt)
         {
             events.Add(evt);
@@ -222,7 +229,7 @@
 
         private void ExecuteImmediateEvent(Event evt)
         {
-            //Logger.Info($"Executing Immediate Event {evt}");
+            SDLLog.Info(LogCategory.APPLICATION, $"Executing Immediate Event {evt}");
             if (!evt.Repeat) evt.RemoveNow = true;
             evt.StartCooldown();
             foreach (var ec in evt.Components)
@@ -233,7 +240,7 @@
 
         private void ExecuteDelayedEvent(Event evt)
         {
-            //Logger.Info($"Executing Delayed Event {evt}");
+            SDLLog.Info(LogCategory.APPLICATION, $"Executing Delayed Event {evt}");
             if (!evt.Repeat) evt.RemoveNow = true;
             foreach (var ec in evt.Components)
             {
@@ -264,7 +271,7 @@
                     }
                     break;
                 case EventComponentType.MapMod:
-                    //map.Modify(ec.MapMods);
+                    map?.Modify(ec.MapMods);
                     break;
                 case EventComponentType.Spawn:
                     //context.Application.EnemyManager.SpawnMapSpawns(map, ec.MapSpawns);

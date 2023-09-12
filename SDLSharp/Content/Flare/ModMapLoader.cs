@@ -190,7 +190,7 @@
                                 case "power": evt.PowerId = infile.PopFirstInt(); break;
                                 case "power_path": break;
                                 case "spawn": break;
-                                case "mapmod": break;
+                                case "mapmod": evt.MapMods = ParseMapMods(infile.GetStrVal()); break;
                                 case "soundfx":
                                     evt.SoundFX = infile.PopFirstString();
                                     evt.SoundX = (int)evt.CenterX;
@@ -211,6 +211,28 @@
             return map ?? new Map(name, width, height);
         }
 
+        private static List<MapMod> ParseMapMods(string value)
+        {
+            var list = new List<MapMod>();
+            foreach (string s in value.Split(';'))
+            {
+                var mod = ParseMapMod(s);
+                if (mod != null)
+                {
+                    list.Add(mod);
+                }
+            }
+            return list;
+        }
+
+        private static MapMod ParseMapMod(string value)
+        {
+            string name = FileParser.PopFirstString(ref value);
+            int x = FileParser.PopFirstInt(ref value);
+            int y = FileParser.PopFirstInt(ref value);
+            int v = FileParser.PopFirstInt(ref value);
+            return new MapMod { Layer = name, MapX = x, MapY = y, MapValue = v };
+        }
         private static EventActivation StringToEventActivation(string str)
         {
             return str switch

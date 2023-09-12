@@ -22,6 +22,7 @@
         private const string MAPNAME4 = "maps/underworld.txt";
         private const string MAPNAME5 = "maps/frontier_plains.txt";
         private const string MAPNAME6 = "maps/hyperspace.txt";
+        private const string MAPNAME7 = "maps/Act1_triston.txt";
 
         private const string DC = @"D:\Users\jebel\Music\iTunes\iTunes Media\Music\Alt-J\Relaxer\05 Deadcrush.mp3";
 
@@ -144,6 +145,12 @@
                     if (map != null)
                     {
                         map.MapName = MAPNAME6;
+                    }
+                    break;
+                case ScanCode.SCANCODE_7:
+                    if (map != null)
+                    {
+                        map.SetMapName(MAPNAME7, 69, 69);
                     }
                     break;
             }

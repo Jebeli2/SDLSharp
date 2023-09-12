@@ -95,7 +95,7 @@
                 if (actor != null)
                 {
                     player = actor;
-                    player.DefaultSpeed *= 2;
+                    player.DefaultSpeed *= 1.1f;
                     player.IsPlayer = true;
                 }
             }
