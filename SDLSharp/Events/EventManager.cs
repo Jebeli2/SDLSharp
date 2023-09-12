@@ -16,6 +16,7 @@
         private readonly List<Event> delayedEvents = new();
         private Map? map;
         private IMapCamera? camera;
+        private Actor? player;
         private double shakyCamDuration;
         //private TooltipData tooltipData;
         private float tooltipMapX;
@@ -42,6 +43,12 @@
             get => camera;
             set => camera = value;
         }
+
+        public Actor? Player
+        {
+            get => player;
+            set => player = value;
+        }
         public float InteractRange { get; set; }
 
         //public TooltipData TooltipData => tooltipData;
@@ -63,6 +70,7 @@
         {
             events.Clear();
             delayedEvents.Clear();
+            player = null;
         }
 
         public void AddEvent(Event evt)
@@ -249,8 +257,7 @@
         }
 
         private void ExecuteEventComponent(Event evt, EventComponent ec)
-        {
-            Actor? player = null;
+        {            
             switch (ec.Type)
             {
                 case EventComponentType.InterMap:

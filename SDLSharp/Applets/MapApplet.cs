@@ -133,6 +133,7 @@
                 player = actorManager.Player;
                 eventManager.Map = map;
                 eventManager.Camera = mapRenderer;
+                eventManager.Player = player;
                 eventManager.ExecuteOnLoadEvents();
                 if (player != null) { player.HasMoved = true; }
             }
@@ -147,6 +148,16 @@
                 int y = eventManager.TravelY;
                 eventManager.Travel = false;
                 SetMapName(map, x, y);
+                return true;
+            }
+            return false;
+        }
+
+        private bool CheckPositionEvents()
+        {
+            if (player != null)
+            {
+                eventManager.CheckPositionEvents(player.PosX, player.PosY, player.Path);
                 return true;
             }
             return false;
@@ -196,9 +207,11 @@
                             {
                                 player.HasMoved = false;
                             }
+                            
                         }
                         else
                         {
+                            CheckPositionEvents();
                             CheckTravel();
                         }
                     }
