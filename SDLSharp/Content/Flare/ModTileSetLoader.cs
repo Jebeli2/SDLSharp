@@ -19,7 +19,7 @@
 
         public TileSet? Load(string name, byte[]? data)
         {
-            using FileParser infile = new FileParser(name, data);
+            using FileParser infile = new FileParser(ContentManager, name, data);
             TileSet? result = LoadTileSet(infile, name);
             if (result != null)
             {

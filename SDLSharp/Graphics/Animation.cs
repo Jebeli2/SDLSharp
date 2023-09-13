@@ -52,6 +52,8 @@
                 }
             }
         }
+
+        public int Frame => sprites[direction].CurrentFrame;
         public int FrameCount => sprites[direction].FrameCount;
         public int Direction
         {

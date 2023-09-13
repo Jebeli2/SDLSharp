@@ -47,6 +47,8 @@
                 }
             }
         }
+        public int Frame => activeAnimations.FirstOrDefault()?.Frame ?? 0;
+        public int FrameCount => activeAnimations.FirstOrDefault()?.FrameCount ?? 0;
 
         public bool HasAnimationFinished => activeAnimations.FirstOrDefault()?.IsFinished ?? true;
         public bool IsActiveFrame => activeAnimations.FirstOrDefault()?.IsActiveFrame ?? true;

@@ -18,10 +18,12 @@
         private string key;
         private string val;
         private string originalVal;
+        private IContentManager? contentManager;
+        private FileParser? includeFp;
 
-
-        public FileParser(string name, byte[]? data)
+        public FileParser(IContentManager? contentManager, string name, byte[]? data)
         {
+            this.contentManager = contentManager;
             this.name = name;
 
             MemoryStream ms = data != null ? new MemoryStream(data, false) : new MemoryStream();
@@ -43,8 +45,26 @@
         public bool Next()
         {
             newSection = false;
-            while (!reader.EndOfStream)
+            while (!reader.EndOfStream || (includeFp != null && !includeFp.reader.EndOfStream))
             {
+                if (includeFp != null)
+                {
+                    if (includeFp.Next())
+                    {
+                        newSection = includeFp.newSection;
+                        section = includeFp.section;
+                        key = includeFp.key;
+                        val = includeFp.val;
+                        originalVal = includeFp.originalVal;
+                        return true;
+                    }
+                    else
+                    {
+                        includeFp.Dispose();
+                        includeFp = null;
+                        continue;
+                    }
+                }
                 line = reader.ReadLine()?.Trim();
                 lineNum++;
                 if (string.IsNullOrEmpty(line)) continue;
@@ -62,6 +82,17 @@
                     string directive = line.Substring(0, firstSpace);
                     if (directive.Equals("INCLUDE"))
                     {
+                        string tmp = line.Substring(firstSpace + 1);
+                        byte[]? data = contentManager?.FindContent(tmp);
+                        if (data != null)
+                        {
+                            includeFp = new FileParser(contentManager, tmp, data);
+                            includeFp.section = section;
+                        }
+                        else
+                        {
+                            includeFp = null;
+                        }
                         continue;
                     }
                 }
@@ -174,6 +205,7 @@
         }
         public void Dispose()
         {
+            includeFp?.Dispose();
             reader.Dispose();
         }
 

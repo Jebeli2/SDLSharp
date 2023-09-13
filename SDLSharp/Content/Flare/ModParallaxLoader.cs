@@ -18,7 +18,7 @@
 
         public MapParallax? Load(string name, byte[]? data)
         {
-            using FileParser infile = new FileParser(name, data);
+            using FileParser infile = new FileParser(ContentManager, name, data);
             MapParallax? result = LoadParallax(infile, name);
             if (result != null)
             {

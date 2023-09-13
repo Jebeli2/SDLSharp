@@ -2,16 +2,18 @@
 {
     using SDLSharp.Content;
     using SDLSharp.Events;
+    using SDLSharp.Graphics;
     using SDLSharp.Maps;
     using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
+    using System.Numerics;
     using System.Text;
     using System.Threading.Tasks;
 
-    public class ActorManager
+    public class ActorManager : IActorManager
     {
         private static readonly float M_SQRT2 = MathF.Sqrt(2.0f);
         private static readonly float M_SQRT2INV = 1.0f / M_SQRT2;
@@ -20,36 +22,34 @@
         private static readonly float[] speedMultiplyer = { M_SQRT2INV, 1.0f, M_SQRT2INV, 1.0f, M_SQRT2INV, 1.0f, M_SQRT2INV, 1.0f };
 
         private readonly List<Actor> actors = new();
-        private Actor? player;
-        private Map? map;
-        private IMapCamera? camera;
-        private EventManager? eventManager;
+        //private IMapCamera? camera;
+        private readonly IMapEngine engine;
 
-        public ActorManager()
+        internal ActorManager(IMapEngine engine)
         {
-
+            this.engine = engine;
         }
 
         public IContentManager? ContentManager { get; set; }
-        public Map? Map
-        {
-            get => map;
-            set => map = value;
-        }
+        //public Map? Map
+        //{
+        //    get => map;
+        //    set => map = value;
+        //}
 
-        public IMapCamera? Camera
-        {
-            get => camera;
-            set => camera = value;
-        }
+        //public IMapCamera? Camera
+        //{
+        //    get => camera;
+        //    set => camera = value;
+        //}
 
-        public EventManager? EventManager
-        {
-            get => eventManager;
-            set => eventManager = value;
-        }
+        //public EventManager? EventManager
+        //{
+        //    get => eventManager;
+        //    set => eventManager = value;
+        //}
         public ActorInfo? PlayerInfo { get; set; }
-        public Actor? Player => player;
+        //public Actor? Player => player;
         public IList<IMapSprite> GetLivingSprites()
         {
             return GetSprites(alive: true);
@@ -82,7 +82,7 @@
             actors.Clear();
         }
 
-        public void SpawnPlayer(Map map)
+        public Actor? SpawnPlayer(Map map)
         {
             if (PlayerInfo != null)
             {
@@ -94,11 +94,13 @@
                 Actor? actor = AddActor(PlayerInfo);
                 if (actor != null)
                 {
-                    player = actor;
-                    player.DefaultSpeed *= 1.1f;
-                    player.IsPlayer = true;
+
+                    actor.DefaultSpeed *= 1.1f;
+                    actor.IsPlayer = true;
+                    return actor;
                 }
             }
+            return null;
         }
         public void SpawnMapActors(Map map)
         {
@@ -108,19 +110,18 @@
                 if (actor != null)
                 {
                     map.Collision?.Block(actor.PosX, actor.PosY, false);
-                    eventManager?.CreateNPCEvent(actor);
+                    engine.EventManager.CreateNPCEvent(actor);
                 }
             }
         }
 
         public void MakeCommands(Actor actor, int mouseX, int mouseY)
         {
-            if (camera == null) return;
-            //if (eventManager == null) return;
+            IMapCamera camera = engine.Camera;
             camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
             mapX = MathUtils.RoundForMap(mapX);
             mapY = MathUtils.RoundForMap(mapY);
-            bool hasEvent = eventManager?.HasAnyEventsAt(mapX, mapY) ?? false;
+            bool hasEvent = engine.EventManager.HasAnyEventsAt(mapX, mapY);
             Actor? mouseEnemy = null;
             Actor? mouseActor = GetActor(mouseX, mouseY);
             bool hasEnemy = mouseEnemy != null;
@@ -152,18 +153,35 @@
                 actor.QueueMove(mapX, mapY);
             }
         }
+        private Actor? AddActor(ActorInfo info)
+        {
+            Actor? actor = ContentManager?.Load<Actor>(info.Id);
+            if (actor != null)
+            {
+                actor.SetPosition(info.PosX + 0.5f, info.PosY + 0.5f);
+                actor.SetDirection(0);
+                actor.SetAnimation("stance");
+                AddActor(actor);
+            }
+            return actor;
+        }
+
+        public void AddActor(Actor actor)
+        {
+            actors.Add(actor);
+        }
+
 
         private void ExecuteCommand(Actor actor, ActorCommand? cmd)
         {
             if (cmd == null) return;
-            if (map == null) return;
-            if (map.Collision == null) return;
-            //if (eventManager == null) return;
+            if (engine.Map == null) return;
+            if (engine.Map.Collision == null) return;
             switch (cmd.Action)
             {
                 case ActorAction.Move:
                     List<PointF> path = new();
-                    if (map.Collision.ComputePath(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY, path, MovementType.Normal))
+                    if (engine.Map.Collision.ComputePath(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY, path, MovementType.Normal))
                     {
                         actor.Path = path;
                     }
@@ -173,37 +191,23 @@
                     }
                     break;
                 case ActorAction.Interact:
-                    eventManager?.CheckClickEvents(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY);
+                    engine.EventManager.CheckClickEvents(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY);
                     break;
                 case ActorAction.Attack:
                     actor.Attack(cmd.Enemy);
                     break;
             }
         }
-        private Actor? AddActor(ActorInfo info)
-        {
-            Actor? actor = ContentManager?.Load<Actor>(info.Id);
-            if (actor != null)
-            {
-                actor.SetPosition(info.PosX + 0.5f, info.PosY + 0.5f);
-                actor.SetDirection(0);
-                actor.SetAnimation("stance");
-
-                actors.Add(actor);
-            }
-            return actor;
-        }
-
         private void UpdatePath(Actor? actor)
         {
             if (actor == null) return;
-            if (map == null) return;
-            if (map.Collision == null) return;
+            if (engine.Map == null) return;
+            if (engine.Map.Collision == null) return;
             var cmd = actor.CurrentCommand;
             if (cmd != null && cmd.Action == ActorAction.Move)
             {
                 List<PointF> path = new();
-                if (map.Collision.ComputePath(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY, path, MovementType.Normal))
+                if (engine.Map.Collision.ComputePath(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY, path, MovementType.Normal))
                 {
                     actor.Path = path;
                 }
@@ -213,18 +217,19 @@
                 }
             }
         }
-        private void FollowPath(Actor actor, double totalTime, double elapsedTime)
+        private void FollowPath(Actor? actor, double totalTime, double elapsedTime)
         {
-            if (map == null) return;
-            if (map.Collision == null) return;
+            if (actor == null) return;
+            if (engine.Map == null) return;
+            if (engine.Map.Collision == null) return;
             if (actor.Dead) return;
             if (actor.Dying) return;
             if (actor.Path != null && actor.Path.Count > 0)
             {
                 PointF src = new PointF(actor.PosX, actor.PosY);
-                map.Collision.Unblock(src.X, src.Y);
+                engine.Map.Collision.Unblock(src.X, src.Y);
                 PointF dest = actor.Path[^1];
-                if (actor.Collided || !map.Collision.IsValidPosition(dest.X, dest.Y, actor.MovementType, actor.CollisionType))
+                if (actor.Collided || !engine.Map.Collision.IsValidPosition(dest.X, dest.Y, actor.MovementType, actor.CollisionType))
                 {
                     UpdatePath(actor);
                     if (actor.Path != null && actor.Path.Count > 0)
@@ -264,7 +269,7 @@
                 {
                     actor.Path?.RemoveAt(actor.Path.Count - 1);
                 }
-                map.Collision.Block(actor.PosX, actor.PosY, actor.IsPlayer);
+                engine.Map.Collision.Block(actor.PosX, actor.PosY, actor.IsPlayer);
             }
             else
             {
@@ -275,17 +280,18 @@
             }
         }
 
-        private bool Move(Actor entity)
+        private bool Move(Actor? entity)
         {
-            if (map == null) return false;
-            if (map.Collision == null) return false;
+            if (entity == null) return false;
+            if (engine.Map == null) return false;
+            if (engine.Map.Collision == null) return false;
             float speed = entity.Speed;
             speed *= speedMultiplyer[entity.Direction];
             float dx = speed * directionDeltaX[entity.Direction];
             float dy = speed * directionDeltaY[entity.Direction];
             float x = entity.PosX;
             float y = entity.PosY;
-            bool fullMove = map.Collision.Move(ref x, ref y, dx, dy, MovementType.Normal, CollisionType.Player);
+            bool fullMove = engine.Map.Collision.Move(ref x, ref y, dx, dy, MovementType.Normal, CollisionType.Player);
             if (fullMove)
             {
                 entity.HasMoved = true;
@@ -308,12 +314,12 @@
         }
         public Actor? GetActor(int mouseX, int mouseY)
         {
-            if (map == null) return null;
-            if (camera == null) return null;
-            camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
+            if (engine.Map == null) return null;
+            if (engine.Map.Collision == null) return null;
+            engine.Camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
             foreach (var a in GetNearActors(mapX, mapY, 4))
             {
-                camera.MapToScreen(a.PosX, a.PosY, out int sx, out int sy);
+                engine.Camera.MapToScreen(a.PosX, a.PosY, out int sx, out int sy);
                 foreach (var sprite in a.GetSprites())
                 {
                     int rx = sx - sprite.OffsetX;

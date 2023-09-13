@@ -181,6 +181,32 @@
                         return HasAnimationFinished;
                     }
                     break;
+                case "spawn":
+                    if (HasAnimationFinished)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        int frame = visual.Frame;
+                        int count = visual.FrameCount;
+                        if (frame >= count)
+                        {
+                            return true;
+                        }
+                    }
+                    //if (!HasAnimationFinished)
+                    //{
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    visual.Update(10, 160);
+                    //    return true;
+                    //}
+                    break;
             }
             return HasAnimationFinished;
         }
@@ -365,6 +391,39 @@
             //manager.PlaySound(this, SfxType.CritDie);
             Dying = true;
             //Dead = true;
+        }
+
+        public bool LoadAnimations(IContentManager? contentManager, IDictionary<string, string> animationParts, IDictionary<int, IList<string>> layerOrder)
+        {
+            if (contentManager != null && animationParts.Count > 0)
+            {
+                if (animationParts.Count > 1 && layerOrder.Count >= animationParts.Count)
+                {
+                    var animSets = new Dictionary<string, AnimationSet>();
+                    foreach (var kvp in animationParts)
+                    {
+                        AnimationSet? animSet = contentManager?.Load<AnimationSet>(kvp.Value);
+                        if (animSet != null)
+                        {
+                            animSets[kvp.Key] = animSet;
+                        }
+                    }
+                    Visual = new MultiPartVisual(animSets, layerOrder);
+                }
+                else
+                {
+                    foreach (var kvp in animationParts)
+                    {
+                        AnimationSet? animSet = contentManager?.Load<AnimationSet>(kvp.Value);
+                        if (animSet != null)
+                        {
+                            Visual = new AnimationSetVisual(animSet);
+                            break;
+                        }
+                    }
+                }
+            }
+            return Visual != null;
         }
 
     }

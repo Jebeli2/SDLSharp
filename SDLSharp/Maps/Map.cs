@@ -22,6 +22,7 @@
         private MapParallax? parallax;
         private List<ActorInfo> actorInfos = new();
         private List<EventInfo> eventInfos = new();
+        private List<EnemyInfo> enemyInfos = new();
 
         public Map(string name, int width, int height)
             : base(name, ContentFlags.Data)
@@ -73,6 +74,12 @@
         public void AddEventInfo(EventInfo info)
         {
             eventInfos.Add(info);
+        }
+
+        public IEnumerable<EnemyInfo> EnemyInfos => enemyInfos;
+        public void AddEnemyInfo(EnemyInfo info)
+        {
+            enemyInfos.Add(info);
         }
         public IEnumerable<MapLayer> Layers => layers;
 
@@ -132,18 +139,6 @@
             }
         }
 
-        public void Spawn(IEnumerable<MapSpawn> mapSpawns)
-        {
-            foreach(MapSpawn spawn in mapSpawns)
-            {
-                Spawn(spawn);
-            }
-        }
-
-        public void Spawn(MapSpawn mapSpawn)
-        {
-
-        }
         protected override void DisposeUnmanaged()
         {
             tileSet?.Dispose();

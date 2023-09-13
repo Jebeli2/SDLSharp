@@ -16,6 +16,8 @@
         IEnumerable<ISprite> CurrentSprites { get; }
         bool HasAnimationFinished { get; }
         bool IsActiveFrame { get; }
+        int Frame { get; }  
+        int FrameCount { get; }
 
         bool Update(double totalTime, double elapsedTime);
 

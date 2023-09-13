@@ -40,6 +40,9 @@
             }
         }
 
+        public int Frame => activeAnimation?.Frame ?? 0;
+        public int FrameCount => activeAnimation?.FrameCount ?? 0;
+
         public bool HasAnimationFinished => activeAnimation?.IsFinished ?? true;
         public bool IsActiveFrame => activeAnimation?.IsActiveFrame ?? true;
 

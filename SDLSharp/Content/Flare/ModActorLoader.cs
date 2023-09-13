@@ -18,8 +18,9 @@
 
         public Actor? Load(string name, byte[]? data)
         {
-            using FileParser infile = new FileParser(name, data);
-            Actor? result = LoadActor(infile, name);
+            using FileParser infile = new FileParser(ContentManager, name, data);
+            Actor actor = new Actor(name);
+            Actor? result = LoadActor(infile, name, actor);
             if (result != null)
             {
                 SDLLog.Info(LogCategory.APPLICATION, $"Actor loaded from resource '{name}'");
@@ -27,9 +28,8 @@
             return result;
         }
 
-        private Actor? LoadActor(FileParser infile, string name)
+        private Actor? LoadActor(FileParser infile, string name, Actor actor)
         {
-            Actor? actor = null;
             string actorName = "";
             List<string> categories = new();
             int turnDelay = 0;
@@ -73,37 +73,12 @@
                         break;
                 }
             }
-            if (animationParts.Count > 0)
+            if (actor.LoadAnimations(ContentManager, animationParts, layerOrder))
             {
-                actor = new Actor(name);
-                actor.DisplayName = actorName;
-                if (animationParts.Count > 1 && layerOrder.Count >= animationParts.Count)
-                {
-                    var animSets = new Dictionary<string, AnimationSet>();
-                    foreach (var kvp in animationParts)
-                    {
-                        AnimationSet? animSet = ContentManager?.Load<AnimationSet>(kvp.Value);
-                        if (animSet != null)
-                        {
-                            animSets[kvp.Key] = animSet;
-                        }
-                    }
-                    actor.Visual = new MultiPartVisual(animSets, layerOrder);
-                }
-                else
-                {
-                    foreach (var kvp in animationParts)
-                    {
-                        AnimationSet? animSet = ContentManager?.Load<AnimationSet>(kvp.Value);
-                        if (animSet != null)
-                        {
-                            actor.Visual = new AnimationSetVisual(animSet);
-                            break;
-                        }
-                    }
-                }
+                return actor;
             }
-            return actor;
+            return null;
         }
+
     }
 }

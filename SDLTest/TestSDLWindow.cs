@@ -57,6 +57,7 @@
             ContentManager.RegisterResourceLoader(new ModMapLoader());
             ContentManager.RegisterResourceLoader(new ModTileSetLoader());
             ContentManager.RegisterResourceLoader(new ModParallaxLoader());
+            ContentManager.RegisterResourceLoader(new ModEnemyTemplateLoader());
             ContentManager.RegisterResourceLoader(new ModActorLoader());
             ContentManager.RegisterResourceLoader(new ModAnimationSetLoader());
 

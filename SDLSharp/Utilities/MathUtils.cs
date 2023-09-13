@@ -14,6 +14,11 @@
         {
             return rnd.Next();
         }
+
+        public static int RandBewteen(int min, int max)
+        {
+            return rnd.Next(max - min) + min;
+        }
         public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
         {
             if (val.CompareTo(min) < 0) return min;

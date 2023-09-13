@@ -74,6 +74,22 @@
             return default;
         }
 
+        public IEnumerable<string> List(string path)
+        {
+            List<string> list = new List<string>();
+            foreach (var modManager in modManagers)
+            {
+                var modFiles = modManager.List(path, false);
+                foreach (var modFile in modFiles)
+                {
+                    if (!list.Contains(modFile))
+                    {
+                        list.Add(modFile);
+                    }
+                }
+            }
+            return list;
+        }
         private IEnumerable<IResourceLoader<T>> GetResourceLoaders<T>() where T : IResource
         {
             foreach (var loader in loaders)

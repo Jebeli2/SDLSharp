@@ -13,7 +13,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class MapApplet : SDLApplet
+    public class MapApplet : SDLApplet, IMapEngine
     {
 
         private enum MapState
@@ -33,6 +33,7 @@
         private readonly IMapRenderer mapRenderer;
         private readonly ActorManager actorManager;
         private readonly EventManager eventManager;
+        private readonly EnemyManager enemyManager;
         private bool panning;
         private int panDX;
         private int panDY;
@@ -51,9 +52,9 @@
             : base("Map")
         {
             mapRenderer = renderer ?? new FlareMapRenderer();
-            actorManager = new ActorManager();
-            eventManager = new EventManager();
-            actorManager.EventManager = eventManager;
+            actorManager = new ActorManager(this);
+            enemyManager = new EnemyManager(this);
+            eventManager = new EventManager(this);
             MousePanning = true;
             CommandMoving = true;
             FollowPlayer = true;
@@ -90,10 +91,17 @@
             get => playerName;
             set => SetPlayerName(value, playerX, playerY);
         }
+        public IMapCamera Camera => mapRenderer;
+        public IMapRenderer Renderer => mapRenderer;
+        public IActorManager ActorManager => actorManager;
+        public IEnemyManager EnemyManager => enemyManager;
+        public IEventManager EventManager => eventManager;
+        public Map? Map => map;
+        public Actor? Player => player;
 
-        public Map? Map
+        public EnemyTemplate? LoadEnemyTemplate(string name)
         {
-            get => map;
+            return ContentManager?.Load<EnemyTemplate>(name);
         }
         private void SetPlayerName(string? name, int x = -1, int y = -1)
         {
@@ -116,25 +124,32 @@
             actorManager.ContentManager = ContentManager;
         }
 
+        private void InitEnemies()
+        {
+            if (!enemyManager.Initialized && ContentManager != null)
+            {
+                enemyManager.AddEnemyTemplates(ContentManager.List("enemies"));
+            }
+        }
+
         private void LoadMap()
         {
             map = ContentManager?.Load<Map>(mapName);
             if (map != null)
             {
                 SetMusic(map.Music);
-
                 actorManager.Clear();
+                enemyManager.Clear();
                 eventManager.Clear();
-                actorManager.Map = map;
-                actorManager.Camera = mapRenderer;
+
+                InitEnemies();
+
                 PlayerName = "";
-                actorManager.SpawnPlayer(map);
+                player = actorManager.SpawnPlayer(map);
                 actorManager.SpawnMapActors(map);
-                player = actorManager.Player;
-                eventManager.Map = map;
-                eventManager.Camera = mapRenderer;
-                eventManager.Player = player;
+                eventManager.AddMapEvents(map);
                 eventManager.ExecuteOnLoadEvents();
+                enemyManager.SpawnEnemies(map);
                 if (player != null) { player.HasMoved = true; }
             }
         }
@@ -207,7 +222,7 @@
                             {
                                 player.HasMoved = false;
                             }
-                            
+
                         }
                         else
                         {
@@ -350,6 +365,16 @@
             mx = MathUtils.RoundForMap(mx);
             my = MathUtils.RoundForMap(my);
             eventManager.CheckHotSpotEvents(mx, my);
+        }
+
+        protected internal override void OnKeyUp(SDLKeyEventArgs e)
+        {
+            switch(e.KeyCode)
+            {
+                case KeyCode.c:
+                    mapRenderer.ShowCollision ^= true;
+                    break;
+            }
         }
 
         private bool Move(float x, float y)

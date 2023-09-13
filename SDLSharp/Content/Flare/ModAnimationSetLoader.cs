@@ -16,7 +16,7 @@
 
         public AnimationSet? Load(string name, byte[]? data)
         {
-            using FileParser infile = new FileParser(name, data);
+            using FileParser infile = new FileParser(ContentManager, name, data);
             AnimationSet? result = LoadAnimationSet(infile, name);
             if (result != null)
             {

@@ -12,6 +12,7 @@
     {
         private readonly List<IImage> images = new();
         private readonly List<ISprite> tiles = new();
+        private readonly List<AnimatedSprite> animSprites = new();
 
         private int maxSizeX;
         private int maxSizeY;
@@ -60,10 +61,10 @@
 
         public void Update(double totalTime, double elapsedTime)
         {
-            //foreach (AnimatedSprite anim in animSprites)
-            //{
-            //    anim.Update(time);
-            //}
+            foreach (AnimatedSprite anim in animSprites)
+            {
+                anim.Update(totalTime, elapsedTime);
+            }
         }
         public void AddImage(IImage image)
         {
@@ -89,17 +90,17 @@
             ISprite? tile = GetTile(id);
             if (tile != null && tile.Image != null)
             {
-                //if (tile is AnimatedSprite anim)
-                //{
-                //    anim.AddFrame(tile.Image, durationMs * speed, x, y, tile.Width, tile.Height, tile.OffsetX, tile.OffsetY);
-                //}
-                //else
-                //{
-                //    anim = new AnimatedSprite();
-                //    animSprites.Add(anim);
-                //    anim.AddFrame(tile.Image, durationMs * speed, x, y, tile.Width, tile.Height, tile.OffsetX, tile.OffsetY);
-                //    tiles[id] = anim;
-                //}
+                if (tile is AnimatedSprite anim)
+                {
+                    anim.AddFrame(tile.Image, durationMs * speed, x, y, tile.Width, tile.Height, tile.OffsetX, tile.OffsetY);
+                }
+                else
+                {
+                    anim = new AnimatedSprite();
+                    animSprites.Add(anim);
+                    anim.AddFrame(tile.Image, durationMs * speed, x, y, tile.Width, tile.Height, tile.OffsetX, tile.OffsetY);
+                    tiles[id] = anim;
+                }
             }
         }
         private IImage? GetCurrentImage()

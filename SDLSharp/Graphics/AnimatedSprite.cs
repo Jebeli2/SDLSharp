@@ -71,6 +71,7 @@
                 currentDuration += elapsedTime;
                 if (currentDuration >= frameDurations[currentFrame])
                 {
+                    
                     AdvanceFrame();
                     return true;
                 }

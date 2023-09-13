@@ -13,5 +13,7 @@
         void RegisterResourceLoader<T>(IResourceLoader<T> loader) where T : IResource;
         byte[]? FindContent(string? name);
         T? Load<T>(string name) where T : IResource;
+
+        IEnumerable<string> List(string path);
     }
 }

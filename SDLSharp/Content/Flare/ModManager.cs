@@ -22,12 +22,12 @@
         {
             fileName = CleanFileName(fileName);
             if (string.IsNullOrEmpty(fileName)) return null;
-            if (locCache.TryGetValue(fileName,out string? fn))
+            if (locCache.TryGetValue(fileName, out string? fn))
             {
                 return fn;
             }
             string testPath;
-            foreach(var mod in modList)
+            foreach (var mod in modList)
             {
                 testPath = mod.GetFileName(fileName);
                 testPath = Path.GetFullPath(testPath);
@@ -38,6 +38,47 @@
                 }
             }
             return null;
+        }
+
+        public IList<string> List(string path, bool fullPaths = true)
+        {
+            List<string> list = new();
+            string testPath;
+            foreach (var mod in modList)
+            {
+                testPath = mod.GetFileName(path);
+                if (File.Exists(testPath))
+                {
+                    list.Add(testPath);
+                }
+                else if (Directory.Exists(testPath))
+                {
+                    GetFileList(testPath, "txt", list);
+                }
+            }
+            if (list.Count > 0 && !fullPaths)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i] = list[i].Substring(list[i].IndexOf(path));
+                }
+                for (int i = 0; i < list.Count; i++)
+                {
+                    int j = i + 1;
+                    while (j < list.Count)
+                    {
+                        if (list[i].Equals(list[j]))
+                        {
+                            list.RemoveAt(j);
+                        }
+                        else
+                        {
+                            j++;
+                        }
+                    }
+                }
+            }
+            return list;
         }
         private static List<Mod> GetModList(string path, IList<string> modDirs)
         {
@@ -68,6 +109,18 @@
                 }
             }
             return list;
+        }
+
+        private static void GetFileList(string dir, string ext, IList<string> files)
+        {
+            if (Directory.Exists(dir))
+            {
+                foreach (var d in Directory.GetFiles(dir, "*." + ext, SearchOption.TopDirectoryOnly))
+                {
+                    string file = Path.GetFileName(d);
+                    files.Add(dir + "/" + file);
+                }
+            }
         }
 
         private static Mod? LoadMod(string name, string dir)

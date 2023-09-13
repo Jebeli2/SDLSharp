@@ -20,7 +20,7 @@
 
         public Map? Load(string name, byte[]? data)
         {
-            using FileParser infile = new FileParser(name, data);
+            using FileParser infile = new FileParser(ContentManager, name, data);
             Map? result = LoadMap(infile, name);
             if (result != null)
             {
@@ -51,6 +51,7 @@
             bool initDone = false;
             ActorInfo? npc = null;
             EventInfo? evt = null;
+            EnemyInfo? enemy = null;
             while (infile.Next())
             {
                 if (!initDone && infile.MatchDifferentSection("header"))
@@ -69,6 +70,8 @@
                 }
                 if (map != null && infile.MatchNewSection("npc")) { npc = new ActorInfo(); map.AddActorInfo(npc); }
                 if (map != null && infile.MatchNewSection("event")) { evt = new EventInfo(); map.AddEventInfo(evt); }
+                if (map != null && infile.MatchNewSection("enemy")) { enemy = new EnemyInfo(); map.AddEnemyInfo(enemy); }
+                if (map != null && infile.MatchNewSection("enemygroup")) { enemy = new EnemyInfo(); map.AddEnemyInfo(enemy); }
                 switch (infile.Section)
                 {
                     case "header":
@@ -146,6 +149,41 @@
                                 case "type": break;
                                 case "location": npc.PosX = infile.PopFirstInt(); npc.PosY = infile.PopFirstInt(); break;
                                 case "filename": npc.Id = infile.GetStrVal(); break;
+                                default: UnknownKey(name, infile); break;
+                            }
+                        }
+                        break;
+                    case "enemy":
+                    case "enemygroup":
+                        if (enemy != null)
+                        {
+                            switch (infile.Key)
+                            {
+                                case "type": enemy.Type = infile.GetStrVal(); break;
+                                case "category": enemy.Category = infile.GetStrVal(); break;
+                                case "chance": enemy.Chance = infile.GetIntVal();break;
+                                case "location":
+                                    enemy.PosX = infile.PopFirstInt();
+                                    enemy.PosY = infile.PopFirstInt();
+                                    enemy.Width = infile.PopFirstInt();
+                                    enemy.Height = infile.PopFirstInt();
+                                    break;
+                                case "level":
+                                    enemy.MinLevel = Math.Max(0,infile.PopFirstInt());
+                                    enemy.MaxLevel = Math.Max(enemy.MinLevel, infile.GetIntVal(enemy.MinLevel));
+                                    break;
+                                case "number":
+                                    enemy.MinNumber = Math.Max(0, infile.PopFirstInt());
+                                    enemy.MaxNumber = Math.Max(enemy.MinNumber, infile.GetIntVal(enemy.MinNumber));
+                                    break;
+                                case "direction":
+                                    enemy.Direction = FileParser.ParseDirection(infile.GetStrVal());
+                                    break;
+                                case "waypoints":
+                                    break;
+                                case "wander_radius":
+                                    enemy.WanderRadius = Math.Max(0, infile.GetIntVal());
+                                    break;
                                 default: UnknownKey(name, infile); break;
                             }
                         }

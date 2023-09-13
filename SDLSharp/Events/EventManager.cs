@@ -10,15 +10,11 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class EventManager
+    public class EventManager : IEventManager
     {
         private readonly List<Event> events = new();
         private readonly List<Event> delayedEvents = new();
-        private Map? map;
-        private IMapCamera? camera;
-        private Actor? player;
         private double shakyCamDuration;
-        //private TooltipData tooltipData;
         private float tooltipMapX;
         private float tooltipMapY;
         private int tooltipOffsetX;
@@ -27,28 +23,29 @@
         private int travelX = -1;
         private int travelY = -1;
         private bool travel = false;
+        private readonly IMapEngine engine;
 
-        public EventManager()
+        internal EventManager(IMapEngine engine)
         {
+            this.engine = engine;
             InteractRange = 2.0f;
-            //tooltipData = new TooltipData();
         }
-        public Map? Map
-        {
-            get { return map; }
-            set { SetMap(value); }
-        }
-        public IMapCamera? Camera
-        {
-            get => camera;
-            set => camera = value;
-        }
+        //public Map? Map
+        //{
+        //    get { return map; }
+        //    set { SetMap(value); }
+        //}
+        //public IMapCamera? Camera
+        //{
+        //    get => camera;
+        //    set => camera = value;
+        //}
 
-        public Actor? Player
-        {
-            get => player;
-            set => player = value;
-        }
+        //public Actor? Player
+        //{
+        //    get => player;
+        //    set => player = value;
+        //}
         public float InteractRange { get; set; }
 
         //public TooltipData TooltipData => tooltipData;
@@ -69,8 +66,7 @@
         public void Clear()
         {
             events.Clear();
-            delayedEvents.Clear();
-            player = null;
+            delayedEvents.Clear();            
         }
 
         public void AddEvent(Event evt)
@@ -261,16 +257,16 @@
             switch (ec.Type)
             {
                 case EventComponentType.InterMap:
-                    player?.Stop();
+                    engine.Player?.Stop();
                     TravelTo(ec.StringParam, ec.MapX, ec.MapY);
                     evt.RemoveNow = true;
                     break;
                 case EventComponentType.IntraMap:
-                    if (player != null)
+                    if (engine.Player != null)
                     {
-                        player.Stop();
-                        player.SetPosition(ec.MapX + 0.5f, ec.MapY + 0.5f);
-                        player.HasMoved = true;
+                        engine.Player.Stop();
+                        engine.Player.SetPosition(ec.MapX + 0.5f, ec.MapY + 0.5f);
+                        engine.Player.HasMoved = true;
                     }
                     else
                     {
@@ -278,10 +274,13 @@
                     }
                     break;
                 case EventComponentType.MapMod:
-                    map?.Modify(ec.MapMods);
+                    engine.Map?.Modify(ec.MapMods);
                     break;
                 case EventComponentType.Spawn:
-                    map?.Spawn(ec.MapSpawns);
+                    //foreach(var spawn in ec.MapSpawns)
+                    //{
+                    //    enemyManager.SpawnMapSpawn(spawn);
+                    //}
                     break;
                 case EventComponentType.SoundFX:
                     //var snd = context.Audio.GetSound(ec.StringParam);
@@ -374,15 +373,11 @@
             return "";
         }
 
-        private void SetMap(Map? value)
+        public void AddMapEvents(Map map)
         {
-            map = value;
-            if (map != null)
+            foreach (EventInfo info in map.EventInfos)
             {
-                foreach (EventInfo info in map.EventInfos)
-                {
-                    AddEvent(info);
-                }
+                AddEvent(info);
             }
         }
 
