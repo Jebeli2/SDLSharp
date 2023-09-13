@@ -16,6 +16,7 @@
         IActorManager ActorManager { get; }
         IEventManager EventManager { get; }
         IEnemyManager EnemyManager { get; }
+        ICampaignManager CampaignManager { get; }
 
         IContentManager? ContentManager { get; }
         Map? Map { get; }

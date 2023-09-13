@@ -66,7 +66,7 @@
         public void Clear()
         {
             events.Clear();
-            delayedEvents.Clear();            
+            delayedEvents.Clear();
         }
 
         public void AddEvent(Event evt)
@@ -185,7 +185,7 @@
             {
                 if (evt.IsInCooldown) return false;
                 if (evt.IsInDelay) return false;
-                //if (!campaignManager.CheckAllRequirements(evt)) return false;
+                if (!engine.CampaignManager.CheckAllRequirements(evt)) return false;
                 return true;
             }
             return false;
@@ -277,10 +277,13 @@
                     engine.Map?.Modify(ec.MapMods);
                     break;
                 case EventComponentType.Spawn:
-                    //foreach(var spawn in ec.MapSpawns)
-                    //{
-                    //    enemyManager.SpawnMapSpawn(spawn);
-                    //}
+                    if (engine.Map != null)
+                    {
+                        foreach (var spawn in ec.MapSpawns)
+                        {
+                            engine.EnemyManager.SpawnMapSpawn(engine.Map, spawn);
+                        }
+                    }
                     break;
                 case EventComponentType.SoundFX:
                     var snd = engine.ContentManager?.Load<SDLSound>(ec.StringParam);
@@ -307,59 +310,35 @@
                         }
                         SDLAudio.PlaySound(snd, pos, loop);
                     }
-                    //var snd = context.Audio.GetSound(ec.StringParam);
-                    //if (snd != null)
-                    //{
-                    //    PointF pos = new PointF();
-                    //    bool loop = false;
-                    //    if (ec.MapX >= 0 && ec.MapY >= 0)
-                    //    {
-                    //        if (ec.MapX != 0 && ec.MapY != 0)
-                    //        {
-                    //            pos.X = ec.MapX + 0.5f;
-                    //            pos.Y = ec.MapY + 0.5f;
-                    //        }
-                    //    }
-                    //    else if (evt.Location.X != 0 && evt.Location.Y != 0)
-                    //    {
-                    //        pos.X = evt.Location.X + 0.5f;
-                    //        pos.Y = evt.Location.Y + 0.5f;
-                    //    }
-                    //    if (evt.Activation == EventActivation.Load)
-                    //    {
-                    //        loop = true;
-                    //    }
-                    //    context.Audio.PlaySound(snd, pos, loop);
-                    //}
                     break;
                 case EventComponentType.VoxIntro:
                     string voxName = GetRandomStringParam(ec);
-                    //var vox = context.Audio.GetSound();
-                    //if (vox != null)
-                    //{
-                    //    PointF pos = new PointF();
-                    //    if (ec.MapX >= 0 && ec.MapY >= 0)
-                    //    {
-                    //        if (ec.MapX != 0 && ec.MapY != 0)
-                    //        {
-                    //            pos.X = ec.MapX + 0.5f;
-                    //            pos.Y = ec.MapY + 0.5f;
-                    //        }
-                    //    }
-                    //    else if (evt.Location.X != 0 && evt.Location.Y != 0)
-                    //    {
-                    //        pos.X = evt.Location.X + 0.5f;
-                    //        pos.Y = evt.Location.Y + 0.5f;
-                    //    }
-                    //    context.Audio.PlaySound(vox, pos);
-                    //}
+                    var vox = engine.ContentManager?.Load<SDLSound>(voxName);
+                    if (vox != null)
+                    {
+                        PointF pos = new PointF();
+                        if (ec.MapX >= 0 && ec.MapY >= 0)
+                        {
+                            if (ec.MapX != 0 && ec.MapY != 0)
+                            {
+                                pos.X = ec.MapX + 0.5f;
+                                pos.Y = ec.MapY + 0.5f;
+                            }
+                        }
+                        else if (evt.Location.X != 0 && evt.Location.Y != 0)
+                        {
+                            pos.X = evt.Location.X + 0.5f;
+                            pos.Y = evt.Location.Y + 0.5f;
+                        }
+                        SDLAudio.PlaySound(vox, pos);
+                    }
                     break;
                 case EventComponentType.Music:
-                    //var mus = context.Audio.GetMusic(ec.StringParam);
-                    //if (mus != null)
-                    //{
-                    //    context.Audio.PlayMusic(mus, true);
-                    //}
+                    var mus = engine.ContentManager?.Load<SDLMusic>(ec.StringParam);
+                    if (mus != null)
+                    {
+                        SDLAudio.PlayMusic(mus, forceRestart: true);
+                    }
                     break;
                 case EventComponentType.ShakyCam:
                     shakyCamDuration = ec.IntParam;
@@ -369,10 +348,16 @@
                     //power.Activate(context.Application.EntityManager, evt);
                     break;
                 case EventComponentType.SetStatus:
-                    //campaignManager.SetStatus(ec.StringParams);
+                    foreach (string status in ec.StringParams)
+                    {
+                        engine.CampaignManager.SetStatus(status);
+                    }
                     break;
                 case EventComponentType.UnsetStatus:
-                    //campaignManager.UnsetStatus(ec.StringParams);
+                    foreach (string status in ec.StringParams)
+                    {
+                        engine.CampaignManager.UnsetStatus(status);
+                    }
                     break;
             }
         }

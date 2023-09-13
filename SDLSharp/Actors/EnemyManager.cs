@@ -37,6 +37,11 @@
 
         }
 
+        public void SpawnMapSpawn(Map map, MapSpawn spawn)
+        {
+
+        }
+
         public void SpawnEnemies(Map map)
         {
             foreach (var info in map.EnemyInfos)

@@ -34,6 +34,7 @@
         private readonly ActorManager actorManager;
         private readonly EventManager eventManager;
         private readonly EnemyManager enemyManager;
+        private readonly CampaignManager campaignManager;
         private bool panning;
         private int panDX;
         private int panDY;
@@ -55,6 +56,8 @@
             actorManager = new ActorManager(this);
             enemyManager = new EnemyManager(this);
             eventManager = new EventManager(this);
+            campaignManager = new CampaignManager(this);
+            campaignManager.ActivateAllWaypoints = true;
             MousePanning = true;
             CommandMoving = true;
             FollowPlayer = true;
@@ -96,6 +99,7 @@
         public IActorManager ActorManager => actorManager;
         public IEnemyManager EnemyManager => enemyManager;
         public IEventManager EventManager => eventManager;
+        public ICampaignManager CampaignManager => campaignManager;
         public Map? Map => map;
         public Actor? Player => player;
 
@@ -373,7 +377,7 @@
 
         protected internal override void OnKeyUp(SDLKeyEventArgs e)
         {
-            switch(e.KeyCode)
+            switch (e.KeyCode)
             {
                 case KeyCode.c:
                     mapRenderer.ShowCollision ^= true;
