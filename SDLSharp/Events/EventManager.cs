@@ -283,6 +283,30 @@
                     //}
                     break;
                 case EventComponentType.SoundFX:
+                    var snd = engine.ContentManager?.Load<SDLSound>(ec.StringParam);
+                    if (snd != null)
+                    {
+                        PointF pos = new PointF();
+                        bool loop = false;
+                        if (ec.MapX >= 0 && ec.MapY >= 0)
+                        {
+                            if (ec.MapX != 0 && ec.MapY != 0)
+                            {
+                                pos.X = ec.MapX + 0.5f;
+                                pos.Y = ec.MapY + 0.5f;
+                            }
+                        }
+                        else if (evt.Location.X != 0 && evt.Location.Y != 0)
+                        {
+                            pos.X = evt.Location.X + 0.5f;
+                            pos.Y = evt.Location.Y + 0.5f;
+                        }
+                        if (evt.Activation == EventActivation.Load)
+                        {
+                            loop = true;
+                        }
+                        SDLAudio.PlaySound(snd, pos, loop);
+                    }
                     //var snd = context.Audio.GetSound(ec.StringParam);
                     //if (snd != null)
                     //{

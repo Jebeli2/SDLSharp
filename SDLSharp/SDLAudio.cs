@@ -293,9 +293,29 @@
             return sound;
         }
 
+        public static void ResetSound()
+        {
+            foreach(var it in playback)
+            {
+                Playback play = it.Value;
+                int channel = it.Key;
+                if (play.Loop)
+                {
+                    SDLLog.Verbose(LogCategory.AUDIO, $"Stopping sound '{play.Sound}' on channel {channel} ({play.Channel})");
+                    SDL_mixer.Mix_HaltChannel(channel);
+                }
+            }
+            Update(0, 0);
+        }
+
         public static void PlaySound(SDLSound? sound)
         {
             PlaySound(sound, null, Point.Empty);
+        }
+
+        public static void PlaySound(SDLSound? sound, PointF pos, bool loop = false)
+        {
+            PlaySound(sound, null, pos, loop);
         }
         public static void PlaySound(SDLSound? sound, string? channel, PointF pos, bool loop = false)
         {

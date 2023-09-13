@@ -185,6 +185,7 @@
                     if (!string.IsNullOrEmpty(mapName))
                     {
                         ClearImage();
+                        SDLAudio.ResetSound();
                         SetImage(GetRandomBackground());
                         mapState = MapState.Load;
                     }
@@ -218,11 +219,14 @@
                         }
                         else if (FollowPlayer && player != null && player.HasMoved)
                         {
-                            if (!Move(player.PosX, player.PosY))
+                            if (Move(player.PosX, player.PosY))
+                            {
+                                SDLAudio.Update(player.PosX, player.PosY);
+                            }
+                            else
                             {
                                 player.HasMoved = false;
                             }
-
                         }
                         else
                         {
