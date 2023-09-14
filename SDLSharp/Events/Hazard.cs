@@ -59,14 +59,48 @@
         public int DmgMin { get; set; }
         public int DmgMax { get; set; }
 
-        public void Update(float deltaTime)
+        public void Update(double totalTime, double elapsedTime)
         {
+            if (DelayFrames > 0)
+            {
+                DelayFrames--;
+                return;
+            }
+            if (Lifespan > 0)
+            {
+                Lifespan -= (float)elapsedTime;
+            }
+            if (Animation != null)
+            {
+                Animation.Update(totalTime, elapsedTime);
+            }
 
         }
 
         public void AddRenderables(List<IMapSprite> r, List<IMapSprite> rDead)
         {
-
+            if (DelayFrames == 0 && Animation != null)
+            {
+                ISprite? sprite = Animation.CurrentSprite;
+                if (sprite != null)
+                {
+                    MapSprite ms = new MapSprite(sprite);
+                    ms.MapPosX = Pos.X;
+                    ms.MapPosY = Pos.Y;
+                    if (OnFloor)
+                    {
+                        ms.BasePrio = 0;
+                        ms.Prio = 0;
+                        rDead.Add(ms);
+                    }
+                    else
+                    {
+                        ms.BasePrio = 2;
+                        ms.Prio = 2;
+                        r.Add(ms);
+                    }
+                }
+            }
         }
         public void AddChild(Hazard haz)
         {

@@ -19,10 +19,12 @@
         private readonly List<Power> powers = new();
         private readonly List<Hazard> hazards = new();
         private Hazard? lastHazard;
+        private Actor eventActor;
 
         public PowerManager(IMapEngine engine)
         {
             this.engine = engine;
+            eventActor = new Actor("event");
         }
 
         public bool Initialized => powers.Count > 0;
@@ -44,6 +46,8 @@
             }
         }
 
+        public IEnumerable<Hazard> Hazards => hazards;
+
         public Power? GetPower(int index)
         {
             if (index >= 0 && index < powers.Count)
@@ -60,8 +64,10 @@
 
         public bool Activate(Power power, Event evt)
         {
-
-            return false;
+            float x = evt.Location.X + evt.Location.Width / 2.0f;
+            float y = evt.Location.Y + evt.Location.Height / 2.0f;
+            eventActor.SetPosition(x, y);
+            return Activate(power, eventActor, new PointF(x, y));
         }
         public bool Activate(Power power, Actor source, PointF target)
         {
@@ -186,6 +192,7 @@
             haz.BaseLifespan = power.Lifespan;
             haz.Lifespan = power.Lifespan;
             haz.OnFloor = power.OnFloor;
+
             LoadAnimation(haz);
             if (power.Directional)
             {
@@ -248,7 +255,7 @@
         {
             if (haz != null && haz.Power != null)
             {
-                var animSet = engine.ContentManager?.Load<AnimationSet>(haz.Power.AnimationName);
+                var animSet =  haz.Power.GetAnimationSet(engine.ContentManager);                
                 if (animSet != null)
                 {
                     var anim = animSet.GetAnimation("");

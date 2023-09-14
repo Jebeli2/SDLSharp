@@ -35,6 +35,7 @@
         private readonly EventManager eventManager;
         private readonly EnemyManager enemyManager;
         private readonly PowerManager powerManager;
+        private readonly HazardManager hazardManager;
         private readonly CampaignManager campaignManager;
 
         private Tooltip? tooltip;
@@ -42,6 +43,7 @@
         private int panDX;
         private int panDY;
         private MapState mapState;
+        private MapState nextMapState;
         private SDLTexture? image;
         private SDLMusic? music;
         private SDLTexture? dialogBox;
@@ -60,12 +62,14 @@
             enemyManager = new EnemyManager(this);
             eventManager = new EventManager(this);
             powerManager = new PowerManager(this);
+            hazardManager = new HazardManager(this);
             campaignManager = new CampaignManager(this);
             campaignManager.ActivateAllWaypoints = true;
             MousePanning = true;
             CommandMoving = true;
             FollowPlayer = true;
-            mapState = MapState.None;
+            mapState = MapState.Display;
+            nextMapState = MapState.Display;
             PlayerName = "";
         }
 
@@ -88,9 +92,9 @@
         public void SetMapName(string name, int posX = -1, int posY = -1)
         {
             mapName = name;
-            mapState = MapState.None;
             playerX = posX;
             playerY = posY;
+            SetMapState(MapState.None);
         }
 
         public string PlayerName
@@ -104,6 +108,7 @@
         public IEnemyManager EnemyManager => enemyManager;
         public IEventManager EventManager => eventManager;
         public IPowerManager PowerManager => powerManager;
+        public IHazardManager HazardManager => hazardManager;
         public ICampaignManager CampaignManager => campaignManager;
         public Map? Map => map;
         public Actor? Player => player;
@@ -117,6 +122,16 @@
             if (string.IsNullOrEmpty(name)) { name = "male"; }
             playerName = name;
             actorManager.PlayerInfo = new ActorInfo { Id = playerName, Name = "Player", PosX = x, PosY = y };
+        }
+
+        private void SetMapState(MapState state)
+        {
+            if (nextMapState != state)
+            {
+                SDLLog.Info(LogCategory.APPLICATION, $"Map State changing to {state}");
+                SDLApplication.ForceNextDraw();
+            }
+            nextMapState = state;
         }
         private static string GetRandomBackground()
         {
@@ -152,6 +167,7 @@
 
         private void LoadMap()
         {
+            map?.Dispose();
             map = ContentManager?.Load<Map>(mapName);
             if (map != null)
             {
@@ -196,8 +212,20 @@
             }
             return false;
         }
+
+        private bool UpdateMapState()
+        {
+            if (nextMapState != mapState)
+            {
+                mapState = nextMapState;
+                return true;
+            }
+            return false;
+        }
         private void Update(double totalTime, double elapsedTime)
         {
+            bool stateChanged = UpdateMapState();
+
             switch (mapState)
             {
                 case MapState.None:
@@ -207,21 +235,24 @@
                         tooltip?.Clear();
                         SDLAudio.ResetSound();
                         SetImage(GetRandomBackground());
-                        mapState = MapState.Load;
+                        SetMapState(MapState.Load);
                     }
                     break;
                 case MapState.Load:
-                    mapState = MapState.Loading;
+                    SetMapState(MapState.Loading);
                     break;
                 case MapState.Loading:
-                    LoadMap();
-                    mapState = MapState.Loaded;
+                    if (stateChanged)
+                    {
+                        LoadMap();
+                        SetMapState(MapState.Loaded);
+                    }
                     break;
                 case MapState.Loaded:
                     if (map != null)
                     {
                         mapRenderer.PrepareMap(map);
-                        mapState = MapState.Display;
+                        SetMapState(MapState.Display);
                     }
                     break;
                 case MapState.Display:
@@ -229,6 +260,7 @@
                     {
                         actorManager.Update(totalTime, elapsedTime);
                         eventManager.Update(totalTime, elapsedTime);
+                        hazardManager.Update(totalTime, elapsedTime);
                         mapRenderer.Update(totalTime, elapsedTime, map);
                         if (MousePanning && panning && (panDX != 0 || panDY != 0))
                         {
@@ -256,37 +288,30 @@
                         }
                     }
                     break;
+
             }
         }
 
         private void Paint(SDLRenderer renderer, double totalTime, double elapsedTime)
         {
-            switch (mapState)
+            if (mapState == MapState.Display)
             {
-                case MapState.None:
-                    break;
-                case MapState.Load:
-                    RenderLoadScreen(renderer);
-                    break;
-                case MapState.Loading:
-                    RenderLoadScreen(renderer);
-                    break;
-                case MapState.Loaded:
-                    RenderLoadScreen(renderer);
-                    break;
-                case MapState.Display:
-                    if (map != null)
+                if (map != null)
+                {
+                    if (map.BackgroundColor != Color.Black)
                     {
-                        if (map.BackgroundColor != Color.Black)
-                        {
-                            renderer.ClearScreen(map.BackgroundColor);
-                        }
-                        List<IMapSprite> front = new(actorManager.GetLivingSprites());
-                        List<IMapSprite> back = new(actorManager.GetDeadSprites());
-                        mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
-                        RenderTooltip();
+                        renderer.ClearScreen(map.BackgroundColor);
                     }
-                    break;
+                    List<IMapSprite> front = new(actorManager.GetLivingSprites());
+                    List<IMapSprite> back = new(actorManager.GetDeadSprites());
+                    hazardManager.AddRenderables(front, back);
+                    mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
+                    RenderTooltip();
+                }
+            }
+            else
+            {
+                RenderLoadScreen(renderer);
             }
         }
 

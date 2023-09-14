@@ -37,6 +37,7 @@
         private static string? fpsText;
         private static int frameCounter;
         private static bool suppressDraw;
+        private static bool forceDraw;
         private static bool isRunningSlowly;
 
         internal static bool Quit => quit;
@@ -90,6 +91,16 @@
                 fpsText ??= BuildFPSText();
                 return fpsText;
             }
+        }
+
+        public static void SuppressNextDraw()
+        {
+            suppressDraw = true;
+        }
+
+        public static void ForceNextDraw()
+        {
+            forceDraw = true;
         }
 
         private static string BuildFPSText()
@@ -191,7 +202,7 @@
 
         private static void Tick()
         {
-            RetryTick:
+        RetryTick:
             double currentTime = GetCurrentTime();
             accumulatedElapsedTime += currentTime - previousTime;
             previousTime = currentTime;
@@ -211,6 +222,7 @@
                     accumulatedElapsedTime -= targetTime;
                     ++stepCount;
                     UpdateLoop(totalElapsedTime, elapsedTime);
+                    if (forceDraw) { PaintLoop(totalElapsedTime, elapsedTime); forceDraw = false; }
                 }
                 updateFrameLag += Math.Max(0, stepCount - 1);
                 if (isRunningSlowly)
@@ -235,6 +247,7 @@
                 totalElapsedTime += accumulatedElapsedTime;
                 accumulatedElapsedTime = 0;
                 UpdateLoop(totalElapsedTime, elapsedTime);
+                if (forceDraw) { PaintLoop(totalElapsedTime, elapsedTime); forceDraw = false; }
             }
             if (suppressDraw)
             {

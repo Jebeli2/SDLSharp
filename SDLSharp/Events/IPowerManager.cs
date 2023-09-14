@@ -10,6 +10,8 @@
 
     public interface IPowerManager
     {
+        void Clear();
+        IEnumerable<Hazard> Hazards { get; }
         Power? GetPower(int index);
         bool Activate(Power power, Actor source, PointF target);
         bool Activate(Power power, Event evt);

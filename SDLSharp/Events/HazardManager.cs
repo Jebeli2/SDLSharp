@@ -6,9 +6,8 @@
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using static System.Net.Mime.MediaTypeNames;
 
-    public class HazardManager
+    public class HazardManager : IHazardManager
     {
         private readonly IMapEngine engine;
         private readonly List<Hazard> hazards = new();
@@ -17,7 +16,7 @@
             this.engine = engine;
         }
 
-        public void Update(float deltaTime)
+        public void Update(double totalTime, double elapsedTime)
         {
             for (int i = hazards.Count; i > 0; i--)
             {
@@ -27,7 +26,7 @@
             for (int i = hazards.Count; i > 0; i--)
             {
                 Hazard haz = hazards[i - 1];
-                haz.Update(deltaTime);
+                haz.Update(totalTime, elapsedTime);
                 if (haz.RemoveNow)
                 {
                     hazards.RemoveAt(i - 1);
@@ -63,7 +62,11 @@
 
         private void CheckNewHazards()
         {
-
+            foreach(Hazard haz in engine.PowerManager.Hazards)
+            {
+                hazards.Add(haz);
+            }
+            engine.PowerManager.Clear();
         }
     }
 }

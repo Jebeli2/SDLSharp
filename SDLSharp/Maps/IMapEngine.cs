@@ -17,6 +17,7 @@
         IEventManager EventManager { get; }
         IEnemyManager EnemyManager { get; }
         IPowerManager PowerManager { get; }
+        IHazardManager HazardManager { get; }
         ICampaignManager CampaignManager { get; }
 
         IContentManager? ContentManager { get; }

@@ -161,7 +161,7 @@
             CloseAllWindows();
             ClearApplets();
             map = GetApplet<MapApplet>();
-            map.MapName = MAPNAME1;
+            map.MapName = MAPNAME2;
         }
 
 

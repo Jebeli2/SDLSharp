@@ -1,6 +1,8 @@
 ﻿namespace SDLSharp.Events
 {
     using SDLSharp.Actors;
+    using SDLSharp.Content;
+    using SDLSharp.Graphics;
     using SDLSharp.Maps;
     using SDLSharp.Utilities;
     using System;
@@ -14,6 +16,7 @@
 
     public class Power
     {
+        private AnimationSet? animationSet;
         public string Name { get; set; }
         public bool IsEmpty { get; set; }
         public string Description { get; set; }
@@ -168,6 +171,15 @@
                     source.SetAnimation("block");
                 }
             }
+        }
+
+        internal AnimationSet? GetAnimationSet(IContentManager? contentManager)
+        {
+            if (contentManager != null && animationSet == null && !string.IsNullOrEmpty(AnimationName))
+            {
+                animationSet = contentManager.Load<AnimationSet>(AnimationName);
+            }
+            return animationSet;
         }
     }
 }
