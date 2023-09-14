@@ -35,6 +35,7 @@
             DisplayName = name;
             DefaultSpeed = 2.0f;
             Cooldown = 333;
+            MeleeRange = 1.0f;
             VoxIntros = new List<string>();
         }
 
@@ -80,6 +81,7 @@
         public int Cooldown { get; set; }
         public float Speed { get; set; }
         public float DefaultSpeed { get; set; }
+        public float MeleeRange { get; set; }
 
         public int Direction => direction;
         public bool IsMoving => "run" == animation;

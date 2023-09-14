@@ -329,6 +329,7 @@
                     shakyCamDuration = ec.IntParam;
                     break;
                 case EventComponentType.Power:
+                    var power = engine.PowerManager.GetPower(ec.IntParam);
                     //var power = context.Application.PowerManager.GetPower(ec.IntParam);
                     //power.Activate(context.Application.EntityManager, evt);
                     break;

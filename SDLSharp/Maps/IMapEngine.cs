@@ -16,6 +16,7 @@
         IActorManager ActorManager { get; }
         IEventManager EventManager { get; }
         IEnemyManager EnemyManager { get; }
+        IPowerManager PowerManager { get; }
         ICampaignManager CampaignManager { get; }
 
         IContentManager? ContentManager { get; }

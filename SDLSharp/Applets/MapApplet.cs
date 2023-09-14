@@ -34,7 +34,9 @@
         private readonly ActorManager actorManager;
         private readonly EventManager eventManager;
         private readonly EnemyManager enemyManager;
+        private readonly PowerManager powerManager;
         private readonly CampaignManager campaignManager;
+
         private Tooltip? tooltip;
         private bool panning;
         private int panDX;
@@ -57,6 +59,7 @@
             actorManager = new ActorManager(this);
             enemyManager = new EnemyManager(this);
             eventManager = new EventManager(this);
+            powerManager = new PowerManager(this);
             campaignManager = new CampaignManager(this);
             campaignManager.ActivateAllWaypoints = true;
             MousePanning = true;
@@ -100,6 +103,7 @@
         public IActorManager ActorManager => actorManager;
         public IEnemyManager EnemyManager => enemyManager;
         public IEventManager EventManager => eventManager;
+        public IPowerManager PowerManager => powerManager;
         public ICampaignManager CampaignManager => campaignManager;
         public Map? Map => map;
         public Actor? Player => player;
@@ -138,6 +142,14 @@
             }
         }
 
+        private void InitPowers()
+        {
+            if (!powerManager.Initialized && ContentManager != null)
+            {
+                powerManager.Powers = powerManager.LoadPowers("powers/powers.txt");
+            }
+        }
+
         private void LoadMap()
         {
             map = ContentManager?.Load<Map>(mapName);
@@ -149,6 +161,7 @@
                 eventManager.Clear();
 
                 InitEnemies();
+                InitPowers();
 
                 PlayerName = "";
                 player = actorManager.SpawnPlayer(map);

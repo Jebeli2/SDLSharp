@@ -39,4 +39,39 @@
         Power,
         VoxIntro
     }
+
+    public enum PowerState
+    {
+        Invalid = -1,
+        Instant = 0,
+        Attack = 1
+    }
+
+    public enum PowerType
+    {
+        Invalid = -1,
+        Fixed = 0,
+        Missile = 1,
+        Repeater = 2,
+        Spawn = 3,
+        Transform = 4,
+        Effect = 5,
+        Block = 6
+    }
+
+    public enum StartingPos
+    {
+        Source,
+        Target,
+        Melee
+    }
+
+    public enum SourceType
+    {
+        Invalid = -1,
+        Hero = 0,
+        Neutral = 1,
+        Enemy = 2,
+        Ally = 3
+    }
 }

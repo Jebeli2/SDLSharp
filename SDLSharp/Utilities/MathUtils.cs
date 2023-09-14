@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Drawing;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
@@ -107,8 +108,60 @@
             }
             return direction;
         }
-
-
+        internal static PointF ClampDistance(float range, PointF src, PointF target)
+        {
+            PointF limitTarget = target;
+            if (range > 0)
+            {
+                if (src.X + range < target.X)
+                    limitTarget.X = src.X + range;
+                if (src.X - range > target.X)
+                    limitTarget.X = src.X - range;
+                if (src.Y + range < target.Y)
+                    limitTarget.Y = src.Y + range;
+                if (src.Y - range > target.Y)
+                    limitTarget.Y = src.Y - range;
+            }
+            return limitTarget;
+        }
+        internal static PointF CalcVector(float x, float y, int direction, float dist)
+        {
+            PointF p = new PointF(x, y);
+            float distStraight = dist;
+            float distDiag = dist * 0.7071f;
+            switch (direction)
+            {
+                case 0:
+                    p.X -= distDiag;
+                    p.Y += distDiag;
+                    break;
+                case 1:
+                    p.X -= distStraight;
+                    break;
+                case 2:
+                    p.X -= distDiag;
+                    p.Y -= distDiag;
+                    break;
+                case 3:
+                    p.Y -= distStraight;
+                    break;
+                case 4:
+                    p.X += distDiag;
+                    p.Y -= distDiag;
+                    break;
+                case 5:
+                    p.X += distStraight;
+                    break;
+                case 6:
+                    p.X += distDiag;
+                    p.Y += distDiag;
+                    break;
+                case 7:
+                    p.Y += distStraight;
+                    break;
+            }
+            return p;
+        }
         public static float Length(float x, float y)
         {
             return MathF.Sqrt(x * x + y * y);
