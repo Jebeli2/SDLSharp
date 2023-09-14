@@ -75,7 +75,7 @@
             music.RenderPrio = -600;
             lines.RenderPrio = -750;
 
-            SDLApplication.MaxFramesPerSecond = 120;
+            SDLApplication.MaxFramesPerSecond = 60;
             button1_1 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 10, width: -20, height: 40, text: "GUI Test", clickAction: GoToGUITest);
             button1_2 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 60, width: -20, height: 40, text: "Map", clickAction: GoToMap);
             button1_3 = GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 110, width: -20, height: 40, text: "Particles");

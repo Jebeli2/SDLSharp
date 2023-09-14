@@ -14,6 +14,8 @@
         private readonly SDLWindow window;
         private readonly StringBuilder stringBuffer = new(512);
         private IntPtr handle;
+        private SDLTexture? backBuffer;
+        private bool useBackBuffer = true;
         private int windowWidth;
         private int windowHeight;
         private int width;
@@ -57,11 +59,11 @@
             {
                 ClearTextCache();
                 ClearIconCache();
-                //if (backBuffer != IntPtr.Zero)
-                //{
-                //    SDL_DestroyTexture(backBuffer);
-                //    backBuffer = IntPtr.Zero;
-                //}
+                if (backBuffer != null)
+                {
+                    backBuffer.Dispose();
+                    backBuffer = null;
+                }
                 textureTracker.Dispose();
                 SDL_DestroyRenderer(handle);
                 handle = IntPtr.Zero;
@@ -536,6 +538,7 @@
         {
             int driverIndex = SDLApplication.GetDriverIndex(window.Driver);
             SDL_RendererFlags flags = SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
+            flags |= SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC;
             handle = SDL_CreateRenderer(window.Handle, driverIndex, flags);
             if (handle != IntPtr.Zero)
             {
@@ -544,6 +547,7 @@
 
                 windowWidth = window.Width;
                 windowHeight = window.Height;
+                CheckBackBuffer();
             }
         }
 
@@ -551,6 +555,14 @@
         {
             prevTargets.Clear();
             prevClips.Clear();
+            if (useBackBuffer && backBuffer != null)
+            {
+                _ = SDL_SetRenderTarget(handle, backBuffer.Handle);
+            }
+            else
+            {
+                _ = SDL_SetRenderTarget(handle, IntPtr.Zero);
+            }
             SetColor(Color.Black);
             SetBlendMode(BlendMode.Blend);
             _ = SDL_RenderClear(handle);
@@ -562,6 +574,11 @@
             {
                 if (prevClips.Count > 0) { SDLLog.Warn(LogCategory.RENDER, $"ClipRects not empty: {prevClips.Count} {(prevClips.Count == 1 ? "was" : "were")} not popped"); }
                 if (prevTargets.Count > 0) { SDLLog.Warn(LogCategory.RENDER, $"Targets not empty: {prevTargets.Count} {(prevTargets.Count == 1 ? "was" : "were")} not popped"); }
+            }
+            if (useBackBuffer && backBuffer != null)
+            {
+                _ = SDL_SetRenderTarget(handle, IntPtr.Zero);
+                _ = SDL_RenderCopy(handle, backBuffer.Handle, IntPtr.Zero, IntPtr.Zero);
             }
             SDL_RenderPresent(handle);
         }
@@ -595,6 +612,19 @@
             windowHeight = height;
             this.width = width;
             this.height = height;
+            CheckBackBuffer();
+        }
+
+        private void CheckBackBuffer()
+        {
+            if (useBackBuffer)
+            {
+                if (backBuffer == null || backBuffer.Width != windowWidth || backBuffer.Height != windowHeight)
+                {
+                    backBuffer?.Dispose();
+                    backBuffer = CreateTexture("backbuffer", windowWidth, windowHeight);
+                }
+            }
         }
 
         private static int MakeTextCacheKey(SDLFont font, int textHash, Color color)
