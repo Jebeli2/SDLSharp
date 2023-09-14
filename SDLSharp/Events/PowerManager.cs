@@ -57,6 +57,12 @@
             hazards.Clear();
             lastHazard = null;
         }
+
+        public bool Activate(Power power, Event evt)
+        {
+
+            return false;
+        }
         public bool Activate(Power power, Actor source, PointF target)
         {
             PointF newTarget = target;

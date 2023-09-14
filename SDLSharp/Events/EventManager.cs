@@ -330,8 +330,10 @@
                     break;
                 case EventComponentType.Power:
                     var power = engine.PowerManager.GetPower(ec.IntParam);
-                    //var power = context.Application.PowerManager.GetPower(ec.IntParam);
-                    //power.Activate(context.Application.EntityManager, evt);
+                    if (power != null)
+                    {
+                        engine.PowerManager.Activate(power, evt);
+                    }
                     break;
                 case EventComponentType.SetStatus:
                     foreach (string status in ec.StringParams)

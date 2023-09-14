@@ -75,6 +75,7 @@
         {
             Name = name;
             IsEmpty = true;
+            SpawnType = "";
             Description = "";
             AttackAnim = "";
             AnimationName = "";
@@ -163,7 +164,7 @@
             else if (NewState == PowerState.Invalid)
             {
                 if (Type == PowerType.Block)
-                {                    
+                {
                     source.SetAnimation("block");
                 }
             }
