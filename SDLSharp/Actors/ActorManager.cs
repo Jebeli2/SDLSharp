@@ -30,7 +30,7 @@
             this.engine = engine;
         }
 
-        public IContentManager? ContentManager { get; set; }
+        //public IContentManager? ContentManager { get; set; }
         //public Map? Map
         //{
         //    get => map;
@@ -155,7 +155,7 @@
         }
         private Actor? AddActor(ActorInfo info)
         {
-            Actor? actor = ContentManager?.Load<Actor>(info.Id);
+            Actor? actor = engine.ContentManager?.Load<Actor>(info.Id);
             if (actor != null)
             {
                 actor.SetPosition(info.PosX + 0.5f, info.PosY + 0.5f);

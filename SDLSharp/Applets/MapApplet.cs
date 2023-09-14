@@ -35,6 +35,7 @@
         private readonly EventManager eventManager;
         private readonly EnemyManager enemyManager;
         private readonly CampaignManager campaignManager;
+        private Tooltip? tooltip;
         private bool panning;
         private int panDX;
         private int panDY;
@@ -125,7 +126,8 @@
 
         protected override void OnWindowLoad(SDLWindowLoadEventArgs e)
         {
-            actorManager.ContentManager = ContentManager;
+            tooltip = new Tooltip(e.Renderer);
+            tooltip.Background = LoadTexture("images/menus/tooltips.png");
         }
 
         private void InitEnemies()
@@ -189,6 +191,7 @@
                     if (!string.IsNullOrEmpty(mapName))
                     {
                         ClearImage();
+                        tooltip?.Clear();
                         SDLAudio.ResetSound();
                         SetImage(GetRandomBackground());
                         mapState = MapState.Load;
@@ -212,6 +215,7 @@
                     if (map != null)
                     {
                         actorManager.Update(totalTime, elapsedTime);
+                        eventManager.Update(totalTime, elapsedTime);
                         mapRenderer.Update(totalTime, elapsedTime, map);
                         if (MousePanning && panning && (panDX != 0 || panDY != 0))
                         {
@@ -267,8 +271,23 @@
                         List<IMapSprite> front = new(actorManager.GetLivingSprites());
                         List<IMapSprite> back = new(actorManager.GetDeadSprites());
                         mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
+                        RenderTooltip();
                     }
                     break;
+            }
+        }
+
+        private void RenderTooltip()
+        {
+            if (tooltip != null)
+            {
+                tooltip.Data = eventManager.TooltipData;
+                if (!tooltip.IsEmpty)
+                {
+                    mapRenderer.MapToScreen(eventManager.TooltipMapX, eventManager.TooltipMapY, out int tx, out int ty);
+                    tooltip.Render(tx + eventManager.TooltipOffsetX, ty + eventManager.TooltipOffsetY);
+
+                }
             }
         }
 

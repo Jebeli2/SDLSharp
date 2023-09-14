@@ -240,6 +240,11 @@
             }
         }
 
+        public void DrawTexture(SDLTexture? texture, int srcX, int srcY, int srcW, int srcH, int dstX, int dstY, int dstW, int dstH)
+        {
+            DrawTexture(texture, new Rectangle(srcX, srcY, srcW, srcH), new Rectangle(dstX, dstY, dstW, dstH));
+        }
+
         public void DrawLine(int x1, int y1, int x2, int y2)
         {
             _ = SDL_RenderDrawLine(handle, x1, y1, x2, y2);

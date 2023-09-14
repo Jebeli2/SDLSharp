@@ -9,6 +9,7 @@
 
     public interface IEventManager
     {
+        void Update(double totalTime, double elapsedTime);
         void CheckClickEvents(float posX, float posY, float mapX, float mapY);
         void CreateNPCEvent(Actor npc);
         bool HasAnyEventsAt(float mapX, float mapY);

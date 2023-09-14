@@ -15,6 +15,7 @@
         private readonly List<Event> events = new();
         private readonly List<Event> delayedEvents = new();
         private double shakyCamDuration;
+        private TooltipData tooltipData;
         private float tooltipMapX;
         private float tooltipMapY;
         private int tooltipOffsetX;
@@ -29,6 +30,7 @@
         {
             this.engine = engine;
             InteractRange = 2.0f;
+            tooltipData = new();
         }
         //public Map? Map
         //{
@@ -47,8 +49,7 @@
         //    set => player = value;
         //}
         public float InteractRange { get; set; }
-
-        //public TooltipData TooltipData => tooltipData;
+        public TooltipData TooltipData => tooltipData;
         public float TooltipMapX => tooltipMapX;
         public float TooltipMapY => tooltipMapY;
         public int TooltipOffsetX => tooltipOffsetX;
@@ -145,7 +146,7 @@
 
         public void CheckHotSpotEvents(float mapX, float mapY)
         {
-            //tooltipData = new TooltipData();
+            tooltipData = new TooltipData();
             tooltipOffsetX = 0;
             tooltipOffsetY = 0;
             foreach (var evt in events)
@@ -160,7 +161,7 @@
                     {
                         tooltipMapX = hotSpot.X;
                         tooltipMapY = hotSpot.Y;
-                        //tooltipData.SetText(tt.StringParam);
+                        tooltipData.SetText(tt.StringParam);
                     }
                     EventComponent? npcHS = evt.Components.FirstOrDefault(x => x.Type == EventComponentType.NPCHotspot);
                     if (npcHS != null)
