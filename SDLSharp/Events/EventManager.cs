@@ -32,22 +32,6 @@
             InteractRange = 2.0f;
             tooltipData = new();
         }
-        //public Map? Map
-        //{
-        //    get { return map; }
-        //    set { SetMap(value); }
-        //}
-        //public IMapCamera? Camera
-        //{
-        //    get => camera;
-        //    set => camera = value;
-        //}
-
-        //public Actor? Player
-        //{
-        //    get => player;
-        //    set => player = value;
-        //}
         public float InteractRange { get; set; }
         public TooltipData TooltipData => tooltipData;
         public float TooltipMapX => tooltipMapX;
@@ -371,7 +355,7 @@
             travel = true;
 
         }
-        private string GetRandomStringParam(EventComponent ec)
+        private static string GetRandomStringParam(EventComponent ec)
         {
             if (ec != null && ec.StringParams != null)
             {
@@ -398,11 +382,13 @@
 
         public void CreateNPCEvent(Actor npc)
         {
-            Event evt = new Event();
-            evt.Activation = EventActivation.Trigger;
-            evt.Repeat = true;
-            evt.Location = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1);
-            evt.HotSpot = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1);
+            Event evt = new()
+            {
+                Activation = EventActivation.Trigger,
+                Repeat = true,
+                Location = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1),
+                HotSpot = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1)
+            };
             evt.AddComponent(EventComponentType.Tooltip, npc.DisplayName);
             if (npc.VoxIntros != null && npc.VoxIntros.Count > 0) { evt.AddComponent(EventComponentType.VoxIntro, npc.VoxIntros); }
             var npcHS = evt.AddComponent(EventComponentType.NPCHotspot);
@@ -413,9 +399,9 @@
             AddEvent(evt);
         }
 
-        private Event CreateEvent(EventInfo info)
+        private static Event CreateEvent(EventInfo info)
         {
-            Event evt = new Event
+            Event evt = new()
             {
                 Activation = info.Activation,
                 Location = info.Location,
