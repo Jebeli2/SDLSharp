@@ -35,6 +35,7 @@
             DisplayName = name;
             DefaultSpeed = 2.0f;
             Cooldown = 333;
+            VoxIntros = new List<string>();
         }
 
         public float PosX => posX;
@@ -50,6 +51,7 @@
         public bool Intangible { get; set; }
         public int TurnDelay { get; set; }
         public int WaypointPause { get; set; }
+        public IList<string> VoxIntros { get; set; }
 
         public MovementType MovementType => movementType;
         public CollisionType CollisionType

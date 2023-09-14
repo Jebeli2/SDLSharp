@@ -30,18 +30,14 @@
 
         private Actor? LoadActor(FileParser infile, string name, Actor actor)
         {
-            string actorName = "";
-            List<string> categories = new();
-            int turnDelay = 0;
-            int waypointPause = 60;
+            //List<string> categories = new();
             float speed = 3.5f;
-            float meleeRange = 1.0f;
-            float threatRange = 4.0f;
-            float threatRangeFar = 8.0f;
-            string? defeatStatus = null;
+            //float meleeRange = 1.0f;
+            //float threatRange = 4.0f;
+            //float threatRangeFar = 8.0f;
+            //string? defeatStatus = null;
             IDictionary<string, string> animationParts = new Dictionary<string, string>();
             IDictionary<int, IList<string>> layerOrder = new Dictionary<int, IList<string>>();
-            IList<string> voxIntros = new List<string>();
             while (infile.Next())
             {
                 switch (infile.Section)
@@ -49,7 +45,20 @@
                     case "":
                         switch (infile.Key)
                         {
-                            case "name": actorName = infile.GetStrVal(); break;
+                            case "name": actor.DisplayName = infile.GetStrVal(); break;
+                            case "speed": speed = infile.GetFloatVal(); break;
+                            case "turn_delay": actor.TurnDelay = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                            case "waypoint_pause": actor.WaypointPause = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                            case "vox_intro": actor.VoxIntros.Add(infile.GetStrVal()); break;
+                            case "sfx_attack": break;
+                            case "sfx_hit": break;
+                            case "sfx_die": break;
+                            case "sfx_critdie": break;
+                            case "sfx_block": break;
+                            case "defeat_status": break;
+                            case "level": break;
+                            case "melee_range": break;
+                            case "threat_range": break;
                             case "categories": break;
                             case "animations": animationParts[""] = infile.GetStrVal(); break;
                             case "gfx": animationParts[""] = infile.GetStrVal(); break;
@@ -75,6 +84,14 @@
             }
             if (actor.LoadAnimations(ContentManager, animationParts, layerOrder))
             {
+                actor.DefaultSpeed = speed;
+                actor.Speed = speed;
+                //actor.DisplayName = actorName;
+                //actor.TurnDelay = turnDelay;
+                //actor.WaypointPause = waypointPause;
+                //actor.DefaultSpeed = speed;
+                //actor.Speed = speed;
+
                 return actor;
             }
             return null;

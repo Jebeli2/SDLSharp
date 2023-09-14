@@ -403,7 +403,7 @@
             evt.Location = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1);
             evt.HotSpot = new Rectangle((int)npc.PosX, (int)npc.PosY, 1, 1);
             evt.AddComponent(EventComponentType.Tooltip, npc.DisplayName);
-            //if (npc.VoxIntros.Count > 0) { evt.AddComponent(EventComponentType.VoxIntro, npc.VoxIntros); }
+            if (npc.VoxIntros != null && npc.VoxIntros.Count > 0) { evt.AddComponent(EventComponentType.VoxIntro, npc.VoxIntros); }
             var npcHS = evt.AddComponent(EventComponentType.NPCHotspot);
             npcHS.MapX = evt.Location.X;
             npcHS.MapY = evt.Location.Y;
