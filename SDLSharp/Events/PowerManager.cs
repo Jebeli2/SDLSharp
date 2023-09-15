@@ -147,11 +147,38 @@
                 haz.DelayFrames = delayIterator;
                 delayIterator += power.Delay;
             }
-
+            PlaySound(power);
             return true;
         }
         private bool Repeater(Power power, Actor source, PointF target)
         {
+            if (engine.Map?.Collision == null) return false;
+            float theta = MathUtils.CalcTheta(source.PosX,source.PosY,target.X,target.Y);
+            int delayIterator = 0;
+            PlaySound(power);
+            PointF locationIterator = new PointF(source.PosX,source.PosY);
+            PointF speed = new PointF();
+            speed.X = power.Speed * MathF.Cos(theta);
+            speed.Y = power.Speed * MathF.Sin(theta);
+            Hazard? parentHaz = null;
+            for(int i = 0; i < power.Count; i++)
+            {
+                locationIterator.X += speed.X;
+                locationIterator.Y += speed.Y;
+                if (engine.Map.Collision.IsValidPosition(locationIterator.X, locationIterator.Y, power.MovementType, CollisionType.Normal))
+                {
+                    break;
+                }
+                Hazard haz = InitHazard(power, source, target);
+                haz.Pos = locationIterator;
+                haz.DelayFrames = delayIterator;
+                delayIterator += power.Delay;
+                if (i == 0 && power.Count > 1) { parentHaz = haz; }
+                else if (parentHaz != null && i > 0)
+                {
+                    parentHaz.AddChild(haz);
+                }
+            }
             return true;
         }
         private bool Spawn(Power power, Actor source, PointF target)
@@ -255,17 +282,10 @@
         {
             if (haz != null && haz.Power != null)
             {
-                var animSet =  haz.Power.GetAnimationSet(engine.ContentManager);                
+                var animSet = haz.Power.GetAnimationSet(engine.ContentManager);
                 if (animSet != null)
                 {
                     haz.Visual = new AnimationSetVisual(animSet);
-
-                    //var anim = animSet.GetAnimation("");
-                    //if (anim != null)
-                    //{
-
-                    //    haz.Animation = anim;
-                    //}
                 }
             }
         }
@@ -277,12 +297,13 @@
             if (data != null)
             {
                 using FileParser infile = new FileParser(engine.ContentManager, name, data);
-                InternalLoadPowers(infile, powers);
+                InternalLoadPowers(infile, name, powers);
+                SDLLog.Info(LogCategory.APPLICATION, $"Loaded {powers.Count(x => !x.IsEmpty)} powers from '{name}'");
             }
             return powers;
         }
 
-        private static void InternalLoadPowers(FileParser infile, List<Power> list)
+        private static void InternalLoadPowers(FileParser infile, string name, List<Power> list)
         {
             int inputId = 0;
             Power? pow = null;
@@ -310,59 +331,109 @@
                         clearPostEffects = true;
                     }
                 }
-                else if (pow != null && infile.MatchSectionKey("power", "name")) { pow.Name = infile.GetStrVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "description")) { pow.Description = infile.GetStrVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "type")) { pow.Type = infile.GetEnumValue<PowerType>(); }
-                else if (pow != null && infile.MatchSectionKey("power", "source_type")) { pow.SourceType = infile.GetEnumValue<SourceType>(); }
-                else if (pow != null && infile.MatchSectionKey("power", "new_state"))
+                else
                 {
-                    if ("instant".Equals(infile.Val)) pow.NewState = PowerState.Instant;
-                    else
+                    switch (infile.Section)
                     {
-                        pow.NewState = PowerState.Attack;
-                        pow.AttackAnim = infile.GetStrVal();
+                        case "power":
+                            if (pow != null)
+                            {
+                                switch (infile.Key)
+                                {
+                                    case "name": pow.Name = infile.GetStrVal(); break;
+                                    case "description": pow.Description = infile.GetStrVal(); break;
+                                    case "type": pow.Type = infile.GetEnumValue<PowerType>(); break;
+                                    case "source_type": pow.SourceType = infile.GetEnumValue<SourceType>(); break;
+                                    case "new_state":
+                                        if ("instant".Equals(infile.Val))
+                                        {
+                                            pow.NewState = PowerState.Instant;
+                                        }
+                                        else
+                                        {
+                                            pow.NewState = PowerState.Attack;
+                                            pow.AttackAnim = infile.GetStrVal();
+                                        }
+                                        break;
+                                    case "animation": pow.AnimationName = infile.GetStrVal(); break;
+                                    case "passive": pow.Passive = infile.GetBoolVal(); break;
+                                    case "directional": pow.Directional = infile.GetBoolVal(); break;
+                                    case "visual_random": pow.VisualRandom = infile.GetIntVal(); break;
+                                    case "visual_option": pow.VisualOption = infile.GetIntVal(); break;
+                                    case "complete_animation": pow.CompleteAnimation = infile.GetBoolVal(); break;
+                                    case "lock_target_to_direction": pow.LockTargetToDirection = infile.GetBoolVal(); break;
+                                    case "use_hazard": pow.UseHazard = infile.GetBoolVal(); break;
+                                    case "no_attack": pow.NoAttack = infile.GetBoolVal(); break;
+                                    case "no_aggro": pow.NoAggro = infile.GetBoolVal(); break;
+                                    case "cooldown": pow.Cooldown = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                    case "lifespan": pow.Lifespan = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                    case "face": pow.Facing = infile.GetBoolVal(); break;
+                                    case "floor": pow.OnFloor = infile.GetBoolVal(); break;
+                                    case "expire_with_caster": pow.ExpireWithCaster = infile.GetBoolVal(); break;
+                                    case "delay": pow.Delay = FileParser.ParseDurationMS(infile.GetStrVal()); break;
+                                    case "speed": pow.Speed = infile.GetFloatVal(); break;
+                                    case "missile_angle": pow.MissileAngle = infile.GetIntVal(); break;
+                                    case "angle_variance": pow.AngleVariance = infile.GetIntVal(); break;
+                                    case "speed_variance": pow.SpeedVariance = infile.GetIntVal(); break;
+                                    case "count": pow.Count = infile.GetIntVal(); break;
+                                    case "ignore_zero_damage": pow.IgnoreZeroDamage = infile.GetBoolVal(); break;
+                                    case "spawn_type": pow.SpawnType = infile.GetStrVal(); break;
+                                    case "spawn_limit": break;
+                                    case "spawn_level": break;
+                                    case "target_neighbor": pow.TargetNeighbor = infile.GetIntVal(); break;
+                                    case "beacon": pow.Beacon = infile.GetBoolVal(); break;
+                                    case "wall_power": break;
+                                    case "post_power": break;
+                                    case "pre_power": break;
+                                    case "wall_reflect": pow.WallReflect = infile.GetBoolVal(); break;
+                                    case "radius": pow.Radius = infile.GetFloatVal(); break;
+                                    case "target_range": pow.TargetRange = infile.GetFloatVal(); break;
+                                    case "multitarget": pow.MultiTarget = infile.GetBoolVal(); break;
+                                    case "multihit": pow.MultiHit = infile.GetBoolVal(); break;
+                                    case "aim_assist": pow.AimAssist = infile.GetBoolVal(); break;
+                                    case "starting_pos": pow.StartingPos = infile.GetEnumValue<StartingPos>(); break;
+                                    case "icon": break;
+                                    case "base_damage": break;
+                                    case "replace_by_effect": break;
+                                    case "state_duration": break;
+                                    case "requires_flags": break;
+                                    case "charge_speed": break;
+                                    case "relative_pos": break;
+                                    case "modifier_critical": break;
+                                    case "soundfx_hit": break;
+                                    case "soundfx": break;
+                                    case "post_effect": break;
+                                    case "modifier_damage": break;
+                                    case "modifier_accuracy": break;
+                                    case "buff": pow.IsBuff = infile.GetBoolVal(); break;
+                                    case "buff_teleport": break;
+                                    case "buff_party": break;
+                                    case "meta_power": break;
+                                    case "trait_armor_penetration": break;
+                                    case "trait_elemental": break;
+                                    case "trait_crits_impaired": break;
+                                    case "remove_effect": break;
+                                    case "target_categories": break;
+                                    case "requires_spawns": break;
+                                    case "requires_empty_target": break;
+                                    case "requires_los": break;
+                                    case "requires_targeting": break;
+                                    case "requires_item": break;
+                                    case "requires_equipped_item": break;
+                                    case "requires_mp": break;
+                                    case "requires_hp": break;
+                                    case "requires_hpmp_state": break;
+                                    case "sacrifice": break;
+                                    case "hp_steal": break;
+                                    case "mp_steal": break;
+                                    case "script": break;
+                                    default: ModLoader.UnknownKey(name, infile); break;
+                                }
+                            }
+                            break;
                     }
                 }
-                else if (pow != null && infile.MatchSectionKey("power", "animation")) { pow.AnimationName = infile.GetStrVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "passive")) { pow.Passive = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "buff")) { pow.IsBuff = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "directional")) { pow.Directional = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "visual_random")) { pow.VisualRandom = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "visual_option")) { pow.VisualOption = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "complete_animation")) { pow.CompleteAnimation = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "lock_target_to_direction")) { pow.LockTargetToDirection = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "use_hazard")) { pow.UseHazard = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "no_attack")) { pow.NoAttack = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "no_aggro")) { pow.NoAggro = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "cooldown")) { pow.Cooldown = FileParser.ParseDurationMS(infile.GetStrVal()); }
-                else if (pow != null && infile.MatchSectionKey("power", "lifespan")) { pow.Lifespan = FileParser.ParseDurationMS(infile.GetStrVal()); }
-                else if (pow != null && infile.MatchSectionKey("power", "face")) { pow.Facing = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "floor")) { pow.OnFloor = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "expire_with_caster")) { pow.ExpireWithCaster = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "delay")) { pow.Delay = FileParser.ParseDurationMS(infile.GetStrVal()); }
-                else if (pow != null && infile.MatchSectionKey("power", "speed")) { pow.Speed = infile.GetFloatVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "missile_angle")) { pow.MissileAngle = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "angle_variance")) { pow.AngleVariance = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "speed_variance")) { pow.SpeedVariance = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "count")) { pow.Count = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "ignore_zero_damage")) { pow.IgnoreZeroDamage = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "spawn_type")) { pow.SpawnType = infile.GetStrVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "target_neighbor")) { pow.TargetNeighbor = infile.GetIntVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "beacon")) { pow.Beacon = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "wall_power")) { }
-                else if (pow != null && infile.MatchSectionKey("power", "post_power")) { }
-                else if (pow != null && infile.MatchSectionKey("power", "pre_power")) { }
-
-                else if (pow != null && infile.MatchSectionKey("power", "wall_reflect")) { pow.WallReflect = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "radius")) { pow.Radius = infile.GetFloatVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "target_range")) { pow.TargetRange = infile.GetFloatVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "multitarget")) { pow.MultiTarget = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "multihit")) { pow.MultiHit = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "aim_assist")) { pow.AimAssist = infile.GetBoolVal(); }
-                else if (pow != null && infile.MatchSectionKey("power", "starting_pos")) { pow.StartingPos = infile.GetEnumValue<StartingPos>(); }
-
             }
-
         }
     }
 }

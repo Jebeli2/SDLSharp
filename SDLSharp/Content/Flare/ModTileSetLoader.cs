@@ -71,11 +71,11 @@
                                     int posX = FileParser.PopFirstInt(ref repeatVal);
                                     int posY = FileParser.PopFirstInt(ref repeatVal);
                                     int duration = FileParser.ParseDurationMS(repeatVal);
-                                    tileSet.AddAnimTile(id, posX, posY, duration);                                    
+                                    tileSet.AddAnimTile(id, posX, posY, duration);
                                     repeatVal = infile.PopFirstString(';');
                                 }
                                 break;
-                            default: SDLLog.Warn(LogCategory.APPLICATION, $"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); break;
+                            default: UnknownKey(name, infile); break;
                         }
                         break;
                 }

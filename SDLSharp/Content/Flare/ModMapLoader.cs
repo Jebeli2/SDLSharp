@@ -161,7 +161,7 @@
                             {
                                 case "type": enemy.Type = infile.GetStrVal(); break;
                                 case "category": enemy.Category = infile.GetStrVal(); break;
-                                case "chance": enemy.Chance = infile.GetIntVal();break;
+                                case "chance": enemy.Chance = infile.GetIntVal(); break;
                                 case "location":
                                     enemy.PosX = infile.PopFirstInt();
                                     enemy.PosY = infile.PopFirstInt();
@@ -169,7 +169,7 @@
                                     enemy.Height = infile.PopFirstInt();
                                     break;
                                 case "level":
-                                    enemy.MinLevel = Math.Max(0,infile.PopFirstInt());
+                                    enemy.MinLevel = Math.Max(0, infile.PopFirstInt());
                                     enemy.MaxLevel = Math.Max(enemy.MinLevel, infile.GetIntVal(enemy.MinLevel));
                                     break;
                                 case "number":
@@ -237,6 +237,7 @@
                                     if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundX = infile.PopFirstInt(); }
                                     if (!string.IsNullOrEmpty(infile.Val)) { evt.SoundY = infile.PopFirstInt(); }
                                     break;
+                                case "requires_level": break;
                                 case "requires_status": evt.RequiresStatus = infile.GetStrValues(); break;
                                 case "requires_not_status": evt.RequiresNotStatus = infile.GetStrValues(); break;
                                 case "requires_item": break;
@@ -245,7 +246,9 @@
                                 case "set_status": evt.SetStatus = infile.GetStrValues(); break;
                                 case "unset_status": evt.UnsetStatus = infile.GetStrValues(); break;
                                 case "loot": break;
-                                case "loot_count":break;
+                                case "loot_count": break;
+                                case "reward_xp": break;
+                                case "cutscene": break;
                                 default: UnknownKey(name, infile); break;
                             }
                         }

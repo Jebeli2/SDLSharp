@@ -17,6 +17,7 @@
             Categories = new List<string>();
             AnimationParts = new Dictionary<string, string>();
             LayerOrder = new Dictionary<int, IList<string>>();
+            LifeForm = true;
         }
         
         public string DisplayName { get; set; }
@@ -26,5 +27,6 @@
         public int Level { get; set; }
         public IDictionary<string, string> AnimationParts { get; set; }
         public IDictionary<int, IList<string>> LayerOrder { get; set; }
+        public bool LifeForm { get; set; }
     }
 }

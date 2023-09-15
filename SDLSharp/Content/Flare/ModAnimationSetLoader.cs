@@ -161,6 +161,10 @@
                             SDLLog.Error(LogCategory.APPLICATION, $"No Image for Animation in file '{name}'");
                         }
                     }
+                    else
+                    {
+                        UnknownKey(name, infile);
+                    }
                 }
             }
 

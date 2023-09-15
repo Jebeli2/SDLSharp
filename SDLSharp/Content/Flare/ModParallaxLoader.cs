@@ -42,6 +42,7 @@
                     layer.FixedSpeedY = infile.PopFirstFloat();
                 }
                 else if (layer != null && infile.MatchSectionKey("layer", "map_layer")) { layer.MapLayer = infile.Val; }
+                else { UnknownKey(name, infile); }
             }
             return parallax;
         }
