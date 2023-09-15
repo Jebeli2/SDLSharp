@@ -101,6 +101,8 @@
             }
         }
 
+        public SDLWindow? Window => window;
+
         public IContentManager? ContentManager => window?.ContentManager;
 
         protected SDLTexture? LoadTexture(string name)

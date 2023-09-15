@@ -38,6 +38,7 @@
         private float fpsPosY;
         private int updateCount;
         private bool needAppletUpdate;
+        private bool appletsChanged;
         private int oldX;
         private int oldY;
         private int oldWidth;
@@ -376,7 +377,7 @@
             {
                 applets.Add(applet);
                 InitApplet(applet);
-                CacheAppletSortOrder();
+                appletsChanged = true;
             }
         }
         public void RemoveApplet(SDLApplet applet)
@@ -385,7 +386,7 @@
             {
                 applets.Remove(applet);
                 FinishApplet(applet);
-                CacheAppletSortOrder();
+                appletsChanged = true;
             }
         }
 
@@ -393,7 +394,7 @@
         {
             if (applets.Contains(applet))
             {
-                CacheAppletSortOrder();
+                appletsChanged = true;  
             }
         }
 
@@ -425,6 +426,15 @@
             if (updateCount == 0 && needAppletUpdate) { CacheAppletSortOrder(); }
         }
 
+        private void CheckApplets()
+        {
+            if (appletsChanged)
+            {
+                CacheAppletSortOrder();
+                appletsChanged = false;
+            }
+        }
+
         private void CacheAppletSortOrder()
         {
             if (updateCount == 0)
@@ -451,7 +461,7 @@
                 applet.Dispose();
             }
             applets.Clear();
-            CacheAppletSortOrder();
+            appletsChanged = true;
         }
 
         public void SetPosition(int x, int y)
@@ -651,6 +661,7 @@
         internal void Update(double totalTime, double elapsedTime)
         {
             SDLWindowUpdateEventArgs e = new(totalTime, elapsedTime);
+            CheckApplets();
             foreach (SDLApplet applet in otherApplets) { applet.InternalOnUpdate(e); }
             OnUpdate(e);
         }

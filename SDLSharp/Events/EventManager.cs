@@ -218,7 +218,7 @@
 
         private void ExecuteImmediateEvent(Event evt)
         {
-            SDLLog.Info(LogCategory.APPLICATION, $"Executing Immediate Event {evt}");
+            SDLLog.Verbose(LogCategory.APPLICATION, $"Executing Immediate Event {evt}");
             if (!evt.Repeat) evt.RemoveNow = true;
             evt.StartCooldown();
             foreach (var ec in evt.Components)
@@ -229,7 +229,7 @@
 
         private void ExecuteDelayedEvent(Event evt)
         {
-            SDLLog.Info(LogCategory.APPLICATION, $"Executing Delayed Event {evt}");
+            SDLLog.Verbose(LogCategory.APPLICATION, $"Executing Delayed Event {evt}");
             if (!evt.Repeat) evt.RemoveNow = true;
             foreach (var ec in evt.Components)
             {

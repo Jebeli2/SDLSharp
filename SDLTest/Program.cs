@@ -1,4 +1,4 @@
 ﻿using SDLSharp;
 using SDLTest;
 
-SDLApplication.Run(new TestSDLWindow(), LogPriority.Verbose);
+SDLApplication.Run(new TestSDLWindow(), LogPriority.Debug);

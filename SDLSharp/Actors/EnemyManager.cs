@@ -77,6 +77,7 @@
             Enemy enemy = new Enemy(et.Name);
             if (enemy.LoadAnimations(engine.ContentManager, et.AnimationParts, et.LayerOrder))
             {
+                enemy.DisplayName = et.DisplayName;
                 return enemy;
             }
             return null;

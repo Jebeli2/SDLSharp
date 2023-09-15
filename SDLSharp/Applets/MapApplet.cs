@@ -3,12 +3,14 @@
     using SDLSharp.Actors;
     using SDLSharp.Content;
     using SDLSharp.Events;
+    using SDLSharp.GUI;
     using SDLSharp.Maps;
     using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -47,6 +49,10 @@
         private SDLMusic? music;
         private SDLTexture? dialogBox;
         private Actor? player;
+
+
+        private bool showGUI;
+        private Window? debugWindow;
 
         public MapApplet()
             : this(null)
@@ -145,6 +151,64 @@
         {
             tooltip = new Tooltip(e.Renderer);
             tooltip.Background = LoadTexture("images/menus/tooltips.png");
+            InitWindows();
+        }
+
+
+        private void ToggleGUI()
+        {
+            if (showGUI)
+            {
+                HideGUI();
+            }
+            else
+            {
+                ShowGUI();
+            }
+        }
+        private void ShowGUI()
+        {
+            GUISystem? gui = Window?.GetApplet<GUISystem>();
+            if (gui != null)
+            {
+                gui.Enabled = true;
+                showGUI = true;
+            }
+        }
+
+        private void HideGUI()
+        {
+            GUISystem? gui = Window?.GetApplet<GUISystem>();
+            if (gui != null)
+            {
+                gui.Enabled = false;
+                showGUI = false;
+            }
+        }
+        private void InitWindows()
+        {
+            debugWindow = Intuition.OpenWindow(new NewWindow
+            {
+                LeftEdge = 50,
+                TopEdge = 50,
+                Width = 300,
+                Height = 300,
+                Title = "Map Debugger",
+                //Gadgets = new Gadget[] { button1_1!, button1_2!, button1_3! },
+                Activate = true,
+                SuperBitmap = true,
+                Borderless = false,
+                Sizing = true,
+                Dragging = true,
+                Closing = true,
+                BackDrop = false,
+                //Font = font
+            });
+        }
+
+        private void FinishWindows()
+        {
+            Intuition.CloseWindow(ref debugWindow);
         }
 
         private void InitEnemies()
@@ -380,6 +444,8 @@
 
         protected override void OnDispose()
         {
+            FinishWindows();
+            HideGUI();
             map?.Dispose();
             map = null;
             dialogBox?.Dispose();
@@ -440,6 +506,9 @@
             {
                 case KeyCode.c:
                     mapRenderer.ShowCollision ^= true;
+                    break;
+                case KeyCode.F12:
+                    ToggleGUI();
                     break;
             }
         }

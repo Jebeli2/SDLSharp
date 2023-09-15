@@ -122,7 +122,7 @@
             mapX = MathUtils.RoundForMap(mapX);
             mapY = MathUtils.RoundForMap(mapY);
             bool hasEvent = engine.EventManager.HasAnyEventsAt(mapX, mapY);
-            Actor? mouseEnemy = null;
+            Actor? mouseEnemy = GetEnemy(mouseX, mouseY);
             Actor? mouseActor = GetActor(mouseX, mouseY);
             bool hasEnemy = mouseEnemy != null;
             bool hasActor = mouseActor != null;
@@ -169,6 +169,11 @@
         public void AddActor(Actor actor)
         {
             actors.Add(actor);
+            actor.Collision = engine.Map?.Collision;
+            if (engine.Map?.Collision != null)
+            {
+                engine.Map.Collision.Block(actor.PosX, actor.PosY, actor.IsPlayer);
+            }
         }
 
 
@@ -312,6 +317,30 @@
                 actor.Update(totalTime, elapsedTime);
             }
         }
+
+        public Actor? GetEnemy(int mouseX, int mouseY)
+        {
+            if (engine.Map == null) return null;
+            if (engine.Map.Collision == null) return null;
+            engine.Camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
+            foreach (var a in GetNearActors(mapX, mapY, 4))
+            {
+                if (a.IsEnemy)
+                {
+                    engine.Camera.MapToScreen(a.PosX, a.PosY, out int sx, out int sy);
+                    foreach (var sprite in a.GetSprites())
+                    {
+                        int rx = sx - sprite.OffsetX;
+                        int ry = sy - sprite.OffsetY;
+                        if (mouseX > rx && mouseY > ry && mouseX < rx + sprite.Width && mouseY < ry + sprite.Height)
+                        {
+                            return a;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
         public Actor? GetActor(int mouseX, int mouseY)
         {
             if (engine.Map == null) return null;
@@ -345,23 +374,5 @@
             }
         }
 
-
-        private static void CalculatePriosIso(IEnumerable<IMapSprite> r)
-        {
-            foreach (var it in r)
-            {
-                uint tilex = (uint)(Math.Floor(it.MapPosX));
-                uint tiley = (uint)(Math.Floor(it.MapPosY));
-                int commax = (int)((it.MapPosX - tilex) * (2 << 16));
-                int commay = (int)((it.MapPosY - tiley) * (2 << 16));
-                long p1 = tilex + tiley;
-                p1 <<= 54;
-                long p2 = tilex;
-                p2 <<= 42;
-                long p3 = commax + commay;
-                p3 <<= 16;
-                it.Prio = it.BasePrio + (p1 + p2 + p3);
-            }
-        }
     }
 }

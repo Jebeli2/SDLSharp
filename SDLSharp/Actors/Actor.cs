@@ -8,6 +8,7 @@
     using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
+    using System.Numerics;
     using System.Text;
     using System.Threading.Tasks;
 
@@ -24,6 +25,9 @@
         private MovementType movementType;
         private IVisual? visual;
         private readonly List<IMapSprite> sprites = new();
+        private Actor? enemy;
+        private int hitCount;
+        private IMapCollision? collision;
 
         public Actor(string name)
             : base(name, ContentFlags.Data)
@@ -38,7 +42,11 @@
             MeleeRange = 1.0f;
             VoxIntros = new List<string>();
         }
-
+        public IMapCollision? Collision
+        {
+            get => collision;
+            set => collision = value;
+        }
         public float PosX => posX;
         public float PosY => posY;
         public bool Alive => alive;
@@ -147,6 +155,7 @@
         }
         public void Update(double totalTime, double elapsedTime)
         {
+            if (Dead) return;
             Speed = DefaultSpeed / 60;
             bool changed = false;
             if (visual != null)
@@ -159,7 +168,7 @@
             }
             if (Dying && HasAnimationFinished && !Dead)
             {
-                Dead = true;
+                BeDead();
             }
             else if (!changed && ShouldRevertToStance())
             {
@@ -190,25 +199,14 @@
                     {
                         return true;
                     }
-                    else
-                    {
-                        int frame = visual.Frame;
-                        int count = visual.FrameCount;
-                        if (frame >= count)
-                        {
-                            return true;
-                        }
-                    }
-                    //if (!HasAnimationFinished)
+                    //else
                     //{
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    visual.Update(10, 160);
-                    //    return true;
+                    //    int frame = visual.Frame;
+                    //    int count = visual.FrameCount;
+                    //    if (frame >= count)
+                    //    {
+                    //        return true;
+                    //    }
                     //}
                     break;
             }
@@ -342,48 +340,51 @@
 
         public void Attack(Actor? other)
         {
-            //enemy = null;
-            if (IsAdjacentTo(other))
+            enemy = null;
+            if (other != null && IsAdjacentTo(other))
             {
                 Face(other);
                 SetAnimation("swing");
                 //manager.PlaySound(this, SfxType.Attack, "swing");
-                //enemy = other;
-                // temp
-                //enemy?.TakeHit(this);
+                enemy = other;
+                enemy.TakeHit(this);
             }
         }
         public void TakeHit(Actor? other)
         {
-            //enemy = null;
-            if (IsAdjacentTo(other))
+            enemy = null;
+            if (other != null && IsAdjacentTo(other))
             {
                 Face(other);
-                //enemy = other;
-                //hitCount++;
-                // temp
-                //if (hitCount > 2 && !IsPlayer)
-                //{
-                //    if (Utils.Rand() % 3 > 1)
-                //    {
-                //        CritDie();
-                //    }
-                //    else
-                //    {
-                //        Die();
-                //    }
-                //}
-                //else
-                //{
-                //    SetAnimation("hit");
-                //    manager.PlaySound(this, SfxType.Hit);
-                //}
+                enemy = other;
+                hitCount++;
+                if (!Dying)
+                {
+                    if (hitCount > 2 && !IsPlayer)
+                    {
+                        if (MathUtils.Rand() % 3 > 1)
+                        {
+                            CritDie();
+                        }
+                        else
+                        {
+                            Die();
+                        }
+                    }
+                    else
+                    {
+                        SDLLog.Info(LogCategory.APPLICATION, $"{DisplayName} is hit.");
+                        SetAnimation("hit");
+                        //    manager.PlaySound(this, SfxType.Hit);
+                    }
+                }
             }
         }
 
         public void Die()
         {
             SetAnimation("die");
+            SDLLog.Info(LogCategory.APPLICATION, $"{DisplayName} dies.");
             //manager.PlaySound(this, SfxType.Die);
             Dying = true;
             //Dead = true;
@@ -392,9 +393,17 @@
         public void CritDie()
         {
             SetAnimation("critdie");
+            SDLLog.Info(LogCategory.APPLICATION, $"{DisplayName} dies.");
             //manager.PlaySound(this, SfxType.CritDie);
             Dying = true;
             //Dead = true;
+        }
+
+        public void BeDead()
+        {
+            collision?.Unblock(PosX, PosY);
+            SDLLog.Info(LogCategory.APPLICATION, $"{DisplayName} is now dead.");
+            Dead = true;
         }
 
         public bool LoadAnimations(IContentManager? contentManager, IDictionary<string, string> animationParts, IDictionary<int, IList<string>> layerOrder)
