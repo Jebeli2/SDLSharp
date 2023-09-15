@@ -227,6 +227,7 @@
                                 case "shakycam": evt.ShakyCam = FileParser.ParseDurationMS(infile.GetStrVal()); break;
                                 case "power": evt.PowerId = infile.PopFirstInt(); break;
                                 case "power_path": break;
+                                case "power_damage": break;
                                 case "spawn": evt.MapSpawns = ParseMapSpawns(infile.GetStrVal()); break;
                                 case "mapmod": evt.MapMods = ParseMapMods(infile.GetStrVal()); break;
                                 case "soundfx":
@@ -238,8 +239,13 @@
                                     break;
                                 case "requires_status": evt.RequiresStatus = infile.GetStrValues(); break;
                                 case "requires_not_status": evt.RequiresNotStatus = infile.GetStrValues(); break;
+                                case "requires_item": break;
+                                case "requires_not_item": break;
+                                case "remove_item": break;
                                 case "set_status": evt.SetStatus = infile.GetStrValues(); break;
                                 case "unset_status": evt.UnsetStatus = infile.GetStrValues(); break;
+                                case "loot": break;
+                                case "loot_count":break;
                                 default: UnknownKey(name, infile); break;
                             }
                         }

@@ -72,8 +72,8 @@
                     }
                 }
             }
-            CalculatePriosIso(list);
-            list.Sort();
+            //CalculatePriosIso(list);
+            //list.Sort();
             return list;
         }
 

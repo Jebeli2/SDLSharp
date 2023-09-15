@@ -15,7 +15,9 @@
 
     internal class TestSDLWindow : SDLWindow
     {
-        private static readonly string MODPATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"flare-engine-master\");
+        //private static readonly string MODPATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"flare-engine-master\");
+        private static readonly string MODPATH = @"C:\Local\";
+
         private const string MAPNAME1 = "maps/frontier_outpost.txt";
         private const string MAPNAME2 = "maps/perdition_harbor.txt";
         private const string MAPNAME3 = "maps/lake_kuuma.txt";

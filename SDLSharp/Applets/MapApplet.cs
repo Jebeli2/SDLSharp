@@ -43,7 +43,6 @@
         private int panDX;
         private int panDY;
         private MapState mapState;
-        private MapState nextMapState;
         private SDLTexture? image;
         private SDLMusic? music;
         private SDLTexture? dialogBox;
@@ -69,7 +68,6 @@
             CommandMoving = true;
             FollowPlayer = true;
             mapState = MapState.Display;
-            nextMapState = MapState.Display;
             PlayerName = "";
         }
 
@@ -126,12 +124,12 @@
 
         private void SetMapState(MapState state)
         {
-            if (nextMapState != state)
+            if (mapState != state)
             {
                 SDLLog.Info(LogCategory.APPLICATION, $"Map State changing to {state}");
                 SDLApplication.ForceNextDraw();
+                mapState = state;
             }
-            nextMapState = state;
         }
         private static string GetRandomBackground()
         {
@@ -212,29 +210,17 @@
             }
             return false;
         }
-
-        private bool UpdateMapState()
-        {
-            if (nextMapState != mapState)
-            {
-                mapState = nextMapState;
-                return true;
-            }
-            return false;
-        }
         private void Update(double totalTime, double elapsedTime)
         {
-            bool stateChanged = UpdateMapState();
-
             switch (mapState)
             {
                 case MapState.None:
+                    ClearImage();
+                    tooltip?.Clear();
+                    SDLAudio.ResetSound();
+                    SetImage(GetRandomBackground());
                     if (!string.IsNullOrEmpty(mapName))
                     {
-                        ClearImage();
-                        tooltip?.Clear();
-                        SDLAudio.ResetSound();
-                        SetImage(GetRandomBackground());
                         SetMapState(MapState.Load);
                     }
                     break;
@@ -242,11 +228,8 @@
                     SetMapState(MapState.Loading);
                     break;
                 case MapState.Loading:
-                    if (stateChanged)
-                    {
-                        LoadMap();
-                        SetMapState(MapState.Loaded);
-                    }
+                    LoadMap();
+                    SetMapState(MapState.Loaded);
                     break;
                 case MapState.Loaded:
                     if (map != null)
@@ -281,11 +264,8 @@
                                 player.HasMoved = false;
                             }
                         }
-                        else
-                        {
-                            CheckPositionEvents();
-                            CheckTravel();
-                        }
+                        CheckPositionEvents();
+                        CheckTravel();
                     }
                     break;
 
@@ -305,6 +285,10 @@
                     List<IMapSprite> front = new(actorManager.GetLivingSprites());
                     List<IMapSprite> back = new(actorManager.GetDeadSprites());
                     hazardManager.AddRenderables(front, back);
+                    CalculatePriosIso(front);
+                    CalculatePriosIso(back);
+                    front.Sort();
+                    back.Sort();
                     mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
                     RenderTooltip();
                 }
@@ -340,6 +324,24 @@
                 Rectangle box = new Rectangle(w, h, dialogBox.Width, dialogBox.Height);
                 renderer.DrawTexture(dialogBox, box);
                 renderer.DrawText(null, "Loading...", box.X, box.Y, box.Width, box.Height, Color.White);
+            }
+        }
+
+        private static void CalculatePriosIso(IEnumerable<IMapSprite> r)
+        {
+            foreach (var it in r)
+            {
+                uint tilex = (uint)(Math.Floor(it.MapPosX));
+                uint tiley = (uint)(Math.Floor(it.MapPosY));
+                int commax = (int)((it.MapPosX - tilex) * (2 << 16));
+                int commay = (int)((it.MapPosY - tiley) * (2 << 16));
+                long p1 = tilex + tiley;
+                p1 <<= 54;
+                long p2 = tilex;
+                p2 <<= 42;
+                long p3 = commax + commay;
+                p3 <<= 16;
+                it.Prio = it.BasePrio + (p1 + p2 + p3);
             }
         }
 

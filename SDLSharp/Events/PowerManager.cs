@@ -258,11 +258,14 @@
                 var animSet =  haz.Power.GetAnimationSet(engine.ContentManager);                
                 if (animSet != null)
                 {
-                    var anim = animSet.GetAnimation("");
-                    if (anim != null)
-                    {
-                        haz.Animation = anim;
-                    }
+                    haz.Visual = new AnimationSetVisual(animSet);
+
+                    //var anim = animSet.GetAnimation("");
+                    //if (anim != null)
+                    //{
+
+                    //    haz.Animation = anim;
+                    //}
                 }
             }
         }

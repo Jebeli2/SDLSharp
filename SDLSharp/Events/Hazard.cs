@@ -8,6 +8,7 @@
     using System.Drawing;
     using System.Linq;
     using System.Text;
+    using System.Threading.Channels;
     using System.Threading.Tasks;
 
     public class Hazard
@@ -15,6 +16,8 @@
         private Hazard? parent;
         private List<Hazard> children;
         private List<Actor> entitiesCollided;
+        private IVisual? visual;
+        private readonly List<IMapSprite> sprites = new();
 
         public Hazard()
         {
@@ -32,7 +35,7 @@
         public bool RemoveNow { get; set; }
         public bool HitWall { get; set; }
         public bool WallReflect { get; set; }
-        public Animation? Animation { get; set; }
+        //public Animation? Animation { get; set; }
         public int Direction { get; set; }
         public MovementType MovementType { get; set; }
         public bool CompleteAnimation { get; set; }
@@ -59,6 +62,25 @@
         public int DmgMin { get; set; }
         public int DmgMax { get; set; }
 
+        public IVisual? Visual
+        {
+            get => visual;
+            set
+            {
+                if (visual != value)
+                {
+                    visual = value;
+                    if (visual != null)
+                    {
+                        visual.SetPosition(Pos.X, Pos.Y);
+                        visual.SetDirection(Direction);
+                        visual.SetAnimation("");
+                    }
+                    InvalidateSprites();
+                }
+            }
+        }
+
         public void Update(double totalTime, double elapsedTime)
         {
             if (DelayFrames > 0)
@@ -70,35 +92,68 @@
             {
                 Lifespan -= (float)elapsedTime;
             }
-            if (Animation != null)
+            if (visual != null)
             {
-                Animation.Update(totalTime, elapsedTime);
+                if (visual.Update(totalTime, elapsedTime))
+                {
+                    InvalidateSprites();
+                    //changed = true;
+                }
             }
+        }
 
+        private void InvalidateSprites()
+        {
+            sprites.Clear();
+        }
+
+        private void UpdateSprites()
+        {
+            if (sprites.Count == 0)
+            {
+                sprites.AddRange(GetCurrentSprites());
+            }
+        }
+
+        private List<IMapSprite> GetCurrentSprites()
+        {
+            List<IMapSprite> list = new();
+            long prio = OnFloor ? 1 : 2;
+            if (visual != null)
+            {
+                foreach (ISprite sprite in visual.CurrentSprites)
+                {
+                    MapSprite s = new MapSprite(sprite)
+                    {
+                        MapPosX = Pos.X,
+                        MapPosY = Pos.Y,
+                        BasePrio = prio
+                    };
+                    list.Add(s);
+                    prio++;
+                }
+            }
+            return list;
+        }
+
+        public IEnumerable<IMapSprite> GetSprites()
+        {
+            UpdateSprites();
+            List<IMapSprite> list = new List<IMapSprite>(sprites);
+            return list;
         }
 
         public void AddRenderables(List<IMapSprite> r, List<IMapSprite> rDead)
         {
-            if (DelayFrames == 0 && Animation != null)
+            if (DelayFrames == 0)
             {
-                ISprite? sprite = Animation.CurrentSprite;
-                if (sprite != null)
+                if (OnFloor)
                 {
-                    MapSprite ms = new MapSprite(sprite);
-                    ms.MapPosX = Pos.X;
-                    ms.MapPosY = Pos.Y;
-                    if (OnFloor)
-                    {
-                        ms.BasePrio = 0;
-                        ms.Prio = 0;
-                        rDead.Add(ms);
-                    }
-                    else
-                    {
-                        ms.BasePrio = 2;
-                        ms.Prio = 2;
-                        r.Add(ms);
-                    }
+                    rDead.AddRange(GetSprites());
+                }
+                else
+                {
+                    r.AddRange(GetSprites());
                 }
             }
         }
