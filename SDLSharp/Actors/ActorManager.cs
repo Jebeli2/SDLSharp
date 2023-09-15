@@ -170,6 +170,7 @@
         {
             actors.Add(actor);
             actor.Collision = engine.Map?.Collision;
+            actor.Engine = engine;
             if (engine.Map?.Collision != null)
             {
                 engine.Map.Collision.Block(actor.PosX, actor.PosY, actor.IsPlayer);
@@ -325,7 +326,7 @@
             engine.Camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
             foreach (var a in GetNearActors(mapX, mapY, 4))
             {
-                if (a.IsEnemy)
+                if (a.IsEnemy && !a.Dying && !a.Dead)
                 {
                     engine.Camera.MapToScreen(a.PosX, a.PosY, out int sx, out int sy);
                     foreach (var sprite in a.GetSprites())

@@ -18,6 +18,7 @@
         IEnemyManager EnemyManager { get; }
         IPowerManager PowerManager { get; }
         IHazardManager HazardManager { get; }
+        ICombatText CombatText { get; }
         ICampaignManager CampaignManager { get; }
 
         IContentManager? ContentManager { get; }

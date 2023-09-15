@@ -28,6 +28,7 @@
         private Actor? enemy;
         private int hitCount;
         private IMapCollision? collision;
+        private IMapEngine? engine;
 
         public Actor(string name)
             : base(name, ContentFlags.Data)
@@ -46,6 +47,12 @@
         {
             get => collision;
             set => collision = value;
+        }
+
+        public IMapEngine? Engine
+        {
+            get => engine;
+            set => engine = value;
         }
         public float PosX => posX;
         public float PosY => posY;
@@ -166,7 +173,7 @@
                     changed = true;
                 }
             }
-            if (Dying && HasAnimationFinished && !Dead)
+            if (Dying && HasAnimationFinished)
             {
                 BeDead();
             }
@@ -178,7 +185,7 @@
         }
         private bool ShouldRevertToStance()
         {
-            if (Dead) return false;
+            if (Dying || Dead) return false;
             if (visual == null) return false;
             switch (visual.Animation)
             {
@@ -345,19 +352,42 @@
             {
                 Face(other);
                 SetAnimation("swing");
-                //manager.PlaySound(this, SfxType.Attack, "swing");
-                enemy = other;
-                enemy.TakeHit(this);
+                if (MathUtils.Rand() % 20 > 15)
+                {
+                    engine?.CombatText.AddString("Miss", other.posX, other.posY, Events.CombatTextType.Miss);
+                }
+                else
+                {
+                    //manager.PlaySound(this, SfxType.Attack, "swing");
+                    enemy = other;
+                    enemy.TakeHit(this);
+                }
             }
         }
         public void TakeHit(Actor? other)
         {
             enemy = null;
-            if (other != null && IsAdjacentTo(other))
+            if (other != null && IsAdjacentTo(other) && !Dying && !Dead)
             {
                 Face(other);
                 enemy = other;
                 hitCount++;
+                float dmg = MathUtils.RandBewteen(3, 14);
+                if (IsPlayer)
+                {
+                    engine?.CombatText.AddFloat(dmg, posX, posY, Events.CombatTextType.TakeDmg);
+                }
+                else if (IsEnemy)
+                {
+                    if (dmg > 10)
+                    {
+                        engine?.CombatText.AddFloat(dmg, posX, posY, Events.CombatTextType.Crit);
+                    }
+                    else
+                    {
+                        engine?.CombatText.AddFloat(dmg, posX, posY, Events.CombatTextType.GiveDmg);
+                    }
+                }
                 if (!Dying)
                 {
                     if (hitCount > 2 && !IsPlayer)

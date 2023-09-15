@@ -38,6 +38,7 @@
         private readonly EnemyManager enemyManager;
         private readonly PowerManager powerManager;
         private readonly HazardManager hazardManager;
+        private readonly CombatText combatText;
         private readonly CampaignManager campaignManager;
 
         private Tooltip? tooltip;
@@ -68,6 +69,7 @@
             eventManager = new EventManager(this);
             powerManager = new PowerManager(this);
             hazardManager = new HazardManager(this);
+            combatText = new CombatText(this);
             campaignManager = new CampaignManager(this);
             campaignManager.ActivateAllWaypoints = true;
             MousePanning = true;
@@ -113,6 +115,7 @@
         public IEventManager EventManager => eventManager;
         public IPowerManager PowerManager => powerManager;
         public IHazardManager HazardManager => hazardManager;
+        public ICombatText CombatText => combatText;
         public ICampaignManager CampaignManager => campaignManager;
         public Map? Map => map;
         public Actor? Player => player;
@@ -280,6 +283,7 @@
             {
                 case MapState.None:
                     ClearImage();
+                    combatText.Clear();
                     tooltip?.Clear();
                     SDLAudio.ResetSound();
                     SetImage(GetRandomBackground());
@@ -308,6 +312,7 @@
                         actorManager.Update(totalTime, elapsedTime);
                         eventManager.Update(totalTime, elapsedTime);
                         hazardManager.Update(totalTime, elapsedTime);
+                        combatText.Update(totalTime, elapsedTime);
                         mapRenderer.Update(totalTime, elapsedTime, map);
                         if (MousePanning && panning && (panDX != 0 || panDY != 0))
                         {
@@ -354,6 +359,7 @@
                     front.Sort();
                     back.Sort();
                     mapRenderer.Render(renderer, totalTime, elapsedTime, map, front, back);
+                    combatText.Render(renderer, totalTime, elapsedTime);
                     RenderTooltip();
                 }
             }

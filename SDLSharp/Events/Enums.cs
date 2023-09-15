@@ -74,4 +74,13 @@
         Enemy = 2,
         Ally = 3
     }
+
+    public enum CombatTextType
+    {
+        GiveDmg,
+        TakeDmg,
+        Crit,
+        Miss,
+        Buff
+    }
 }
