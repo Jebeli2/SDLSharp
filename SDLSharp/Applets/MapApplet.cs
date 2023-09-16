@@ -43,6 +43,7 @@
 
         private Tooltip? tooltip;
         private bool panning;
+        private bool hasPanned;
         private int panDX;
         private int panDY;
         private MapState mapState;
@@ -320,6 +321,7 @@
                             {
                                 panDX = 0;
                                 panDY = 0;
+                                hasPanned = true;
                             }
                         }
                         else if (FollowPlayer && player != null && player.HasMoved)
@@ -475,6 +477,7 @@
             if (e.Button == MouseButton.Right)
             {
                 panning = true;
+                hasPanned = false;
             }
         }
 
@@ -483,12 +486,19 @@
             if (e.Button == MouseButton.Right)
             {
                 panning = false;
+                if (!hasPanned)
+                {
+                    if (CommandMoving && player != null)
+                    {
+                        actorManager.MakeCommands(player, e.X, e.Y, e.Button);
+                    }
+                }
             }
             else if (e.Button == MouseButton.Left)
             {
                 if (CommandMoving && player != null)
                 {
-                    actorManager.MakeCommands(player, e.X, e.Y);
+                    actorManager.MakeCommands(player, e.X, e.Y, e.Button);
                 }
             }
         }

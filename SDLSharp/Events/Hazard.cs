@@ -3,6 +3,7 @@
     using SDLSharp.Actors;
     using SDLSharp.Graphics;
     using SDLSharp.Maps;
+    using SDLSharp.Utilities;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
@@ -18,6 +19,7 @@
         private List<Actor> entitiesCollided;
         private IVisual? visual;
         private readonly List<IMapSprite> sprites = new();
+        private float angle;
 
         public Hazard()
         {
@@ -61,7 +63,7 @@
         public bool NoAggro { get; set; }
         public int DmgMin { get; set; }
         public int DmgMax { get; set; }
-
+        public PointF Speed { get; set; }
         public IVisual? Visual
         {
             get => visual;
@@ -97,8 +99,26 @@
                 if (visual.Update(totalTime, elapsedTime))
                 {
                     InvalidateSprites();
+                    PointF prevPos = Pos;
+                    if (Speed.X != 0 || Speed.Y != 0)
+                    {
+                        Pos = new PointF(Pos.X + Speed.X, Pos.Y + Speed.Y);
+                        //InvalidateSprites();
+                    }
                     //changed = true;
                 }
+            }
+        }
+
+        public void SetAngle(float angle)
+        {
+            while (angle >= MathF.Tau) { angle -= MathF.Tau; }
+            while (angle < 0.0f) { angle += MathF.Tau; }
+            this.angle = angle;
+            Speed = new PointF(BaseSpeed * MathF.Cos(this.angle), BaseSpeed * MathF.Sin(this.angle));
+            if (Power != null && Power.Directional)
+            {
+                Direction = MathUtils.CalcDirection(Pos.X, Pos.Y, Pos.X + Speed.X, Pos.Y + Speed.Y);
             }
         }
 

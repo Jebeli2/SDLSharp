@@ -1,6 +1,7 @@
 ﻿namespace SDLSharp.Actors
 {
     using SDLSharp.Content;
+    using SDLSharp.Events;
     using SDLSharp.Graphics;
     using SDLSharp.Maps;
     using SDLSharp.Utilities;
@@ -311,9 +312,9 @@
             QueueCommand(new ActorCommand { Action = ActorAction.Interact, MapDestX = destX, MapDestY = destY });
         }
 
-        public void QueueAttack(Actor? enemy)
+        public void QueueAttack(Actor? enemy, Power? power = null)
         {
-            QueueCommand(new ActorCommand { Action = ActorAction.Attack, Enemy = enemy });
+            QueueCommand(new ActorCommand { Action = ActorAction.Attack, Enemy = enemy, Power = power });
         }
 
         public void ReplaceMove(float destX, float destY)

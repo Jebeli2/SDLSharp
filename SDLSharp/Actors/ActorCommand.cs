@@ -1,5 +1,6 @@
 ﻿namespace SDLSharp.Actors
 {
+    using SDLSharp.Events;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -12,6 +13,7 @@
         public float MapDestX { get; set; }
         public float MapDestY { get; set; }
         public Actor? Enemy { get; set; }
+        public Power? Power { get; set; }
 
         public override string ToString()
         {
@@ -34,9 +36,22 @@
                     sb.Append(")");
                     break;
                 case ActorAction.Attack:
-                    sb.Append(" ");
-                    if (Enemy != null) { sb.Append(Enemy); }
-                    else { sb.Append("nothing"); }
+                    if (Power != null)
+                    {
+                        sb.Append(" using ");
+                        sb.Append(Power.Name);
+                        if (Enemy != null)
+                        {
+                            sb.Append(" on ");
+                            sb.Append(Enemy);
+                        }
+                    }
+                    else
+                    {
+                        sb.Append(" ");
+                        if (Enemy != null) { sb.Append(Enemy); }
+                        else { sb.Append("nothing"); }
+                    }
                     break;
             }
             return sb.ToString();

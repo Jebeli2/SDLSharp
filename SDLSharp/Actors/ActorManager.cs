@@ -115,7 +115,7 @@
             }
         }
 
-        public void MakeCommands(Actor actor, int mouseX, int mouseY)
+        public void MakeCommands(Actor actor, int mouseX, int mouseY, MouseButton button = MouseButton.Left)
         {
             IMapCamera camera = engine.Camera;
             camera.ScreenToMap(mouseX, mouseY, out float mapX, out float mapY);
@@ -126,14 +126,24 @@
             Actor? mouseActor = GetActor(mouseX, mouseY);
             bool hasEnemy = mouseEnemy != null;
             bool hasActor = mouseActor != null;
+            bool melee = button == MouseButton.Left;
+
             if (hasEnemy)
             {
                 actor.ClearCommands();
-                if (!actor.IsAdjacentTo(mouseEnemy))
+                if (melee)
                 {
-                    actor.QueueMove(mapX, mapY);
+                    if (!actor.IsAdjacentTo(mouseEnemy))
+                    {
+                        actor.QueueMove(mapX, mapY);
+                    }
+                    actor.QueueAttack(mouseEnemy);
                 }
-                actor.QueueAttack(mouseEnemy);
+                else
+                {
+                    Power? power = engine.PowerManager.GetPower(116);
+                    actor.QueueAttack(mouseEnemy, power);
+                }
             }
             else if (hasEvent)
             {
@@ -200,7 +210,21 @@
                     engine.EventManager.CheckClickEvents(actor.PosX, actor.PosY, cmd.MapDestX, cmd.MapDestY);
                     break;
                 case ActorAction.Attack:
-                    actor.Attack(cmd.Enemy);
+                    if (cmd.Power != null)
+                    {
+                        if (cmd.Enemy != null)
+                        {
+                            engine.PowerManager.Activate(cmd.Power, actor, new PointF(cmd.Enemy.PosX, cmd.Enemy.PosY));
+                        }
+                        else
+                        {
+                            engine.PowerManager.Activate(cmd.Power, actor, new PointF(cmd.MapDestX, cmd.MapDestY));
+                        }
+                    }
+                    else
+                    {
+                        actor.Attack(cmd.Enemy);
+                    }
                     break;
             }
         }

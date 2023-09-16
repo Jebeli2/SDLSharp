@@ -143,7 +143,7 @@
                     speedVar = ((power.SpeedVariance * 2.0f * (float)(MathUtils.Rand())) / (float)0x7FFF) - power.SpeedVariance;
                 }
                 haz.BaseSpeed += speedVar;
-                //haz SetAngle(alpha);
+                haz.SetAngle(alpha);
                 haz.DelayFrames = delayIterator;
                 delayIterator += power.Delay;
             }
