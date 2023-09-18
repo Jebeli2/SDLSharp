@@ -10,17 +10,18 @@ namespace SDLSharp.GUI
     {
         public static void ActivateAslRequest(ASLRequester? requester)
         {
-            if (requester != null)
+            if (requester != null && requester.Window != null)
             {
-
+                Intuition.ActivateWindow(requester.Window);
             }
         }
 
         public static void AbortAslRequest(ASLRequester? requester)
         {
-            if (requester != null)
+            if (requester != null && requester.Window != null)
             {
-
+                Intuition.CloseWindow(requester.Window);
+                requester.Window = null;
             }
         }
         public static bool AslRequest(ASLRequester? requester, string? dir = null)
@@ -47,7 +48,10 @@ namespace SDLSharp.GUI
         {
             if (requester != null)
             {
-
+                if (requester.Window != null)
+                {
+                    AbortAslRequest(requester);
+                }
             }
         }
 

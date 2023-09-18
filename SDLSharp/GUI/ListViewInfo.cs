@@ -577,6 +577,8 @@ namespace SDLSharp.GUI
             int w = cell.Width;
             int h = gadget.GetBounds().Height - cell.Y;
             Rectangle cellBox = new Rectangle(x, y, w, h);
+            Color bg = gui.ButtonGradientBotUnFocused;
+            gfx.FillRect(cellBox, bg);
             if (!cell.IsFirstInRow)
             {
                 gfx.DrawLine(x - 1, y, x - 1, y + h, gui.BorderLight);

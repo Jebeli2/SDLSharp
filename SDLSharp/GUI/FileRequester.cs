@@ -23,15 +23,16 @@ namespace SDLSharp.GUI
         private const int BUTTONWIDTH = WIDTH / 4 - 2;
         private const int BUTTONLEFT = 1;
         private DirectoryInfo? directoryInfo;
+        private FileInfo? selectedFile;
 
         public FileRequester()
         {
 
 
-            okButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONLEFT, -30, BUTTONWIDTH, 30, "Open", clickAction: OkSelected);
+            okButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONLEFT, -30, BUTTONWIDTH, 30, "Open", clickAction: OkButtonSelected);
             volumesButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONWIDTH + BUTTONLEFT, -30, BUTTONWIDTH, 30, "Volumes", clickAction: GoToVolumes);
             parentButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONWIDTH * 2 + BUTTONLEFT, -30, BUTTONWIDTH, 30, "Parent", clickAction: GoToParent);
-            cancelButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONWIDTH * 3 + BUTTONLEFT, -30, -BUTTONWIDTH * 3, 30, "Cancel", clickAction: CancelSelected);
+            cancelButton = GadTools.CreateGadget(GadgetKind.Button, BUTTONWIDTH * 3 + BUTTONLEFT, -30, -BUTTONWIDTH * 3, 30, "Cancel", clickAction: CancelButtonSelected);
             var fileLabel = GadTools.CreateGadget(GadgetKind.Text, BUTTONLEFT, -60, BUTTONWIDTH, 30, "File:");
             fileNameGadget = GadTools.CreateGadget(GadgetKind.String, BUTTONWIDTH, -60, -(BUTTONWIDTH + BUTTONLEFT), 30);
             var dirLabel = GadTools.CreateGadget(GadgetKind.Text, BUTTONLEFT, -90, BUTTONWIDTH, 30, "Drawer:");
@@ -45,7 +46,7 @@ namespace SDLSharp.GUI
                 Width = WIDTH + 8,
                 Height = HEIGHT + 8,
                 Title = "Open File",
-                Gadgets = new Gadget[] { okButton, volumesButton, parentButton, cancelButton, fileLabel, fileNameGadget, dirLabel, dirNameGadget, listViewGadget },
+                Gadgets = new Gadget[] { listViewGadget, dirLabel, dirNameGadget, fileLabel, fileNameGadget, okButton, volumesButton, parentButton, cancelButton },
                 MinWidth = WIDTH + 8,
                 MinHeight = HEIGHT + 8,
                 Activate = true,
@@ -53,6 +54,7 @@ namespace SDLSharp.GUI
                 Sizing = true,
                 Dragging = true,
                 Closing = true,
+                Maximizing = true,
                 CloseAction = CloseSelected
             };
             listViewInfo = listViewGadget.GadInfo?.ListViewInfo!;
@@ -64,14 +66,33 @@ namespace SDLSharp.GUI
             listViewInfo.IndexDoubleClicked = IndexDoubleClicked;
         }
 
+        internal override FileInfo? GetFileInfo()
+        {
+            return selectedFile;
+        }
+
         private void SelectedIndexChanged(int index)
         {
+            selectedFile = null;
             var row = listViewInfo.GetRow(index);
             FileSystemInfo? info = row?.Tag as FileSystemInfo;
             if (info != null)
             {
                 GadTools.SetAttrs(dirNameGadget, buffer: Path.GetDirectoryName(info.FullName));
                 GadTools.SetAttrs(fileNameGadget, buffer: Path.GetFileName(info.FullName));
+                if (info is FileInfo file)
+                {
+                    selectedFile = file;
+                }
+            }
+            else
+            {
+                DriveInfo? drive = row?.Tag as DriveInfo;
+                if (drive != null)
+                {
+                    GadTools.SetAttrs(dirNameGadget, buffer: drive.Name);
+                    GadTools.SetAttrs(fileNameGadget, buffer: "");
+                }
             }
         }
 
@@ -84,6 +105,19 @@ namespace SDLSharp.GUI
                 if (info is DirectoryInfo dirInfo)
                 {
                     FillListView(dirInfo);
+                }
+                else if (info is FileInfo file)
+                {
+                    selectedFile = file;
+                    OkButtonSelected();
+                }
+            }
+            else
+            {
+                DriveInfo? drive = row?.Tag as DriveInfo;
+                if (drive != null)
+                {
+                    FillListView(drive.RootDirectory);
                 }
             }
 
@@ -110,8 +144,6 @@ namespace SDLSharp.GUI
         }
         internal void FillListView(IEnumerable<FileSystemInfo> infos)
         {
-            //listViewInfo.InitColumnWidths();
-            //listViewInfo.InitColumns();
             listViewInfo.ClearRows();
             foreach (FileSystemInfo info in infos.OrderByDescending(x => (x.Attributes & FileAttributes.Directory)).ThenBy(x => x.Name))
             {
@@ -134,14 +166,30 @@ namespace SDLSharp.GUI
             }
         }
 
-        private void OkSelected()
+        internal void FillListView(IEnumerable<DriveInfo> drives)
+        {
+            listViewInfo.ClearRows();
+            foreach (DriveInfo info in drives)
+            {
+                string name = info.Name;
+                if (!string.IsNullOrEmpty(info.VolumeLabel)) { name += " (" + info.VolumeLabel + ")"; }
+                string sizeS = "Volume";
+                string dateS = info.RootDirectory.LastWriteTime.ToString("yyyy:MM:dd HH:mm:ss");
+                var row = listViewInfo.AddRow(name, sizeS, dateS);
+                row.Tag = info;
+            }
+
+        }
+
+        private void OkButtonSelected()
         {
             CloseWindow();
+            OkSelected?.Invoke();
         }
 
         private void GoToVolumes()
         {
-
+            FillListView(DriveInfo.GetDrives().Where(x => x.IsReady).OrderBy(x => x.Name));
         }
 
         private void GoToParent()
@@ -156,9 +204,10 @@ namespace SDLSharp.GUI
             }
         }
 
-        private void CancelSelected()
+        private void CancelButtonSelected()
         {
             CloseWindow();
+            CancelSelected?.Invoke();
         }
 
         private void CloseSelected()

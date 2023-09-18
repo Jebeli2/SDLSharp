@@ -266,7 +266,14 @@
                     () =>
                     {
                         var req = ASL.AllocAslRequest(ASLRequestType.FileRequest);
-                        ASL.AslRequest(req, @"C:\Local");
+                        if (req != null)
+                        {
+                            req.OkSelected = () =>
+                            {
+                                SDLLog.Info(LogCategory.APPLICATION, $"'{req.FileInfo}' selected");
+                            };
+                            ASL.AslRequest(req, @"C:\Local");
+                        }
                         //ASL.FreeAslRequest(req);
                     }));
 
