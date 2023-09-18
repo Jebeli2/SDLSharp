@@ -28,9 +28,11 @@
         internal Action<bool>? CheckedStateChangedAction { get; set; }
         internal string? Format { get; set; }
 
+        internal ListViewInfo? ListViewInfo { get; set; }
+
         internal void Invalidate()
         {
-
+            ListViewInfo?.Invalidate();
         }
     }
 }

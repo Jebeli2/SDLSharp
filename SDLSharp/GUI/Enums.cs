@@ -70,4 +70,11 @@
         NavigatePrevious = 0x0008,
     }
 
+    public enum ASLRequestType
+    {
+        FileRequest = 0,
+        FontRequest = 1,
+        ScreenModeRequest = 2
+    }
+
 }

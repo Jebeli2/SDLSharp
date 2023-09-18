@@ -51,6 +51,9 @@
         private SDLMusic? music;
         private SDLTexture? dialogBox;
         private Actor? player;
+        private SDLFont? fontRegular;
+        private SDLFont? fontCaptions;
+        private SDLFont? fontSubtitles;
 
 
         private bool showGUI;
@@ -155,6 +158,10 @@
         {
             tooltip = new Tooltip(e.Renderer);
             tooltip.Background = LoadTexture("images/menus/tooltips.png");
+            fontRegular = LoadFont("LiberationSans_Regular", 14);
+            fontCaptions = LoadFont("LiberationSans_Regular", 18);
+            fontSubtitles = LoadFont("LiberationSans_Regular", 16);
+            combatText.Font = fontRegular;
             InitWindows();
         }
 
@@ -206,7 +213,7 @@
                 Dragging = true,
                 Closing = true,
                 BackDrop = false,
-                //Font = font
+                Font = fontRegular,
             });
         }
 
@@ -378,6 +385,7 @@
                 tooltip.Data = eventManager.TooltipData;
                 if (!tooltip.IsEmpty)
                 {
+                    tooltip.Data.Font = fontRegular;
                     mapRenderer.MapToScreen(eventManager.TooltipMapX, eventManager.TooltipMapY, out int tx, out int ty);
                     tooltip.Render(tx + eventManager.TooltipOffsetX, ty + eventManager.TooltipOffsetY);
 
@@ -395,7 +403,7 @@
                 int h = renderer.Height - dialogBox.Height * 2;
                 Rectangle box = new Rectangle(w, h, dialogBox.Width, dialogBox.Height);
                 renderer.DrawTexture(dialogBox, box);
-                renderer.DrawText(null, "Loading...", box.X, box.Y, box.Width, box.Height, Color.White);
+                renderer.DrawText(fontCaptions, "Loading...", box.X, box.Y, box.Width, box.Height, Color.White);
             }
         }
 
@@ -454,6 +462,12 @@
         {
             FinishWindows();
             HideGUI();
+            fontSubtitles?.Dispose();
+            fontSubtitles = null;
+            fontCaptions?.Dispose();
+            fontCaptions = null;
+            fontRegular?.Dispose();
+            fontRegular = null;
             map?.Dispose();
             map = null;
             dialogBox?.Dispose();

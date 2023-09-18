@@ -107,7 +107,6 @@
 
         protected SDLTexture? LoadTexture(string name)
         {
-            //return window?.ContentManager.Load<SDLTexture>(name);
             return window?.LoadTexture(name);
         }
 
@@ -119,6 +118,11 @@
         protected SDLMusic? LoadMusic(string name)
         {
             return window?.LoadMusic(name);
+        }
+
+        protected SDLFont? LoadFont(string name, int size)
+        {
+            return window?.LoadFont(name, size);
         }
 
         protected virtual void OnWindowLoad(SDLWindowLoadEventArgs e) { }

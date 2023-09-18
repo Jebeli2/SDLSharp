@@ -49,15 +49,50 @@
                 case GadgetKind.Scroller: return CreateScroller(leftEdge, topEdge, width, height, top, total, visible, freedom, valueChangedAction);
                 case GadgetKind.String: return CreateString(leftEdge, topEdge, width, height, buffer);
                 case GadgetKind.Integer: return CreateInteger(leftEdge, topEdge, width, height, intValue);
+                case GadgetKind.ListView: return CreateListView(leftEdge, topEdge, width, height);
             }
             throw new NotSupportedException($"GadgetKind {kind} not supported");
         }
 
-        public static void SetAttrs(Gadget gadget, int? intValue = null)
+        public static void SetAttrs(Gadget gadget, string? text = null, int? intValue = null)
         {
             switch (GetGadgetKind(gadget))
             {
+                case GadgetKind.Button: SetButtonAttrs(gadget, text); break;
+                case GadgetKind.Checkbox: SetCheckboxAttrs(gadget, text); break;
+                case GadgetKind.Text: SetTextAttrs(gadget, text); break;
                 case GadgetKind.Number: SetNumberAttrs(gadget, intValue); break;
+            }
+        }
+
+        private static void SetButtonAttrs(Gadget gadget, string? text = null)
+        {
+            if (IsValid(gadget, GadgetKind.Button, out GadToolsInfo? info))
+            {
+                if (text != null)
+                {
+                    gadget.Text = text;
+                }
+            }
+        }
+        private static void SetCheckboxAttrs(Gadget gadget, string? text = null)
+        {
+            if (IsValid(gadget, GadgetKind.Checkbox, out GadToolsInfo? info))
+            {
+                if (text != null)
+                {
+                    gadget.Text = text;
+                }
+            }
+        }
+        private static void SetTextAttrs(Gadget gadget, string? text = null)
+        {
+            if (IsValid(gadget, GadgetKind.Text, out GadToolsInfo? info))
+            {
+                if (text != null)
+                {
+                    gadget.Text = text;
+                }
             }
         }
         private static void SetNumberAttrs(Gadget gadget, int? intValue)
@@ -125,6 +160,23 @@
             return gadget;
         }
 
+        private static Gadget CreateListView(int leftEdge, int topEdge, int width, int height)
+        {
+            Gadget gadget = new Gadget(GadgetKind.ListView)
+            {
+                LeftEdge = leftEdge,
+                TopEdge = topEdge,
+                Width = width,
+                Height = height,
+                GadgetType = GadgetType.CustomGadget,
+            };
+            if (gadget.GadInfo != null)
+            {
+                gadget.GadInfo.ListViewInfo = new ListViewInfo(gadget);
+            }
+            gadget.CustomRenderAction = RenderListView;
+            return gadget;
+        }
 
         private static Gadget CreateText(int leftEdge, int topEdge, int width, int height,
             string? text)
@@ -253,8 +305,8 @@
             gadget.GadgetDown += ScrollerGadgetDown;
             gadget.GadgetUp += ScrollerGadgetUp;
             return gadget;
-
         }
+
 
         private static void CheckboxGadgetUp(object? sender, EventArgs e)
         {
@@ -403,6 +455,33 @@
                 }
             }
             return false;
+        }
+
+        private static void RenderListView(IGuiRenderer gui, SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)
+        {
+            if (IsValid(gadget, GadgetKind.ListView, out GadToolsInfo? info))
+            {
+                ListViewInfo? lvInfo = info.ListViewInfo;
+                if (lvInfo != null)
+                {
+                    lvInfo.Render(gui, gfx,offsetX,offsetY);
+                    ////Rectangle bounds = gadget.GetBounds();
+                    ////Rectangle inner = gadget.GetInnerBounds();
+                    ////bounds.Offset(offsetX, offsetY);
+                    ////inner.Offset(offsetX, offsetY);
+                    //bool active = gadget.Active;
+                    //bool hover = gadget.MouseHover;
+                    //bool selected = gadget.Selected;
+
+                    //Rectangle headerRect = lvInfo.HeaderRect;
+                    //Rectangle viewRect = lvInfo.ViewRect;
+                    //headerRect.Offset(offsetX, offsetY);
+                    //viewRect.Offset(offsetX, offsetY);
+
+                    //gui.RenderGadgetBorder(gfx, headerRect, active, hover, selected);
+                    //gui.RenderGadgetBorder(gfx, viewRect, active, hover, selected);
+                }
+            }
         }
 
         private static void RenderCheckbox(IGuiRenderer gui, SDLRenderer gfx, Gadget gadget, int offsetX, int offsetY)

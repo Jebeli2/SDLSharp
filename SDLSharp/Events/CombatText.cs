@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,7 +16,18 @@ namespace SDLSharp.Events
         private float fadeDuration;
         private float speed;
         private int offset;
+        private SDLFont? font;
         private readonly List<CombatTextItem> combatTexts = new();
+
+        private readonly Color defaultColor = Color.FromArgb(250, Color.White);
+        private readonly Color[] colors = new Color[]
+        {
+            Color.FromArgb(250,Color.White), // GiveDmg
+            Color.FromArgb(250,Color.Red), // TakeDmg
+            Color.FromArgb(250,Color.Yellow), // Crit
+            Color.FromArgb(250,Color.Gray), // Miss
+            Color.FromArgb(250,Color.Green) // Buff
+        };
         public CombatText(IMapEngine engine)
         {
             this.engine = engine;
@@ -23,6 +35,12 @@ namespace SDLSharp.Events
             fadeDuration = 0;
             speed = 1;
             offset = 48;
+        }
+
+        public SDLFont? Font
+        {
+            get => font;
+            set => font = value;
         }
 
         public void Update(double totalTime, double elapsedTime)
@@ -58,20 +76,17 @@ namespace SDLSharp.Events
 
         private void RenderItem(SDLRenderer renderer, CombatTextItem item)
         {
-            renderer.DrawText(null, item.Text, item.ScreenX, item.ScreenY, GetColor(item.DisplayType));
+            renderer.DrawText(item.Font, item.Text, item.ScreenX, item.ScreenY, GetColor(item.DisplayType));
         }
 
         private Color GetColor(CombatTextType type)
         {
-            switch (type)
+            int idx = (int)type;
+            if (idx >= 0 && idx < colors.Length)
             {
-                case CombatTextType.GiveDmg: return Color.White;
-                case CombatTextType.TakeDmg: return Color.Red;
-                case CombatTextType.Crit: return Color.Yellow;
-                case CombatTextType.Buff: return Color.Green;
-                case CombatTextType.Miss: return Color.Gray;
+                return colors[(int)type];
             }
-            return Color.White;
+            return defaultColor;
         }
 
 
@@ -88,6 +103,7 @@ namespace SDLSharp.Events
             item.FloatingOffset = offset;
             item.Pos = new PointF(x, y);
             item.DisplayType = displayType;
+            item.Font = font;
             combatTexts.Add(item);
         }
         public void AddFloat(float num, float x, float y, CombatTextType displayType)
@@ -102,6 +118,7 @@ namespace SDLSharp.Events
             public PointF Pos;
             public float FloatingOffset;
             public CombatTextType DisplayType;
+            public SDLFont? Font;
             public bool IsNumber;
             public float NumberValue;
             public int ScreenX;

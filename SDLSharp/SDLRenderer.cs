@@ -421,7 +421,7 @@
                     stringBuffer.Clear();
                     stringBuffer.Append(text);
                     int hash = string.GetHashCode(text);
-                    IntPtr surface = SDL_ttf.TTF_RenderUTF8_Blended(fontHandle, stringBuffer, color.ToArgb());
+                    IntPtr surface = SDL_ttf.TTF_RenderUTF8_Blended(fontHandle, stringBuffer, ToSDLColor(color));
                     if (surface != IntPtr.Zero)
                     {
                         IntPtr texHandle = SDL_CreateTextureFromSurface(handle, surface);
@@ -446,7 +446,7 @@
                 IntPtr fontHandle = font.Handle;
                 if (fontHandle != IntPtr.Zero)
                 {
-                    IntPtr surface = SDL_ttf.TTF_RenderGlyph32_Blended(fontHandle, (uint)icon, color.ToArgb());
+                    IntPtr surface = SDL_ttf.TTF_RenderGlyph32_Blended(fontHandle, (uint)icon, ToSDLColor(color));
                     if (surface != IntPtr.Zero)
                     {
                         IntPtr texHandle = SDL_CreateTextureFromSurface(handle, surface);

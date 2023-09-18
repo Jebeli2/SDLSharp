@@ -262,6 +262,14 @@
                 gadgets.Add(GadTools.CreateGadget(GadgetKind.Checkbox, leftEdge: 10, topEdge: 290, width: -20, height: 30, text: "Debug Borders", _cheked: Intuition.ShowDebugBounds, checkedStateChangedAction:
                     (b) => { Intuition.ShowDebugBounds = b; }));
 
+                gadgets.Add(GadTools.CreateGadget(GadgetKind.Button, leftEdge: 10, topEdge: 330, width: -20, height: 30, text: "File Dialog", clickAction:
+                    () =>
+                    {
+                        var req = ASL.AllocAslRequest(ASLRequestType.FileRequest);
+                        ASL.AslRequest(req, @"C:\Local");
+                        //ASL.FreeAslRequest(req);
+                    }));
+
                 winButTest = Intuition.OpenWindow(new NewWindow
                 {
                     LeftEdge = 400,
