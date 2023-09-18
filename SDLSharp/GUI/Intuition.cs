@@ -335,6 +335,7 @@ namespace SDLSharp.GUI
         private static bool CheckGadgetMove(int x, int y)
         {
             bool result = false;
+            bool isListView = GadTools.GetGadgetKind(mouseHoverGadget) == GadgetKind.ListView;
             if (downGadget == mouseHoverGadget && downGadget != null)
             {
                 result |= downGadget.HandleMouseMove(x, y);
@@ -347,7 +348,14 @@ namespace SDLSharp.GUI
                 }
                 else if (mouseHoverGadget != null)
                 {
-                    result |= mouseHoverGadget.HandleMouseMove(x, y);
+                    if (isListView)
+                    {
+                        result |= mouseHoverGadget.HandleMouseMove(x, y);
+                    }
+                    else
+                    {
+                        result |= mouseHoverGadget.HandleMouseMove(x, y);
+                    }
                 }
             }
             return result;
@@ -356,13 +364,21 @@ namespace SDLSharp.GUI
         private static bool CheckGadgetDown(int x, int y, MouseButton button)
         {
             bool result = false;
+            bool isListView = GadTools.GetGadgetKind(mouseHoverGadget) == GadgetKind.ListView;
             if (button == MouseButton.Left)
             {
                 downGadget = mouseHoverGadget;
                 if (downGadget != null)
                 {
                     SetSelectedGadget(downGadget);
-                    result |= downGadget.HandleMouseDown(x, y, false);
+                    if (isListView)
+                    {
+                        result |= downGadget.HandleMouseDown(x, y, false);
+                    }
+                    else
+                    {
+                        result |= downGadget.HandleMouseDown(x, y, false);
+                    }
                 }
             }
             return result;
@@ -371,18 +387,28 @@ namespace SDLSharp.GUI
         private static bool CheckGadgetUp(int x, int y, MouseButton button)
         {
             bool result = false;
+            bool isListView = GadTools.GetGadgetKind(mouseHoverGadget) == GadgetKind.ListView;
             if (button == MouseButton.Left)
             {
                 upGadget = mouseHoverGadget;
                 if (upGadget != null && upGadget == downGadget)
                 {
                     Gadget useGadget = upGadget;
-                    result |= useGadget.HandleMouseUp(x, y);
+                    if (isListView)
+                    {
+                        result |= useGadget.HandleMouseUp(x, y);
+                    }
+                    else
+                    {
+                        result |= useGadget.HandleMouseUp(x, y);
+                    }
                     if (useGadget.EndGadget && useGadget.Requester != null && useGadget.Window != null)
                     {
                         EndRequest(useGadget.Requester, useGadget.Window);
                     }
                 }
+                downGadget = null;
+                upGadget = null;
                 SetSelectedGadget(null);
             }
             return result;

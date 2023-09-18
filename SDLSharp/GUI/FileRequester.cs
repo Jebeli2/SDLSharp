@@ -18,10 +18,11 @@ namespace SDLSharp.GUI
         private readonly Gadget listViewGadget;
         private readonly ListViewInfo listViewInfo;
 
-        private const int WIDTH = 400;
-        private const int HEIGHT = 400;
+        private const int WIDTH = 500;
+        private const int HEIGHT = 500;
         private const int BUTTONWIDTH = WIDTH / 4 - 2;
         private const int BUTTONLEFT = 1;
+        private DirectoryInfo? directoryInfo;
 
         public FileRequester()
         {
@@ -56,9 +57,36 @@ namespace SDLSharp.GUI
             };
             listViewInfo = listViewGadget.GadInfo?.ListViewInfo!;
             listViewInfo.AddColumn("Name", -1);
-            listViewInfo.AddColumn("Size", 72);
-            listViewInfo.AddColumn("Date", 148);
+            listViewInfo.AddColumn("Size", 100);
+            listViewInfo.AddColumn("Date", 150);
             listViewInfo.AddColumn("Comment", 64);
+            listViewInfo.SelectedIndexChanged = SelectedIndexChanged;
+            listViewInfo.IndexDoubleClicked = IndexDoubleClicked;
+        }
+
+        private void SelectedIndexChanged(int index)
+        {
+            var row = listViewInfo.GetRow(index);
+            FileSystemInfo? info = row?.Tag as FileSystemInfo;
+            if (info != null)
+            {
+                GadTools.SetAttrs(dirNameGadget, buffer: Path.GetDirectoryName(info.FullName));
+                GadTools.SetAttrs(fileNameGadget, buffer: Path.GetFileName(info.FullName));
+            }
+        }
+
+        private void IndexDoubleClicked(int index)
+        {
+            var row = listViewInfo.GetRow(index);
+            FileSystemInfo? info = row?.Tag as FileSystemInfo;
+            if (info != null)
+            {
+                if (info is DirectoryInfo dirInfo)
+                {
+                    FillListView(dirInfo);
+                }
+            }
+
         }
 
         internal override void Init(string? dir = null)
@@ -67,12 +95,19 @@ namespace SDLSharp.GUI
             {
                 if (Directory.Exists(dir))
                 {
+
                     DirectoryInfo dirInfo = new DirectoryInfo(dir);
-                    FillListView(dirInfo.EnumerateFileSystemInfos());
+                    FillListView(dirInfo);
                 }
             }
         }
-
+        internal void FillListView(DirectoryInfo dirInfo)
+        {
+            directoryInfo = dirInfo;
+            FillListView(directoryInfo.EnumerateFileSystemInfos());
+            GadTools.SetAttrs(dirNameGadget, buffer: directoryInfo.FullName);
+            GadTools.SetAttrs(fileNameGadget, buffer: "");
+        }
         internal void FillListView(IEnumerable<FileSystemInfo> infos)
         {
             //listViewInfo.InitColumnWidths();
@@ -85,14 +120,16 @@ namespace SDLSharp.GUI
                     string name = info.Name;
                     string sizeS = "Drawer";
                     string dateS = info.LastWriteTime.ToString("yyyy:MM:dd HH:mm:ss");
-                    listViewInfo.AddRow(name, sizeS, dateS);
+                    var row = listViewInfo.AddRow(name, sizeS, dateS);
+                    row.Tag = dirInfo;
                 }
                 else if (info is FileInfo fileInfo)
                 {
                     string name = info.Name;
                     string sizeS = fileInfo.Length.ToString();
                     string dateS = info.LastWriteTime.ToString("yyyy:MM:dd HH:mm:ss");
-                    listViewInfo.AddRow(name, sizeS, dateS);
+                    var row = listViewInfo.AddRow(name, sizeS, dateS);
+                    row.Tag = fileInfo;
                 }
             }
         }
@@ -109,7 +146,14 @@ namespace SDLSharp.GUI
 
         private void GoToParent()
         {
-
+            if (directoryInfo != null)
+            {
+                var parent = directoryInfo.Parent;
+                if (parent != null)
+                {
+                    FillListView(parent);
+                }
+            }
         }
 
         private void CancelSelected()

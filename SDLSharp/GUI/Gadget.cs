@@ -460,6 +460,11 @@ namespace SDLSharp.GUI
                 Rectangle bounds = GetBounds();
                 result |= stringInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
             }
+            else if (gadInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= gadInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
+            }
             if (immediate) { RaiseGadgetDown(); result |= true; }
             if (result) { window?.InvalidateFromGadget(); }
             return result;
@@ -476,6 +481,11 @@ namespace SDLSharp.GUI
             {
                 Rectangle bounds = GetBounds();
                 result |= stringInfo.HandleMouseUp(bounds, x, y);
+            }
+            else if (gadInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= gadInfo.HandleMouseUp(bounds, x, y);
             }
             if (RelVerify) { RaiseGadgetUp(); result |= true; }
             if (result) { window?.InvalidateFromGadget(); }
@@ -494,6 +504,11 @@ namespace SDLSharp.GUI
             {
                 Rectangle bounds = GetBounds();
                 result |= stringInfo.HandleMouseMove(bounds, x, y);
+            }
+            else if (gadInfo != null)
+            {
+                Rectangle bounds = GetBounds();
+                result |= gadInfo.HandleMouseMove(bounds, x, y);
             }
             if (result) { window?.InvalidateFromGadget(); }
             return result;

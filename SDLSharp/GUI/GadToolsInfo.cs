@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Drawing;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
@@ -34,5 +35,32 @@
         {
             ListViewInfo?.Invalidate();
         }
+
+        internal bool HandleMouseMove(Rectangle bounds, int x, int y)
+        {
+            if (ListViewInfo != null)
+            {
+                return ListViewInfo.HandleMouseMove(bounds, x, y);
+            }
+            return false;
+        }
+
+        internal bool HandleMouseDown(Rectangle bounds, int x, int y, bool isTimerRepeat = false)
+        {
+            if (ListViewInfo != null)
+            {
+                return ListViewInfo.HandleMouseDown(bounds, x, y, isTimerRepeat);
+            }
+            return false;
+        }
+        internal bool HandleMouseUp(Rectangle bounds, int x, int y)
+        {
+            if (ListViewInfo != null)
+            {
+                return ListViewInfo.HandleMouseUp(bounds, x, y);
+            }
+            return false;
+        }
+
     }
 }

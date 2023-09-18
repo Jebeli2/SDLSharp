@@ -100,6 +100,27 @@ namespace SDLSharp.GUI
         {
             return Color.FromArgb(alpha, gray, gray, gray);
         }
+        public void RenderGadgetBackground(SDLRenderer renderer, Rectangle bounds, bool active, bool hover, bool selected)
+        {
+            Color gradTop = ButtonGradientTopUnFocused;
+            Color gradBottom = ButtonGradientBotUnFocused;
+            if (selected)
+            {
+                gradTop = ButtonGradientTopPushed;
+                gradBottom = ButtonGradientBotPushed;
+            }
+            else if (active)
+            {
+                gradTop = ButtonGradientTopFocused;
+                gradBottom = ButtonGradientBotFocused;
+            }
+            else if (hover)
+            {
+                gradTop = ButtonGradientTopHover;
+                gradBottom = ButtonGradientBotHover;
+            }
+            renderer.FillVertGradient(bounds, gradTop, gradBottom);
+        }
 
         public void RenderGadgetBorder(SDLRenderer renderer, Rectangle bounds, bool active, bool hover, bool selected)
         {

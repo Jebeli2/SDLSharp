@@ -76,5 +76,10 @@
         FontRequest = 1,
         ScreenModeRequest = 2
     }
-
+    public enum TableSelectMode
+    {
+        Rows,
+        Cells,
+        Cols
+    }
 }

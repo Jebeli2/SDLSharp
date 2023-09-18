@@ -54,7 +54,7 @@
             throw new NotSupportedException($"GadgetKind {kind} not supported");
         }
 
-        public static void SetAttrs(Gadget gadget, string? text = null, int? intValue = null)
+        public static void SetAttrs(Gadget gadget, string? text = null, int? intValue = null, string? buffer = null)
         {
             switch (GetGadgetKind(gadget))
             {
@@ -62,6 +62,7 @@
                 case GadgetKind.Checkbox: SetCheckboxAttrs(gadget, text); break;
                 case GadgetKind.Text: SetTextAttrs(gadget, text); break;
                 case GadgetKind.Number: SetNumberAttrs(gadget, intValue); break;
+                case GadgetKind.String: SetStringAttrs(gadget, buffer); break;
             }
         }
 
@@ -72,6 +73,16 @@
                 if (text != null)
                 {
                     gadget.Text = text;
+                }
+            }
+        }
+        private static void SetStringAttrs(Gadget gadget, string? buffer = null)
+        {
+            if (IsValid(gadget, GadgetKind.String, out GadToolsInfo? info))
+            {
+                if (buffer != null && gadget.StringInfo != null)
+                {
+                    gadget.StringInfo.Buffer = buffer;
                 }
             }
         }
@@ -420,7 +431,7 @@
             return ((hidden * pot) + (PropInfo.MAXPOT / 2)) / PropInfo.MAXPOT;
         }
 
-        private static GadgetKind GetGadgetKind(Gadget? gadget)
+        public static GadgetKind GetGadgetKind(Gadget? gadget)
         {
             return gadget?.GadInfo?.Kind ?? GadgetKind.None;
         }
@@ -464,7 +475,7 @@
                 ListViewInfo? lvInfo = info.ListViewInfo;
                 if (lvInfo != null)
                 {
-                    lvInfo.Render(gui, gfx,offsetX,offsetY);
+                    lvInfo.Render(gui, gfx, offsetX, offsetY);
                     ////Rectangle bounds = gadget.GetBounds();
                     ////Rectangle inner = gadget.GetInnerBounds();
                     ////bounds.Offset(offsetX, offsetY);

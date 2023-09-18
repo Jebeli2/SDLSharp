@@ -17,10 +17,18 @@ namespace SDLSharp.GUI
         private readonly List<ListViewColumn> columns = new();
         private readonly List<ListViewRow> rows = new();
         private bool validated;
+        private ListViewCell? hoverCell;
+        private ListViewCell? selectedCell;
+        private ListViewColumn? hoverColumn;
+        private ListViewColumn? selectedColumn;
+        private TableSelectMode selectMode = TableSelectMode.Rows;
         public ListViewInfo(Gadget gadget)
         {
             this.gadget = gadget;
         }
+
+        public Action<int>? SelectedIndexChanged;
+        public Action<int>? IndexDoubleClicked;
 
         public void Invalidate()
         {
@@ -65,6 +73,8 @@ namespace SDLSharp.GUI
         }
         public void ClearRows()
         {
+            selectedCell = null;
+            selectedColumn = null;
             rows.Clear();
         }
 
@@ -78,7 +88,7 @@ namespace SDLSharp.GUI
                 HTextAlign = HorizontalAlignment.Left,
                 VTextAlign = VerticalAlignment.Center
             };
-            columns.Add(col);            
+            columns.Add(col);
             return col;
         }
 
@@ -203,6 +213,224 @@ namespace SDLSharp.GUI
             get { return rows.Count - 1; }
         }
 
+        internal int VisibleHeaderHeight
+        {
+            get { return showHeader ? headerHeight : 0; }
+        }
+
+        public ListViewRow? GetRow(int index)
+        {
+            return rows.FirstOrDefault(x => x.Index == index);
+        }
+
+        public void SetCellHover(ListViewCell cell, bool hover)
+        {
+            switch (selectMode)
+            {
+                case TableSelectMode.Cells:
+                    cell.Hover = hover;
+                    break;
+                case TableSelectMode.Rows:
+                    foreach (var c in cell.Row.Cells)
+                    {
+                        c.Hover = hover;
+                    }
+                    break;
+                case TableSelectMode.Cols:
+                    int idx = cell.ColIndex;
+                    foreach (var row in rows)
+                    {
+                        row.Cells[idx].Hover = hover;
+                    }
+                    break;
+            }
+        }
+        public void SetCellSelected(ListViewCell cell, bool selected)
+        {
+            switch (selectMode)
+            {
+                case TableSelectMode.Cells:
+                    cell.Selected = selected;
+                    break;
+                case TableSelectMode.Rows:
+                    foreach (var c in cell.Row.Cells)
+                    {
+                        c.Selected = selected;
+                    }
+                    break;
+                case TableSelectMode.Cols:
+                    int idx = cell.ColIndex;
+                    foreach (var row in rows)
+                    {
+                        row.Cells[idx].Selected = selected;
+                    }
+                    break;
+            }
+        }
+
+        public void SetHoverColumn(ListViewColumn? column)
+        {
+            if (column != hoverColumn)
+            {
+                if (hoverColumn != null)
+                {
+                    hoverColumn.Hover = false;
+                }
+                hoverColumn = column;
+                if (hoverColumn != null)
+                {
+                    hoverColumn.Hover = true;
+                }
+            }
+        }
+
+        public void SetSelectedColumn(ListViewColumn? column)
+        {
+            if (column != selectedColumn)
+            {
+                if (selectedColumn != null)
+                {
+                    selectedColumn.Selected = false;
+                }
+                selectedColumn = column;
+                if (selectedColumn != null)
+                {
+                    selectedColumn.Selected = true;
+                }
+
+            }
+        }
+
+        public void SetHoverCell(ListViewCell? cell)
+        {
+            if (cell != hoverCell)
+            {
+                if (hoverCell != null)
+                {
+                    SetCellHover(hoverCell, false);
+                }
+                hoverCell = cell;
+                if (hoverCell != null)
+                {
+                    SetCellHover(hoverCell, true);
+                }
+            }
+        }
+
+        public void SetSelectedCell(ListViewCell? cell)
+        {
+            if (cell != selectedCell)
+            {
+                if (selectedCell != null)
+                {
+                    SetCellSelected(selectedCell, false);
+                }
+                selectedCell = cell;
+                if (selectedCell != null)
+                {
+                    SetCellSelected(selectedCell, true);
+                }
+                int index = selectedCell?.RowIndex ?? -1;
+                SelectedIndexChanged?.Invoke(index);
+            }
+        }
+
+        private int X2Col(int x)
+        {
+            if (x < 0) return -1;
+            if (columns.Count == 0)
+            {
+                return 0;
+            }
+            foreach (var col in columns)
+            {
+                if (x < col.PixelWidth)
+                {
+                    return col.Index;
+                }
+                x -= col.PixelWidth;
+            }
+            return -1;
+        }
+
+        private int Y2Row(int y)
+        {
+            y -= 2;
+            y -= VisibleHeaderHeight;
+            if (y < 0) return -1;
+            y += FirstVisibleRowMod;
+            y /= rowHeight;
+            y += FirstVisibleRow;
+            return y;
+        }
+        private ListViewCell? XY2Cell(int x, int y)
+        {
+            x = X2Col(x);
+            y = Y2Row(y);
+            return GetCell(x, y);
+        }
+
+        private ListViewColumn? XY2Column(int x, int y)
+        {
+            if (y >= 0 && y < VisibleHeaderHeight)
+            {
+                x = X2Col(x);
+                if (x >= 0 && x < columns.Count)
+                {
+                    return columns[x];
+                }
+            }
+            return null;
+        }
+
+        public ListViewCell? GetCell(int x, int y)
+        {
+            if (y >= 0 && y < rows.Count)
+            {
+                if (columns.Count == 0)
+                {
+                    return rows[y].Cells[0];
+                }
+                if (x >= 0 && x < columns.Count)
+                {
+                    return rows[y].Cells[x];
+                }
+            }
+            return null;
+        }
+
+        internal bool HandleMouseMove(Rectangle bounds, int x, int y)
+        {
+            ListViewCell? oldHoverCell = hoverCell;
+            ListViewColumn? oldHoverColumn = hoverColumn;
+            ListViewCell? cell = XY2Cell(x - bounds.X, y - bounds.Y);
+            ListViewColumn? column = XY2Column(x - bounds.X, y - bounds.Y);
+            SetHoverColumn(column);
+            SetHoverCell(cell);
+            return (cell != oldHoverCell) || (column != oldHoverColumn);
+        }
+
+        internal bool HandleMouseDown(Rectangle bounds, int x, int y, bool isTimerRepeat = false)
+        {
+            return false;
+        }
+
+        internal bool HandleMouseUp(Rectangle bounds, int x, int y)
+        {
+            ListViewCell? oldSelectedCell = selectedCell;
+            ListViewColumn? oldSelectedColumn = selectedColumn;
+            ListViewCell? cell = XY2Cell(x - bounds.X, y - bounds.Y);
+            ListViewColumn? column = XY2Column(x - bounds.X, y - bounds.Y);
+            if (cell != null && cell == oldSelectedCell) // double click...
+            {
+                IndexDoubleClicked?.Invoke(cell.RowIndex);
+                return true;
+            }
+            SetSelectedColumn(column);
+            SetSelectedCell(cell);
+            return (cell != oldSelectedCell) || (column != oldSelectedColumn);
+        }
+
         public ListViewRow AddRow(params string[] labels)
         {
             ListViewRow row = new ListViewRow(this)
@@ -265,7 +493,7 @@ namespace SDLSharp.GUI
             foreach (var col in columns)
             {
                 Rectangle colBox = new Rectangle(rect.X + col.X, rect.Y + y, col.PixelWidth, height);
-                gui.RenderGadgetBorder(gfx, colBox, false, false, false);
+                gui.RenderGadgetBorder(gfx, colBox, false, col.Hover, col.Selected);
                 colBox.Inflate(-1, -1);
                 gfx.DrawText(gadget.Font, col.Label, colBox.X, colBox.Y, colBox.Width, colBox.Height, gui.TextColor, col.HTextAlign, col.VTextAlign);
             }
@@ -318,6 +546,19 @@ namespace SDLSharp.GUI
             int w = cell.Width;
             int h = cell.Height;
             Rectangle cellBox = new Rectangle(x, y, w, h);
+            Color tg = gui.TextColor;
+            Color bg = gui.ButtonGradientBotUnFocused;
+            if (cell.Hover)
+            {
+                bg = gui.ButtonGradientBotHover;
+            }
+            if (cell.Selected)
+            {
+                bg = gui.ButtonGradientBotPushed;
+                tg = gui.SelectedTextColor;
+            }
+            //gui.RenderGadgetBackground(gfx, cellBox, false, cell.Hover, cell.DrawSelected);
+            gfx.FillRect(cellBox, bg);
             if (!cell.IsFirstInRow)
             {
                 gfx.DrawLine(x - 1, y, x - 1, y + h, gui.BorderLight);
@@ -326,7 +567,7 @@ namespace SDLSharp.GUI
             if (!string.IsNullOrEmpty(cell.Label))
             {
                 var textBox = cellBox;
-                gfx.DrawText(gadget.Font, cell.Label, textBox.X, textBox.Y, textBox.Width, textBox.Height, gui.TextColor, cell.Column?.HTextAlign ?? HorizontalAlignment.Left, cell.Column?.VTextAlign ?? VerticalAlignment.Center);
+                gfx.DrawText(gadget.Font, cell.Label, textBox.X, textBox.Y, textBox.Width, textBox.Height, tg, cell.Column?.HTextAlign ?? HorizontalAlignment.Left, cell.Column?.VTextAlign ?? VerticalAlignment.Center);
             }
         }
         private void DrawEmptyCell(ListViewCell cell, IGuiRenderer gui, SDLRenderer gfx, int offsetX, int offsetY)
@@ -357,6 +598,11 @@ namespace SDLSharp.GUI
             public int PixelWidth { get; set; }
             public HorizontalAlignment HTextAlign { get; set; }
             public VerticalAlignment VTextAlign { get; set; }
+            public bool Hover { get; set; }
+            public bool Selected { get; set; }
+            public bool MouseSelected { get; set; }
+            public bool DrawSelected { get { return Selected || MouseSelected; } }
+
             //public int Height
             //{
             //    get { return Table.VisibleHeaderHeight; }
@@ -402,6 +648,10 @@ namespace SDLSharp.GUI
             public ListViewRow Row { get; set; }
             public ListViewColumn? Column { get; set; }
             public string? Label { get; set; }
+            public bool Hover { get; set; }
+            public bool Selected { get; set; }
+            public bool MouseSelected { get; set; }
+            public bool DrawSelected { get { return Selected || MouseSelected; } }
 
             public int Width
             {
