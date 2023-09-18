@@ -46,6 +46,12 @@ public class ModActorLoader : ModLoader, IResourceLoader<Actor>
                         case "turn_delay": actor.TurnDelay = FileParser.ParseDurationMS(infile.GetStrVal()); break;
                         case "waypoint_pause": actor.WaypointPause = FileParser.ParseDurationMS(infile.GetStrVal()); break;
                         case "vox_intro": actor.VoxIntros.Add(infile.GetStrVal()); break;
+                        case "vendor": break;
+                        case "constant_stock":break;
+                        case "status_stock": break;
+                        case "talker":break;
+                        case "level": break;
+                        case "portrait": break;
                         case "sfx_attack": break;
                         case "sfx_hit": break;
                         case "sfx_die": break;
@@ -85,7 +91,7 @@ public class ModActorLoader : ModLoader, IResourceLoader<Actor>
                             break;
                         case "layer":
                             int layer = infile.PopFirstInt();
-                            List<string> order = new List<string>();
+                            List<string> order = new();
                             string orderPart = infile.PopFirstString();
                             while (!string.IsNullOrEmpty(orderPart))
                             {
@@ -94,7 +100,7 @@ public class ModActorLoader : ModLoader, IResourceLoader<Actor>
                             }
                             layerOrder[layer] = order;
                             break;
-                        default: UnknownKey(name, infile); break;
+                        default: UnknownKey<Actor>(name, infile); break;
                     }
                     break;
             }

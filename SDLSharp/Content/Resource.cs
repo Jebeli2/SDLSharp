@@ -8,7 +8,7 @@
 
     public class Resource : IResource, IDisposable
     {
-        private readonly string name;
+        private string name;
         private ContentFlags flags;
         private bool disposedValue;
 
@@ -24,7 +24,12 @@
             flags = other.flags;
         }
 
-        public string Name => name;
+        public string Name
+        {
+            get => name;
+            internal set => name = value;
+        }
+
         public ContentFlags Flags
         {
             get => flags;

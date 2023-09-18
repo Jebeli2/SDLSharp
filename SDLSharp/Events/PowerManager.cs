@@ -428,7 +428,7 @@
                                     case "hp_steal": break;
                                     case "mp_steal": break;
                                     case "script": break;
-                                    default: ModLoader.UnknownKey(name, infile); break;
+                                    default: ModLoader.UnknownKey<Power>(name, infile); break;
                                 }
                             }
                             break;

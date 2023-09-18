@@ -14,10 +14,10 @@
     using System.Threading.Tasks;
     using System.Xml.Linq;
 
-    public class Power
+    public class Power : Resource
     {
         private AnimationSet? animationSet;
-        public string Name { get; set; }
+        //public string Name { get; set; }
         public bool IsEmpty { get; set; }
         public string Description { get; set; }
         public PowerType Type { get; set; }
@@ -75,8 +75,8 @@
 
         }
         public Power(string name)
+            : base(name, ContentFlags.Data)
         {
-            Name = name;
             IsEmpty = true;
             SpawnType = "";
             Description = "";

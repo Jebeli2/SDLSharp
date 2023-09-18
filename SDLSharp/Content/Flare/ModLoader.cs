@@ -18,9 +18,9 @@
         public IContentManager? ContentManager { get; set; }
 
 
-        internal static void UnknownKey(string name, FileParser infile)
+        internal static void UnknownKey<T>(string name, FileParser infile) where T : IResource
         {
-            SDLLog.Warn(LogCategory.APPLICATION, $"Unknown entry in {name}: {infile.Section}-{infile.Key} = {infile.Val}"); 
+            SDLLog.Warn(LogCategory.APPLICATION, $"Unknown entry in {name} loading {typeof(T).Name}: {infile.Section}-{infile.Key} = {infile.Val}");
         }
     }
 }

@@ -91,7 +91,7 @@
                                 break;
                             case "orientation": projection = infile.GetEnumValue(MapProjection.Isometric); break;
                             case "background_color": bgColor = infile.GetColorRGBAValue(); break;
-                            default: UnknownKey(name, infile); break;
+                            default: UnknownKey<Map>(name, infile); break;
                         }
                         break;
                     case "layer":
@@ -138,7 +138,7 @@
                                     }
                                 }
                                 break;
-                            default: UnknownKey(name, infile); break;
+                            default: UnknownKey<Map>(name, infile); break;
                         }
                         break;
                     case "npc":
@@ -149,7 +149,7 @@
                                 case "type": break;
                                 case "location": npc.PosX = infile.PopFirstInt(); npc.PosY = infile.PopFirstInt(); break;
                                 case "filename": npc.Id = infile.GetStrVal(); break;
-                                default: UnknownKey(name, infile); break;
+                                default: UnknownKey<Map>(name, infile); break;
                             }
                         }
                         break;
@@ -184,7 +184,7 @@
                                 case "wander_radius":
                                     enemy.WanderRadius = Math.Max(0, infile.GetIntVal());
                                     break;
-                                default: UnknownKey(name, infile); break;
+                                default: UnknownKey<Map>(name, infile); break;
                             }
                         }
                         break;
@@ -249,7 +249,7 @@
                                 case "loot_count": break;
                                 case "reward_xp": break;
                                 case "cutscene": break;
-                                default: UnknownKey(name, infile); break;
+                                default: UnknownKey<Map>(name, infile); break;
                             }
                         }
                         break;

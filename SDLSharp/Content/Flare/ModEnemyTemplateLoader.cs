@@ -84,7 +84,7 @@ public class ModEnemyTemplateLoader : ModLoader, IResourceLoader<EnemyTemplate>
                             }
                             et.LayerOrder[layer] = order;
                             break;
-                        default: UnknownKey(name, infile); break;
+                        default: UnknownKey<EnemyTemplate>(name, infile); break;
 
                     }
                     break;

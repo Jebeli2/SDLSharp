@@ -75,7 +75,7 @@
                                     repeatVal = infile.PopFirstString(';');
                                 }
                                 break;
-                            default: UnknownKey(name, infile); break;
+                            default: UnknownKey<TileSet>(name, infile); break;
                         }
                         break;
                 }

@@ -163,7 +163,7 @@
                     }
                     else
                     {
-                        UnknownKey(name, infile);
+                        UnknownKey<AnimationSet>(name, infile);
                     }
                 }
             }
