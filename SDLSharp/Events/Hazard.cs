@@ -159,8 +159,9 @@
         public IEnumerable<IMapSprite> GetSprites()
         {
             UpdateSprites();
-            List<IMapSprite> list = new List<IMapSprite>(sprites);
-            return list;
+            return sprites;
+            //List<IMapSprite> list = new List<IMapSprite>(sprites);
+            //return list;
         }
 
         public void AddRenderables(List<IMapSprite> r, List<IMapSprite> rDead)
