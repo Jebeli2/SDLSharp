@@ -22,9 +22,11 @@ namespace SDLSharp.GUI
         private ListViewColumn? hoverColumn;
         private ListViewColumn? selectedColumn;
         private TableSelectMode selectMode = TableSelectMode.Rows;
+        private Gadget scrollBar;
         public ListViewInfo(Gadget gadget)
         {
             this.gadget = gadget;
+            scrollBar = GadTools.CreateGadget(GadgetKind.Scroller, 0, 0, 20, 20);
         }
 
         public Action<int>? SelectedIndexChanged;
